@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Databricks GenAI — End-to-End Learning Roadmap</title>
+<style>
+  :root{
+    --bg:#0f1419; --panel:#1a2029; --panel2:#222b36; --ink:#e8edf2; --muted:#9fb0c0;
+    --accent:#ff6b35; --accent2:#3aa0ff; --ok:#28c76f; --warn:#ffb020; --line:#2c3744;
+    --theory:#3aa0ff; --hands:#28c76f; --both:#ff6b35;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f5f7fa; --panel:#fff; --panel2:#eef2f7; --ink:#1a2230; --muted:#5a6b7b; --line:#dde3ea; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--ink);line-height:1.55}
+  header{padding:26px 22px;background:linear-gradient(135deg,#ff6b35 0%,#c2410c 100%);color:#fff}
+  header h1{margin:0 0 4px;font-size:26px}
+  header p{margin:2px 0;opacity:.92;font-size:14px}
+  main{max-width:1080px;margin:0 auto;padding:18px 18px 60px}
+
+  /* sticky control bar */
+  .toolbar{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);
+    padding:12px 0;margin-bottom:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .toolbar input[type=search]{flex:1;min-width:180px;background:var(--panel);color:var(--ink);
+    border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px}
+  .btn{background:var(--panel2);color:var(--ink);border:1px solid var(--line);padding:7px 12px;
+    border-radius:8px;cursor:pointer;font-size:13px}
+  .btn:hover{border-color:var(--accent2)}
+  .btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .chip{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:7px 12px;font-size:13px}
+
+  /* progress */
+  .progress-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0 16px}
+  .bar{height:14px;border-radius:8px;background:var(--panel2);overflow:hidden;margin-top:8px}
+  .bar > span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ok),var(--accent));transition:width .4s}
+  .pstats{font-size:13px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
+  .pstats b{color:var(--ink)}
+
+  /* levels & modules */
+  details.level{margin:14px 0;border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}
+  details.level > summary{padding:14px 18px;font-size:18px;font-weight:700;cursor:pointer;list-style:none;
+    border-left:5px solid var(--accent);background:var(--panel)}
+  details.level > summary::-webkit-details-marker{display:none}
+  details.level > summary .lvlmeta{float:right;font-size:12px;color:var(--muted);font-weight:500}
+
+  details.module{margin:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+  details.module > summary{padding:11px 14px;font-weight:600;cursor:pointer;font-size:15px;list-style:none}
+  details.module > summary::-webkit-details-marker{display:none}
+  details.module > summary .mmeta{float:right;font-size:12px;color:var(--muted);font-weight:500}
+  .modnote{padding:0 14px 6px;color:var(--muted);font-size:13px;font-style:italic}
+
+  /* topic rows */
+  .topic{display:flex;align-items:flex-start;gap:10px;padding:9px 14px;border-top:1px solid var(--line)}
+  .topic:hover{background:rgba(58,160,255,.06)}
+  .status{flex:0 0 auto;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--bg);
+    cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;user-select:none}
+  .status[data-s="2"]{background:rgba(40,199,111,.18);border-color:var(--ok)}
+  .status[data-s="1"]{background:rgba(255,176,32,.18);border-color:var(--warn)}
+  .tbody{flex:1}
+  .tid{font-weight:600;color:var(--accent2);font-size:13px;margin-right:6px}
+  .ttitle{font-size:14px}
+  .tmeta{margin-top:3px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .tag{font-size:11px;padding:1px 8px;border-radius:20px;border:1px solid var(--line)}
+  .tag.T{color:var(--theory);border-color:var(--theory)}
+  .tag.H{color:var(--hands);border-color:var(--hands)}
+  .tag.TH{color:var(--both);border-color:var(--both)}
+  .src{font-size:11px;color:var(--muted)}
+  .topic.hidden{display:none}
+
+  /* generic sections */
+  section.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin:16px 0}
+  section.card h2{margin-top:0;font-size:19px;border-left:4px solid var(--accent);padding-left:10px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600}
+  .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:6px;font-size:13px}
+  .legend div{padding:4px 0}
+  ul{padding-left:20px} li{margin:5px 0}
+  .callout{border-radius:10px;padding:10px 14px;margin:10px 0;border-left:5px solid var(--accent);background:rgba(255,107,53,.1);font-size:14px}
+  footer{color:var(--muted);font-size:12px;text-align:center;padding:24px}
+  a{color:var(--accent2)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧭 Databricks Generative AI — End-to-End Learning Roadmap</h1>
+  <p><b>Audience:</b> Databricks Field Engineer (FDE) · <b>Goal:</b> fundamentals → expert / architect, mixing theory + hands-on</p>
+  <p>Interactive view of <code>ROADMAP.md</code>. Click the box on each topic to cycle status: ⬜ → 🔄 → ✅ (saved in your browser).</p>
+</header>
+
+<main>
+  <!-- PROGRESS -->
+  <div class="progress-wrap">
+    <div class="pstats">
+      <span><b id="pPct">0%</b> complete</span>
+      <span>✅ Done: <b id="pDone">0</b></span>
+      <span>🔄 In progress: <b id="pProg">0</b></span>
+      <span>⬜ Not started: <b id="pTodo">0</b></span>
+      <span>Total topics: <b id="pTotal">0</b></span>
+    </div>
+    <div class="bar"><span id="pBar"></span></div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <input type="search" id="search" placeholder="🔎 Search topics… (e.g. vector, agent, genie, tracing)" />
+    <button class="btn active" data-f="all" onclick="setFilter(this,'all')">All</button>
+    <button class="btn" data-f="T" onclick="setFilter(this,'T')">Theory</button>
+    <button class="btn" data-f="H" onclick="setFilter(this,'H')">Hands-on</button>
+    <button class="btn" onclick="expandAll(true)">Expand all</button>
+    <button class="btn" onclick="expandAll(false)">Collapse all</button>
+    <button class="btn" onclick="resetProgress()">♻︎ Reset progress</button>
+  </div>
+
+  <div id="tree"></div>
+
+  <!-- SOURCE LEGEND -->
+  <section class="card">
+    <h2>Source legend</h2>
+    <div class="legend" id="legend"></div>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px">Content type: <b>[T]</b> Theory · <b>[H]</b> Hands-on · <b>[T+H]</b> Both</p>
+  </section>
+
+  <!-- CADENCE -->
+  <section class="card">
+    <h2>Suggested 16-week cadence <span style="font-size:12px;color:var(--muted)">(compressible to 10–12 weeks)</span></h2>
+    <table id="cadence"><thead><tr><th>Weeks</th><th>Focus</th><th>Modules</th></tr></thead><tbody></tbody></table>
+    <div class="callout">💡 <b>Per-module learning loop:</b> ① Learn concepts → ② Build a focused lab → ③ Review architecture trade-offs → ④ Produce a customer-facing narrative (demo + design rationale).</div>
+    <div class="callout">📝 <b>Evidence checklist per module:</b> concept notes · lab artifact · architecture decision log · failure cases documented · demo script.</div>
+  </section>
+
+  <!-- PATHS -->
+  <section class="card">
+    <h2>Suggested learning paths</h2>
+    <ul id="paths"></ul>
+  </section>
+
+  <!-- CAPSTONE -->
+  <section class="card">
+    <h2>🏁 Capstone (Topic 17.7)</h2>
+    <p>Deliver a complete Databricks GenAI solution package: architecture diagram · implementation notebooks · evaluation report · monitoring plan · governance controls · customer-facing narrative.</p>
+    <p><b>Rubric:</b> technical correctness · quality &amp; groundedness · reliability/observability · governance &amp; security completeness · business-impact clarity.</p>
+  </section>
+
+  <section class="card">
+    <div class="callout">📌 <b>IMPORTANT:</b> This roadmap is the single source of teaching order for both Claude Code (<code>CLAUDE.md</code>) and Cursor (<code>.cursor/rules/databricks-genai-learning-mode.mdc</code>). Progress you set here is stored locally in your browser; the canonical text lives in <code>ROADMAP.md</code>.</div>
+  </section>
+</main>
+
+<footer>Generated from ROADMAP.md · Databricks GenAI FDE learning project</footer>
+
+<script>
+const LEGEND=[
+  ["📘 B1","Practical MLflow for Generative AI on Databricks (book)"],
+  ["📗 B2","Databricks Certified Generative AI Engineer Associate Study Guide (book)"],
+  ["🌐 Agents","docs.databricks.com → AI Agents"],
+  ["🌐 Genie","docs.databricks.com → AI/BI Genie"],
+  ["🌐 GenieOne","docs.databricks.com → Genie One"],
+  ["🌐 Semantics","docs.databricks.com → Business Semantics / Metric Views"],
+  ["🌐 Docs","Other latest Databricks docs"],
+  ["✍️ Blog","Official Databricks blog / engineering blog"],
+];
+
+const DATA=[
+ {id:"L0",title:"Level 0 — Orientation & Environment",modules:[
+  {id:"00",title:"Module 00 — Databricks platform foundations for GenAI",note:"You can't build GenAI without the platform plumbing.",topics:[
+   ["00.1","Databricks Lakehouse & workspace basics — clusters/serverless, notebooks, repos","TH","📗B2 Ch1"],
+   ["00.2","Unity Catalog 101 — catalogs, schemas, tables, volumes, governance model","T","📗B2 Ch6 · 📘B1 Ch1"],
+   ["00.3","Setting up a workspace + ML compute (sign-up, cluster, first notebook)","H","📗B2 Ch1"],
+   ["00.4","The Mosaic AI product landscape — where each piece fits","T","🌐Agents · 📗B2 Ch9"],
+   ["00.5","The \"Unity Airways\" running use case (book's end-to-end example)","T","📘B1 Ch1"],
+  ]},
+ ]},
+ {id:"L1",title:"Level 1 — GenAI Foundations",modules:[
+  {id:"01",title:"Module 01 — GenAI & LLM fundamentals",topics:[
+   ["01.1","What is Generative AI vs traditional ML","T","📗B2 Ch2"],
+   ["01.2","LLMs, tokens, context windows, temperature & sampling","T","📗B2 Ch2"],
+   ["01.3","Embeddings — what they are and why they matter","T","📗B2 Ch3, Ch9"],
+   ["01.4","Model tasks ↔ use cases; reading model cards (risk & bias)","T","📗B2 Ch2"],
+   ["01.5","Balancing cost, latency, and quality when choosing models","T","📗B2 Ch2, Ch9"],
+   ["01.6","Foundation Model APIs & external models on Databricks","TH","🌐Docs · 🌐Agents"],
+  ]},
+  {id:"02",title:"Module 02 — Prompt engineering",topics:[
+   ["02.1","Fundamentals & core prompting techniques","T","📘B1 Ch3 · 📗B2 Ch2"],
+   ["02.2","Prompts for structured output; prompt templates in code","TH","📗B2 Ch2"],
+   ["02.3","Prompt injection considerations with templates","T","📗B2 Ch2, Ch4"],
+   ["02.4","Metaprompts — minimizing hallucination & data leakage","T","📗B2 Ch4"],
+   ["02.5","MLflow Prompt Registry — versioning, aliases, lifecycle","TH","📘B1 Ch3"],
+   ["02.6","Evaluating & comparing prompt versions","H","📘B1 Ch3"],
+   ["02.7","Prompt optimization (MLflow interface)","TH","📘B1 Ch3"],
+   ["02.8","Anti-patterns & debugging habits","T","📘B1 Ch3"],
+  ]},
+ ]},
+ {id:"L2",title:"Level 2 — RAG Core",modules:[
+  {id:"03",title:"Module 03 — Data preparation & chunking for RAG",topics:[
+   ["03.1","RAG pipeline overview — where chunking fits","T","📗B2 Ch3"],
+   ["03.2","Chunking strategies: fixed, sentence, paragraph, sliding-window, semantic","TH","📗B2 Ch3"],
+   ["03.3","Controlling overlap & granularity; impact on retrieval","T","📗B2 Ch3"],
+   ["03.4","Content extraction from PDFs/images; choosing the right Python package","H","📗B2 Ch3"],
+   ["03.5","Content filtering — removing redundancy & noise","TH","📗B2 Ch3"],
+   ["03.6","Converting to Delta for querying","H","📗B2 Ch3"],
+   ["03.7","Evaluating retrieval quality; corrective techniques","TH","📗B2 Ch3"],
+  ]},
+  {id:"04",title:"Module 04 — Embeddings & Vector Search (Mosaic AI / \"AI Search\")",topics:[
+   ["04.1","Vector Search fundamentals — cosine vs dot-product, normalization","T","📗B2 Ch9"],
+   ["04.2","Choosing an embedding model & context length","T","📗B2 Ch3, Ch9"],
+   ["04.3","Creating & querying a Vector Search index","H","📗B2 Ch9 · 🌐Agents (AI Search)"],
+   ["04.4","Metadata filtering on queries","H","📗B2 Ch9"],
+   ["04.5","Retrievers & embedding models together","TH","📗B2 Ch9"],
+   ["04.6","Tuning for latency & cost; endpoint optimization","TH","📗B2 Ch5, Ch9"],
+  ]},
+  {id:"05",title:"Module 05 — Building & versioning a RAG chain",topics:[
+   ["05.1","What is a \"chain\"? RAG chain anatomy","T","📘B1 Ch4 · 📗B2 Ch4"],
+   ["05.2","LangChain ↔ Databricks: ChatDatabricks, DatabricksVectorSearch","H","📘B1 Ch4"],
+   ["05.3","LLM-only app → full RAG chain","H","📘B1 Ch4"],
+   ["05.4","Memory & context management (short/long-term, injection patterns)","TH","📗B2 Ch4"],
+   ["05.5","Packaging & logging: model signatures, dependent resources","TH","📘B1 Ch4"],
+   ["05.6","Logging \"Model as Code\" vs LangChain flavor","TH","📘B1 Ch4"],
+   ["05.7","MLflow app versioning for chains","H","📘B1 Ch4"],
+  ]},
+ ]},
+ {id:"L3",title:"Level 3 — MLOps for GenAI with MLflow",modules:[
+  {id:"06",title:"Module 06 — MLflow for GenAI core",topics:[
+   ["06.1","What is MLflow? Experiments, Runs, Model Registry","T","📘B1 Ch1 · 📗B2 Ch6"],
+   ["06.2","From MLflow 2 → MLflow 3 (what changed for GenAI)","T","📘B1 Ch1"],
+   ["06.3","Tracking experiments, params, metrics, artifacts","H","📘B1 Ch1 · 📗B2 Ch6"],
+   ["06.4","Open-source vs Managed MLflow; workspaces ↔ catalogs","T","📘B1 Ch1"],
+   ["06.5","Unity Catalog Model Registry — registration, aliases, tags","TH","📘B1 Ch1 · 📗B2 Ch6"],
+   ["06.6","Model lifecycle, governance & access control","T","📗B2 Ch6"],
+   ["06.7","Reproducibility, signatures, metadata, archiving/cleanup","TH","📗B2 Ch6"],
+  ]},
+  {id:"07",title:"Module 07 — MLflow Tracing & observability",topics:[
+   ["07.1","Tracing concepts — Trace & Span","T","📘B1 Ch5"],
+   ["07.2","Automated tracing","H","📘B1 Ch5"],
+   ["07.3","Manual tracing / custom spans","H","📘B1 Ch5"],
+   ["07.4","Querying traces","H","📘B1 Ch5"],
+   ["07.5","Trace-first development as a discipline","T","📘B1 Ch2, Ch5"],
+  ]},
+  {id:"08",title:"Module 08 — Evaluating GenAI applications",topics:[
+   ["08.1","The MLflow 3.x evaluation stack & Evaluation Harness","T","📘B1 Ch6"],
+   ["08.2","Building & managing evaluation datasets","TH","📘B1 Ch6 · 📗B2 Ch8"],
+   ["08.3","Scorers — code-based scorers","H","📘B1 Ch6"],
+   ["08.4","LLM-as-a-Judge scorers; which judges need ground truth","TH","📘B1 Ch6 · 📗B2 Ch8"],
+   ["08.5","Running & comparing evaluation runs; diagnosing regressions with traces","H","📘B1 Ch6"],
+   ["08.6","Capturing human-in-the-loop feedback","TH","📘B1 Ch6"],
+   ["08.7","Qualitative assessment: quality, safety, hallucination rubrics","T","📗B2 Ch4, Ch8"],
+   ["08.8","Calibrating evaluation metrics (e.g., groundedness)","TH","📗B2 Ch8"],
+   ["08.9","Evidence-driven development & the minimum evaluable product (MEP) — the Develop-phase discipline","T","📘B1 Ch2"],
+  ]},
+ ]},
+ {id:"L4",title:"Level 4 — Agents",modules:[
+  {id:"09",title:"Module 09 — Agent fundamentals & tools (Mosaic AI Agent Framework)",topics:[
+   ["09.1","Agents vs AI Agents vs Agentic AI — definitions","T","📘B1 Ch7 · 📗B2 Ch4"],
+   ["09.2","Agent development lifecycle","T","🌐Agents"],
+   ["09.3","Creating tools: vector retriever, structured-data lookup, API-calling","H","📘B1 Ch7 · 📗B2 Ch4"],
+   ["09.4","Tool design for safety/governance; tools vs prompt instructions","T","📗B2 Ch4"],
+   ["09.5","Multi-stage reasoning & tool ordering; planning agent chains","TH","📗B2 Ch2, Ch4"],
+   ["09.6","Packaging with ResponsesAgent; register in Unity Catalog","H","📘B1 Ch7"],
+   ["09.7","Context engineering","T","📘B1 Ch7"],
+   ["09.8","MCP servers as tools","TH","📘B1 Ch7 · 🌐Agents"],
+   ["09.9","Multi-agent orchestration & agents-as-tools; multi-agent system design","TH","📘B1 Ch7 · 📗B2 Ch2, Ch4"],
+   ["09.10","Testing agent tools before packaging/deploy (pairs with 09.3)","H","📘B1 Ch7"],
+  ]},
+  {id:"10",title:"Module 10 — Agent Bricks & no/low-code agents",topics:[
+   ["10.1","AI Playground — prototyping agents","H","🌐Agents"],
+   ["10.2","Knowledge Assistant (Agent Bricks)","TH","🌐Agents"],
+   ["10.3","Supervisor Agent (multi-agent orchestration)","TH","🌐Agents"],
+   ["10.4","Custom Agents (Agent Bricks)","TH","🌐Agents"],
+   ["10.5","Agents on Databricks Apps","TH","🌐Agents"],
+   ["10.6","Get started with AI agents end-to-end","H","🌐Agents"],
+  ]},
+ ]},
+ {id:"L5",title:"Level 5 — Production: Deploy, Govern, Monitor",modules:[
+  {id:"11",title:"Module 11 — Deployment & serving",topics:[
+   ["11.1","Model Serving endpoints for GenAI","TH","📘B1 Ch8 · 📗B2 Ch5"],
+   ["11.2","The Review App for stakeholder feedback","H","📘B1 Ch8"],
+   ["11.3","AI Gateway (MLflow → Databricks/Unity AI Gateway) — capabilities, fallbacks, supported LLM providers","TH","📘B1 Ch7, Ch8 · 🌐Agents"],
+   ["11.4","PyFunc model structure; pre/post-processing","H","📗B2 Ch5"],
+   ["11.5","Batch inference with ai_query","H","📗B2 Ch5, Ch9"],
+   ["11.6","Access & version control for endpoints","TH","📗B2 Ch5"],
+   ["11.7","Authentication for agent endpoints","T","📘B1 Ch8 · 🌐Agents"],
+   ["11.8","LLMOps & AgentOps: environments, Champion vs Challenger, rollout","T","📘B1 Ch8"],
+  ]},
+  {id:"12",title:"Module 12 — Responsible GenAI: guardrails & governance",topics:[
+   ["12.1","Guardrail techniques: prompt filtering, redaction, input validation","TH","📗B2 Ch7 · 📘B1 Ch8"],
+   ["12.2","AI Guardrails on Databricks (config & examples)","H","📘B1 Ch8"],
+   ["12.3","Masking & PII handling; mitigating problematic text","TH","📗B2 Ch7"],
+   ["12.4","Rate limiting & monitoring for abuse","T","📗B2 Ch7"],
+   ["12.5","Data governance & privacy with Unity Catalog","T","📗B2 Ch6, Ch7"],
+   ["12.6","Licensing/legal requirements for data sources","T","📗B2 Ch7"],
+   ["12.7","Risk frameworks, responsible-AI checklists, audit trails","T","📗B2 Ch7"],
+  ]},
+  {id:"13",title:"Module 13 — Production monitoring & continuous improvement",topics:[
+   ["13.1","Metric types: operational, quality, business impact","T","📘B1 Ch9 · 📗B2 Ch8"],
+   ["13.2","Inference tables & logs","TH","📗B2 Ch8"],
+   ["13.3","Online monitoring workflow; real-time trace capture","H","📘B1 Ch9"],
+   ["13.4","Agent monitoring tools","TH","📗B2 Ch8 · 🌐Agents"],
+   ["13.5","NLP analysis on traces; custom AI/BI monitoring dashboard","H","📘B1 Ch9"],
+   ["13.6","Metric alerts & anomaly detection","H","📘B1 Ch9 · 📗B2 Ch8"],
+   ["13.7","The \"Improve\" loop — expanding eval sets from production","TH","📘B1 Ch2, Ch9"],
+  ]},
+ ]},
+ {id:"L6",title:"Level 6 — Conversational Analytics & the Semantic Layer",modules:[
+  {id:"14",title:"Module 14 — AI/BI Genie",topics:[
+   ["14.1","Genie Spaces concepts — how Genie works","T","🌐Genie"],
+   ["14.2","Create & manage a Genie Space","H","🌐Genie"],
+   ["14.3","Curate & tune a Genie Space (instructions, sample queries, quality)","TH","🌐Genie"],
+   ["14.4","Test & monitor a Genie Space","H","🌐Genie"],
+   ["14.5","Verified answers & trust/safety","T","🌐Genie"],
+   ["14.6","Agent mode in Genie Spaces","TH","🌐Genie"],
+   ["14.7","Embed a Genie Space in an external app","H","🌐Genie"],
+   ["14.8","Genie Spaces API","H","🌐Genie"],
+   ["14.9","Genie One — unified interface, account-level discovery, deep research, budgets","TH","🌐GenieOne"],
+  ]},
+  {id:"15",title:"Module 15 — Business Semantics (Unity Catalog metric views)",topics:[
+   ["15.1","What metric views are & why a semantic layer matters","T","🌐Semantics"],
+   ["15.2","Create & edit metric views","H","🌐Semantics"],
+   ["15.3","Query metric views; tutorial with joins","H","🌐Semantics"],
+   ["15.4","Modeling metric views; advanced techniques","TH","🌐Semantics"],
+   ["15.5","Materialization for metric views","TH","🌐Semantics"],
+   ["15.6","Agent metadata in metric views (synonyms, display names, formatting) — feeding Genie/agents","TH","🌐Semantics · 🌐Genie"],
+   ["15.7","Metric view YAML syntax reference; manage metric views","H","🌐Semantics"],
+  ]},
+ ]},
+ {id:"L7",title:"Level 7 — Architect & Frontier",modules:[
+  {id:"16",title:"Module 16 — Cost, performance & scaling",topics:[
+   ["16.1","Mosaic AI architecture overview; model serving at scale","T","📗B2 Ch9"],
+   ["16.2","Context length & embedding dimension trade-offs","T","📗B2 Ch9"],
+   ["16.3","Batch inference workloads suitable for ai_query()","TH","📗B2 Ch9"],
+   ["16.4","Performance testing & profiling; high-throughput retrieval","H","📗B2 Ch9"],
+   ["16.5","Controlling LLM/GenAI costs with Databricks features","T","📗B2 Ch6, Ch8"],
+  ]},
+  {id:"17",title:"Module 17 — Reference architectures & unifying GenAI systems",topics:[
+   ["17.1","The 5-phase GenAI lifecycle (Develop→Evaluate→Deploy→Monitor→Improve) as architecture","T","📘B1 Ch2"],
+   ["17.2","MLflow Traces as the shared integration artifact","T","📘B1 Ch10"],
+   ["17.3","OpenTelemetry for cross-stack tracing","TH","📘B1 Ch10"],
+   ["17.4","MLflow Agent Server as a stable serving layer","T","📘B1 Ch10"],
+   ["17.5","MCP as the bridge to assistants & IDEs; MLflow Skills for coding agents","TH","📘B1 Ch10"],
+   ["17.6","Third-party judges & ecosystem integration","T","📘B1 Ch10"],
+   ["17.7","Designing an end-to-end enterprise GenAI reference architecture (capstone)","TH","all"],
+  ]},
+ ]},
+ {id:"TC",title:"Track C — Certification prep (cross-cutting)",modules:[
+  {id:"C",title:"Track C — Map the roadmap to the exam blueprint",note:"Run alongside Levels 1–7.",topics:[
+   ["C.1","Exam format, blueprint, domains & weights","T","📗B2 Ch1, Ch10"],
+   ["C.2","Domain 1 — Designing GenAI applications → Modules 01, 02, 09","T","📗B2 Ch2"],
+   ["C.3","Domain 2 — Data prep for RAG → Modules 03, 04","T","📗B2 Ch3"],
+   ["C.4","Domain 3 — Building apps (Python/LangChain) → Modules 05, 09","T","📗B2 Ch4"],
+   ["C.5","Domain 4 — Deploying & integrating → Modules 11, 04","T","📗B2 Ch5"],
+   ["C.6","Domain 5 — Models with MLflow & UC → Modules 06, 07","T","📗B2 Ch6"],
+   ["C.7","Domain 6 — Governance → Module 12","T","📗B2 Ch7"],
+   ["C.8","Domain 7 — Monitoring & evaluation → Modules 08, 13","T","📗B2 Ch8"],
+   ["C.9","Domain 8 — Scaling (Vector Search & Mosaic AI) → Modules 04, 16","T","📗B2 Ch9"],
+   ["C.10","Mock exams, readiness checklist, practice questions","H","📗B2 Ch10"],
+  ]},
+ ]},
+ {id:"TD",title:"Track D — FDE delivery toolkit (cross-cutting)",modules:[
+  {id:"D",title:"Track D — Turn knowledge into customer-facing delivery skill",note:"Run from Level 4 onward.",topics:[
+   ["D.1","Discovery questions for customer GenAI maturity mapping","T","—"],
+   ["D.2","POC shaping & success criteria; pilot → production migration path","T","—"],
+   ["D.3","Architecture trade-off storytelling & objection handling","T","—"],
+   ["D.4","Reusable assets: architecture one-pager, POC scorecard, production-readiness checklist","H","—"],
+   ["D.5","Reliability/security/governance-by-design; red-teaming your own agent","TH","—"],
+   ["D.6","Reference architectures by use case: enterprise Q&A · operational copilot · agentic analytics · hybrid","TH","—"],
+  ]},
+ ]},
+];
+
+const CADENCE=[
+ ["1","Foundations & setup","00"],
+ ["2–3","GenAI core + prompting","01, 02"],
+ ["4–5","Retrieval & grounding (RAG)","03, 04, 05"],
+ ["6–8","MLflow MLOps + agent engineering","06, 07, 08, 09, 10"],
+ ["9–10","Evaluation, tracing, monitoring, deploy","08, 11, 13 + Track D"],
+ ["11–12","Genie ecosystem","14"],
+ ["13–14","Business semantics & metric governance","15"],
+ ["15–16","Expert architecture + FDE execution + capstone","16, 17, Track D, capstone"],
+];
+
+const PATHS=[
+ "<b>Fastest path to a RAG app:</b> 00 → 01 → 02 → 03 → 04 → 05 → 06 → 11",
+ "<b>Agent-focused path:</b> (after RAG core) 07 → 08 → 09 → 10 → 11 → 13",
+ "<b>Certification path:</b> Track C in parallel, Levels 1–6 in order",
+ "<b>Architect path (full):</b> Level 0 → Level 7 in order, ending with capstone 17.7",
+];
+
+const STORE_KEY="dbx_genai_roadmap_progress_v1";
+let progress=JSON.parse(localStorage.getItem(STORE_KEY)||"{}");
+const ICON={0:"⬜",1:"🔄",2:"✅"};
+
+function save(){localStorage.setItem(STORE_KEY,JSON.stringify(progress));}
+
+function render(){
+  const tree=document.getElementById("tree");tree.innerHTML="";
+  DATA.forEach(level=>{
+    const lvl=document.createElement("details");lvl.className="level";lvl.open=true;
+    const lsum=document.createElement("summary");
+    lsum.innerHTML=`${level.title}<span class="lvlmeta" data-lvlmeta="${level.id}"></span>`;
+    lvl.appendChild(lsum);
+    level.modules.forEach(mod=>{
+      const m=document.createElement("details");m.className="module";m.open=true;
+      const msum=document.createElement("summary");
+      msum.innerHTML=`${mod.title}<span class="mmeta" data-modmeta="${mod.id}"></span>`;
+      m.appendChild(msum);
+      if(mod.note){const n=document.createElement("div");n.className="modnote";n.textContent="ℹ︎ "+mod.note;m.appendChild(n);}
+      mod.topics.forEach(t=>{
+        const [id,title,type,src]=t;
+        const row=document.createElement("div");row.className="topic";
+        row.dataset.type=type;row.dataset.search=(id+" "+title).toLowerCase();
+        const st=progress[id]||0;
+        const tlabel=type==="TH"?"T+H":type;
+        row.innerHTML=`
+          <div class="status" data-id="${id}" data-s="${st}" title="Click to change status">${ICON[st]}</div>
+          <div class="tbody">
+            <span class="tid">${id}</span><span class="ttitle">${title}</span>
+            <div class="tmeta"><span class="tag ${type}">${tlabel}</span><span class="src">${src}</span></div>
+          </div>`;
+        m.appendChild(row);
+      });
+      lvl.appendChild(m);
+    });
+    tree.appendChild(lvl);
+  });
+  // status click handlers
+  document.querySelectorAll(".status").forEach(el=>{
+    el.addEventListener("click",()=>{
+      const id=el.dataset.id;const cur=progress[id]||0;const next=(cur+1)%3;
+      if(next===0)delete progress[id];else progress[id]=next;
+      el.dataset.s=next;el.textContent=ICON[next];save();updateStats();
+    });
+  });
+  updateStats();applyFilter();
+}
+
+let allTopics=[];
+DATA.forEach(l=>l.modules.forEach(m=>m.topics.forEach(t=>allTopics.push({id:t[0],mod:m.id,lvl:l.id}))));
+
+function updateStats(){
+  const total=allTopics.length;
+  let done=0,prog=0;
+  allTopics.forEach(t=>{const s=progress[t.id]||0;if(s===2)done++;else if(s===1)prog++;});
+  const todo=total-done-prog;
+  const pct=Math.round((done/total)*100);
+  document.getElementById("pTotal").textContent=total;
+  document.getElementById("pDone").textContent=done;
+  document.getElementById("pProg").textContent=prog;
+  document.getElementById("pTodo").textContent=todo;
+  document.getElementById("pPct").textContent=pct+"%";
+  document.getElementById("pBar").style.width=pct+"%";
+  // per-module + per-level meta
+  DATA.forEach(l=>{
+    let lt=0,ld=0;
+    l.modules.forEach(m=>{
+      let mt=m.topics.length,md=0;
+      m.topics.forEach(t=>{if((progress[t[0]]||0)===2)md++;});
+      lt+=mt;ld+=md;
+      const meta=document.querySelector(`[data-modmeta="${m.id}"]`);
+      if(meta)meta.textContent=`${md}/${mt} done`;
+    });
+    const lmeta=document.querySelector(`[data-lvlmeta="${l.id}"]`);
+    if(lmeta)lmeta.textContent=`${ld}/${lt} done`;
+  });
+}
+
+let curFilter="all";
+function setFilter(btn,f){
+  curFilter=f;
+  document.querySelectorAll(".toolbar .btn[data-f]").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");applyFilter();
+}
+function applyFilter(){
+  const q=(document.getElementById("search").value||"").toLowerCase().trim();
+  document.querySelectorAll(".topic").forEach(row=>{
+    const type=row.dataset.type;
+    let okType = curFilter==="all" || (curFilter==="T"&&(type==="T"||type==="TH")) || (curFilter==="H"&&(type==="H"||type==="TH"));
+    let okSearch = !q || row.dataset.search.includes(q);
+    row.classList.toggle("hidden", !(okType&&okSearch));
+  });
+}
+document.getElementById("search").addEventListener("input",applyFilter);
+
+function expandAll(open){document.querySelectorAll("details").forEach(d=>d.open=open);}
+function resetProgress(){
+  if(confirm("Reset all progress markers to ⬜ not-started?")){
+    progress={};save();
+    document.querySelectorAll(".status").forEach(el=>{el.dataset.s=0;el.textContent=ICON[0];});
+    updateStats();
+  }
+}
+
+// static sections
+document.getElementById("legend").innerHTML=LEGEND.map(([t,d])=>`<div><b>${t}</b> — ${d}</div>`).join("");
+document.querySelector("#cadence tbody").innerHTML=CADENCE.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+document.getElementById("paths").innerHTML=PATHS.map(p=>`<li>${p}</li>`).join("");
+
+render();
+</script>
+</body>
+</html>

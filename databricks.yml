@@ -1,0 +1,20 @@
+# This is a Databricks asset bundle definition for 9. Databricks Generative AI_ End to End.
+# The Databricks extension requires databricks.yml configuration file.
+# See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
+
+bundle:
+  name: 9. Databricks Generative AI_ End to End
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://fevm-internal-demo-sbanerjee.cloud.databricks.com
+      profile: fevm-sbanerjee
+
+  ## Optionally, there could be 'staging' or 'prod' targets here.
+  #
+  # prod:
+  #   workspace:
+  #     host: https://fevm-internal-demo-sbanerjee.cloud.databricks.com

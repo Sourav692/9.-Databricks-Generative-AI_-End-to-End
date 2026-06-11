@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="paper">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Mosaic AI Product Landscape · Field Almanac 00.4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Spectral:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============ DATABRICKS GENAI FIELD ALMANAC — design system ============ */
+  :root{
+    --paper:#f5efe4; --paper-2:#ece3d3; --card:#fbf7ef;
+    --ink:#1b1916; --ink-soft:#6b6253; --rule:#d9cfbc;
+    --lava:#d83a17; --lava-deep:#b62f12;
+    --grid:rgba(27,25,22,.05);
+    --serif-display:"Fraunces","Iowan Old Style",Georgia,"Times New Roman",serif;
+    --serif-body:"Spectral","Iowan Old Style",Georgia,serif;
+    --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+    --maxw:1180px;
+  }
+  html[data-theme="night"]{
+    --paper:#14120d; --paper-2:#1d1a13; --card:#1b1812;
+    --ink:#efe6d4; --ink-soft:#a99d86; --rule:#322c20;
+    --lava:#ff5a2c; --lava-deep:#ff7a52;
+    --grid:rgba(239,230,212,.05);
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{scroll-behavior:auto!important}
+    .entry{opacity:1!important;transform:none!important}
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+       font-family:var(--serif-body);font-size:18px;line-height:1.72;
+       font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased}
+
+  /* paper grain + scroll progress + theme toggle */
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.05;
+    mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  html[data-theme="night"] .grain{mix-blend-mode:screen;opacity:.06}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;
+    background:var(--lava);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .toggle{position:fixed;top:14px;right:16px;z-index:60;width:42px;height:42px;border-radius:50%;
+    border:1px solid var(--rule);background:var(--card);color:var(--ink);cursor:pointer;
+    font-size:18px;line-height:1;display:grid;place-items:center;transition:border-color .2s,transform .2s}
+  .toggle:hover{border-color:var(--lava);transform:rotate(-12deg)}
+  .toggle:focus-visible{outline:2px solid var(--lava);outline-offset:3px}
+
+  /* ============ masthead ============ */
+  .masthead{position:relative;border-bottom:2px solid var(--ink);overflow:hidden}
+  .masthead-inner{max-width:var(--maxw);margin:0 auto;padding:46px 28px 26px}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.34em;text-transform:uppercase;
+    color:var(--lava);font-weight:600}
+  .filed{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink-soft);margin-top:8px}
+  .masthead h1{font-family:var(--serif-display);font-weight:900;font-optical-sizing:auto;
+    font-size:clamp(2.6rem,6.5vw,5rem);line-height:.98;letter-spacing:-.015em;margin:14px 0 0;max-width:14ch}
+  .dek{font-size:clamp(1rem,2vw,1.28rem);color:var(--ink-soft);max-width:54ch;margin:18px 0 6px;font-style:italic}
+  .ghost{position:absolute;right:-2vw;top:50%;transform:translateY(-50%);
+    font-family:var(--serif-display);font-weight:900;font-size:clamp(8rem,26vw,22rem);
+    color:transparent;-webkit-text-stroke:2px var(--rule);text-stroke:2px var(--rule);
+    line-height:1;pointer-events:none;user-select:none;z-index:0;opacity:.55}
+  .masthead-inner *{position:relative;z-index:1}
+
+  /* ============ shell: index rail + reading column ============ */
+  .shell{max-width:var(--maxw);margin:0 auto;padding:0 28px;
+    display:grid;grid-template-columns:210px 1fr;gap:48px;align-items:start}
+  .index-rail{position:sticky;top:28px;padding-top:48px}
+  .index-rail .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.26em;text-transform:uppercase;
+    color:var(--ink-soft);padding-bottom:10px;border-bottom:1px solid var(--rule);margin-bottom:10px}
+  .index-rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink-soft);
+    font-family:var(--mono);font-size:12.5px;padding:7px 0;border-bottom:1px solid transparent;transition:color .2s}
+  .index-rail a .n{color:var(--lava);font-weight:600;min-width:22px}
+  .index-rail a:hover{color:var(--ink)}
+  .index-rail a.on{color:var(--ink)}
+  .index-rail a.on .n{text-decoration:underline}
+  @media(max-width:860px){.shell{grid-template-columns:1fr;gap:0}.index-rail{display:none}}
+
+  main{padding:18px 0 40px;min-width:0}
+
+  /* ============ editorial entry sections ============ */
+  .entry{padding:42px 0;border-bottom:1px solid var(--rule);
+    opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:flex;align-items:baseline;gap:16px;margin-bottom:18px}
+  .entry-head .num{font-family:var(--serif-display);font-weight:900;font-size:clamp(2.2rem,5vw,3.4rem);
+    color:transparent;-webkit-text-stroke:1.5px var(--lava);line-height:.8}
+  .entry-head h2{font-family:var(--serif-display);font-weight:600;font-size:clamp(1.5rem,3vw,2.1rem);
+    margin:0;letter-spacing:-.01em}
+  p{margin:0 0 16px} .lead{font-size:1.18rem}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0}
+  li::marker{color:var(--lava)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--lava);text-underline-offset:3px}
+
+  /* ============ filing tabs ============ */
+  .tabs{display:flex;gap:0;border-bottom:2px solid var(--ink);margin:6px 0 22px}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;
+    margin-bottom:-2px;padding:11px 18px;cursor:pointer;color:var(--ink-soft);
+    font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--lava)}
+  .tabs button:focus-visible{outline:2px solid var(--lava);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+
+  /* ============ plate (framed diagram/figure) ============ */
+  .plate{position:relative;border:1px solid var(--ink);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:-1px;
+    background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:10px;
+    letter-spacing:.2em;text-transform:uppercase;padding:5px 10px}
+  .plate-cap{font-family:var(--mono);font-size:11px;color:var(--ink-soft);text-align:center;margin-top:12px;letter-spacing:.04em}
+
+  /* ============ stack explorer ============ */
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--lava)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--lava)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;
+    background:transparent;color:var(--ink);border:1px solid var(--rule);border-radius:2px;
+    padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--lava);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--ink);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--lava)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.5rem;margin:6px 0 10px}
+  .detail p{font-size:1rem;color:var(--ink)}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--lava-deep)}
+
+  /* ============ stepper ============ */
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);
+    padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--lava);color:#fff;border-color:var(--lava)}
+  .stepbox{border:1px solid var(--ink);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--lava)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    background:var(--ink);color:var(--paper);border:0;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--lava);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+
+  /* ============ tables ============ */
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td:first-child{width:46%}
+
+  /* ============ field notes (callouts) ============ */
+  .note{position:relative;border:1px solid var(--rule);padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--lava)} .note.imp .tag{color:var(--lava-deep)}
+  .note.tip::before{background:#3a7d44} .note.tip .tag{color:#3a7d44}
+  .note.gotcha::before{background:#b8860b} .note.gotcha .tag{color:#9c7209}
+  html[data-theme="night"] .note.tip::before{background:#7bc47f}
+  html[data-theme="night"] .note.tip .tag{color:#7bc47f}
+  html[data-theme="night"] .note.gotcha::before{background:#e6b54a}
+  html[data-theme="night"] .note.gotcha .tag{color:#e6b54a}
+
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--lava);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+
+  footer{max-width:var(--maxw);margin:0 auto;padding:28px;border-top:2px solid var(--ink);
+    font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink-soft);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+<button class="toggle" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle day / night reading mode">☾</button>
+
+<!-- ============ MASTHEAD ============ -->
+<header class="masthead">
+  <div class="ghost" aria-hidden="true">00.4</div>
+  <div class="masthead-inner">
+    <div class="kicker">Databricks GenAI · Field Almanac</div>
+    <div class="filed">Module 00 — Platform Foundations · Entry 00.4 · Theory</div>
+    <h1>The Mosaic&nbsp;AI Product Landscape</h1>
+    <p class="dek">Where each piece fits — a field guide to the modular stack, the cross-cutting governance &amp; ops spines, and how one request travels through it all.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <!-- ============ INDEX RAIL ============ -->
+  <aside class="index-rail" aria-label="Contents">
+    <div class="lbl">Contents</div>
+    <a href="#overview"><span class="n">01</span> Overview</a>
+    <a href="#explore"><span class="n">02</span> Explore the stack</a>
+    <a href="#architecture"><span class="n">03</span> 3-layer architecture</a>
+    <a href="#markers"><span class="n">04</span> Field notes</a>
+    <a href="#check"><span class="n">05</span> Self-check</a>
+    <a href="#sources"><span class="n">06</span> Sources</a>
+  </aside>
+
+  <main>
+    <!-- 01 OVERVIEW -->
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01</span><h2>The big idea</h2></div>
+      <p class="lead"><b>"Mosaic AI" is not one product — it is a stack of modular pieces that snap together.</b> Learn the <b>layers</b> first, then the boxes inside them.</p>
+      <p>Two pieces run <i>across</i> every layer and are easy to forget: <b>Unity Catalog</b> (governance) and <b>MLflow + the AI Gateway</b> (quality &amp; ops). Hold the layered map in your head and every later entry in this almanac becomes a deep-dive into a single box.</p>
+    </section>
+
+    <!-- 02 EXPLORE -->
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02</span><h2>Explore the stack</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-stack" id="t-stack" onclick="tab(this,'p-stack')">Layered stack</button>
+        <button role="tab" aria-selected="false" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Request flow</button>
+        <button role="tab" aria-selected="false" aria-controls="p-airways" id="t-airways" onclick="tab(this,'p-airways')">Unity Airways</button>
+      </div>
+
+      <!-- PANE: STACK -->
+      <div id="p-stack" class="pane active" role="tabpanel" aria-labelledby="t-stack">
+        <div class="plate" data-fig="Plate I — the stack">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a component</div>
+              <h3>Where each piece fits</h3>
+              <p>Click any component on the left. The two <b>dashed</b> layers (Unity Catalog, AI Gateway, MLflow) are cross-cutting — they touch everything above them.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE: FLOW -->
+      <div id="p-flow" class="pane" role="tabpanel" aria-labelledby="t-flow" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar">
+          <button id="prev" onclick="step(-1)" disabled>◀ Prev</button>
+          <span class="count" id="stepLabel"></span>
+          <button id="next" onclick="step(1)">Next ▶</button>
+        </div>
+        <div class="plate" data-fig="Fig. 01 — a request's journey" style="margin-top:18px">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Mirrors the cert book's Fig 9-7 / 9-8: serving layer → retriever + model execution → response.</div>
+        </div>
+      </div>
+
+      <!-- PANE: AIRWAYS -->
+      <div id="p-airways" class="pane" role="tabpanel" aria-labelledby="t-airways" hidden>
+        <table><thead><tr><th>The need</th><th>Mosaic AI piece</th></tr></thead><tbody id="airways"></tbody></table>
+      </div>
+    </section>
+
+    <!-- 03 ARCHITECTURE -->
+    <section class="entry" id="architecture">
+      <div class="entry-head"><span class="num">03</span><h2>The cert book's 3-layer view</h2></div>
+      <p>For the exam, compress the infrastructure into <b>three core layers</b> (📗 B2 Ch9):</p>
+      <div class="plate" data-fig="Fig. 02 — three-layer architecture">
+        <table>
+          <thead><tr><th>Layer</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td><b>Model serving layer</b></td><td>Hosts foundation, embedding &amp; fine-tuned models behind scalable API endpoints.</td></tr>
+            <tr><td><b>Feature &amp; data integration layer</b></td><td>Feeds models current context from Delta tables, Vector Search indexes, or streaming pipelines.</td></tr>
+            <tr><td><b>Orchestration layer</b></td><td>Scales resources, balances workloads, routes requests, caches responses, meets SLOs.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 04 FIELD NOTES -->
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">04</span><h2>Field notes</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Mosaic AI is a <b>stack, not a product</b>. <b>Unity Catalog</b> + <b>AI Gateway</b> + <b>MLflow/Tracing</b> are cross-cutting. There are <b>two ways to build agents</b>: Agent Framework (code) vs Agent Bricks (no/low-code).</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Minimum "chatbot over our docs" stack = 4 boxes: <b>Vector Search → Foundation Model API → Agent Framework/Bricks → Model Serving</b>, governed by Unity Catalog. Enable <b>dynamic batching</b> for many short requests.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · names drift</span>"Databricks Vector Search" → also "AI Search"; "MLflow AI Gateway" → "Unity/Databricks AI Gateway". Confirm current naming in the docs before quoting a customer.</div>
+    </section>
+
+    <!-- 05 SELF-CHECK -->
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">05</span><h2>Notes &amp; self-check</h2></div>
+      <details>
+        <summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>What are the <b>three core layers</b> of the Mosaic AI architecture?</li>
+          <li>Which two "spines" are <b>cross-cutting</b>, and what does each provide?</li>
+          <li>When would you choose <b>Agent Bricks</b> over the <b>Agent Framework</b>?</li>
+          <li>In Unity Airways, which piece answers from <b>policy docs</b>, and which serves the <b>LLM</b>?</li>
+          <li>What does the <b>AI Gateway</b> add that raw Model Serving does not?</li>
+        </ol>
+      </details>
+    </section>
+
+    <!-- 06 SOURCES -->
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">06</span><h2>Sources</h2></div>
+      <ul>
+        <li>📗 B2 — Cert Study Guide, Ch9 "Scaling Applications with Mosaic AI" → "Overview of Mosaic AI Architecture" (pp. 562–565, Figs 9-7/9-8).</li>
+        <li>📘 B1 — Practical MLflow for GenAI on Databricks, Ch7 (Agent Framework, <code>agents.deploy()</code>) — Early Release.</li>
+        <li>🌐 Databricks docs — AI Agents (<code>/agents/</code>), Machine Learning / Mosaic AI (<code>/machine-learning/</code>), Generative AI (<code>/generative-ai/</code>), Genie, Genie One, Business Semantics.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Field Almanac · Entry 00.4</span>
+  <span>Grounded in Book 2 Ch9 + current Databricks docs</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const LAYERS=[
+ {name:"📊 Consumption — humans use it",spine:false,comps:[
+   ["AI/BI Genie","Natural-language analytics","Business users ask questions in plain English over governed data; returns SQL-backed answers.","Module 14"],
+   ["Genie One","Unified, account-level Genie","One interface to discover & query data assets across the account; deep research & budgets.","Module 14.9"],
+   ["Metric views","Semantic layer","Reusable KPI definitions + synonyms/formatting so Genie & agents answer consistently.","Module 15"],
+ ]},
+ {name:"🛠️ Application & agents — the logic",spine:false,comps:[
+   ["AI Playground","No-code prototyping","Chat with models, attach tools, compare prompts/models — fastest way to try an idea.","Module 10.1"],
+   ["Agent Framework","Code-first agents","Author agents, tools & ResponsesAgent; deploy with agents.deploy(). Max control.","Module 09"],
+   ["Agent Bricks","No/low-code agents","Knowledge Assistant, Supervisor Agent, Custom Agents — fast path, less code.","Module 10"],
+   ["MCP servers","Standard tool interface","Expose tools/data to agents through the Model Context Protocol.","Module 09.8"],
+   ["Databricks Apps","Host the UI","Serve the web front-end for your agent/app.","Module 10.5"],
+ ]},
+ {name:"📚 Retrieval & context — the memory",spine:false,comps:[
+   ["Vector Search / AI Search","Embedding index + similarity search","Indexes your docs as vectors and retrieves the most relevant chunks for RAG.","Module 04"],
+   ["AI Functions","Models from SQL","ai_query and ai_* functions for inline/batch inference directly in SQL.","Module 11.5 / 16.3"],
+   ["Feature & function serving","Structured context","Serve features / Delta data to enrich prompts.","Module 04.5"],
+ ]},
+ {name:"🧠 Models — the brains",spine:false,comps:[
+   ["Foundation Model APIs","Databricks-hosted open models","State-of-the-art open LLMs/embeddings, pay-per-token or provisioned throughput.","Module 01.6"],
+   ["External Models","Third-party models","OpenAI/Anthropic/etc. called through Databricks with unified governance.","Module 01.6 / 11.3"],
+   ["Mosaic AI Model Serving","Scalable model endpoints","One endpoint type for foundation/custom/embedding models; autoscaling, GPU, batching, versioning, A/B.","Module 11.1"],
+ ]},
+ {name:"🧱 Foundation — data",spine:false,comps:[
+   ["Delta tables / Volumes","Governed data & files","Where your source data, docs and artifacts live.","Module 00.1 / 03"],
+ ]},
+ {name:"🔐 Governance spine — cross-cutting",spine:true,comps:[
+   ["Unity Catalog","Govern everything","One governance model for data, features, models, functions & vector indexes; lineage + access control.","Module 00.2 / 12"],
+   ["AI Gateway","Govern & monitor model access","Rate limits, payload logging, guardrails, usage tracking, provider fallbacks — in front of serving.","Module 11.3 / 12"],
+ ]},
+ {name:"🔬 Quality & Ops spine — cross-cutting",spine:true,comps:[
+   ["MLflow","Track & register","Experiments, Model Registry in UC, Prompt Registry, model-as-code.","Module 06"],
+   ["MLflow Tracing","Observability","See every step/span an agent took — debug bad answers.","Module 07"],
+   ["Agent Evaluation","Quality scoring","LLM-as-a-judge + eval datasets to score quality before & after release.","Module 08"],
+   ["Monitoring / inference tables","Production signals","Capture traffic, metrics & feedback in production.","Module 13"],
+ ]},
+];
+const FLOW=[
+ ["Client request","A user (or app) sends a prompt/query to the deployed endpoint."],
+ ["AI Gateway","Request passes the governance spine: guardrails, rate limits, payload logging."],
+ ["Agent","The agent (Agent Framework or Agent Bricks) decides what to do and which tools to call."],
+ ["Vector Search","Retriever tool fetches the most relevant chunks of YOUR data (RAG)."],
+ ["Model Serving","The LLM (Foundation Model API / custom model) generates the answer using retrieved context."],
+ ["Response","The orchestration layer returns the answer; the autoscaler manages capacity under load."],
+ ["Trace & evaluate","MLflow Tracing records every span; Agent Evaluation scores quality for the improve loop."],
+];
+const AIRWAYS=[
+ ["The chatbot 'brain'","Foundation Model APIs (LLM) via Model Serving"],
+ ["Answer from airline policies / FAQs","Vector Search index over policy docs"],
+ ["Look up a flight, cancel a booking","Agent Framework tools (API-calling, structured lookup)"],
+ ["Tie it all together","Agent Framework agent — or Agent Bricks → Knowledge Assistant (no-code)"],
+ ["Block unsafe input/output, rate-limit","AI Gateway guardrails"],
+ ["Govern the docs, model, index","Unity Catalog"],
+ ["See why the bot gave a bad answer","MLflow Tracing"],
+ ["Prove quality before release","Agent Evaluation"],
+ ["Ops asks 'what's our deflection rate?'","AI/BI Genie + metric views"],
+];
+
+/* ---------- theme ---------- */
+const root=document.documentElement;
+const savedTheme=localStorage.getItem("almanac-theme");
+root.dataset.theme = savedTheme || (matchMedia("(prefers-color-scheme: dark)").matches?"night":"paper");
+function updateThemeBtn(){document.getElementById("themeBtn").textContent = root.dataset.theme==="night"?"☀":"☾";}
+function toggleTheme(){root.dataset.theme = root.dataset.theme==="night"?"paper":"night";
+  localStorage.setItem("almanac-theme",root.dataset.theme);updateThemeBtn();drawMermaid();}
+updateThemeBtn();
+
+/* ---------- build stack explorer ---------- */
+const stack=document.getElementById("stack");
+LAYERS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");
+  d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{
+    const b=document.createElement("button");b.className="chip";b.type="button";
+    b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{
+      document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=
+        `<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p>`+
+        `<div class="layerof">Layer · ${l.name.replace(' — cross-cutting','').replace(/^[^A-Za-z]+/,'')}</div>`+
+        `<div class="mod">→ Deep dive: ${c[3]}</div>`;
+    };
+    chips.appendChild(b);
+  });
+  d.appendChild(chips);stack.appendChild(d);
+});
+
+/* ---------- tabs ---------- */
+function tab(btn,id){
+  document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;
+  btn.setAttribute("aria-selected","true");
+}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");
+FLOW.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;
+  n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});
+let idx=0;
+const box=document.getElementById("stepbox"),lbl=document.getElementById("stepLabel"),
+      prevB=document.getElementById("prev"),nextB=document.getElementById("next");
+function renderStep(){
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${FLOW.length}</div><div class="st">${FLOW[idx][0]}</div><div>${FLOW[idx][1]}</div>`;
+  lbl.textContent=`${idx+1} of ${FLOW.length}`;
+  prevB.disabled=idx===0;nextB.disabled=idx===FLOW.length-1;
+  document.querySelectorAll("#flowline .n").forEach(n=>n.classList.toggle("on",+n.dataset.i===idx));
+}
+function step(d){idx=Math.max(0,Math.min(FLOW.length-1,idx+d));renderStep();}
+renderStep();
+
+/* ---------- airways table ---------- */
+document.getElementById("airways").innerHTML=AIRWAYS.map(r=>`<tr><td>${r[0]}</td><td><b>${r[1]}</b></td></tr>`).join("");
+
+/* ---------- mermaid (theme-aware, graceful) ---------- */
+const MERMAID_SRC=`flowchart LR
+  C(["Client request"]) --> G["AI Gateway<br/>guardrails + limits"]
+  G --> A["Agent<br/>Framework / Bricks"]
+  A --> V["Vector Search<br/>retrieve your data"]
+  A --> M["Model Serving<br/>Foundation Model API"]
+  V --> M
+  M --> R(["Response"])
+  A -. trace .-> T[("MLflow Tracing<br/>+ Evaluation")]`;
+function drawMermaid(){
+  if(!window.mermaid){return;}
+  const el=document.getElementById("mermaidGraph");if(!el)return;
+  const night=root.dataset.theme==="night";
+  el.innerHTML=MERMAID_SRC;el.removeAttribute("data-processed");
+  try{
+    mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",
+      fontFamily:"IBM Plex Mono, monospace",
+      themeVariables: night
+        ? {background:"#1b1812",primaryColor:"#211d15",primaryTextColor:"#efe6d4",primaryBorderColor:"#ff5a2c",lineColor:"#a99d86",secondaryColor:"#26211a",tertiaryColor:"#26211a"}
+        : {background:"#fbf7ef",primaryColor:"#fbf7ef",primaryTextColor:"#1b1916",primaryBorderColor:"#d83a17",lineColor:"#6b6253",secondaryColor:"#efe7d8",tertiaryColor:"#efe7d8"}});
+    mermaid.run({nodes:[el]});
+  }catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}
+}
+(function(){var s=document.createElement("script");
+  s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;
+  s.onerror=function(){var el=document.getElementById("mermaidGraph");
+    if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';};
+  document.body.appendChild(s);})();
+
+/* ---------- reveal-on-scroll + scroll-spy + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+const spy=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){
+  document.querySelectorAll(".index-rail a").forEach(a=>a.classList.toggle("on",a.getAttribute("href")==="#"+e.target.id));}});},
+  {rootMargin:"-35% 0px -55% 0px"});
+entries.forEach(s=>spy.observe(s));
+addEventListener("scroll",()=>{const h=document.documentElement;
+  const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);
+  document.getElementById("progress").style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>
