@@ -138,6 +138,47 @@
     <ul id="paths"></ul>
   </section>
 
+  <!-- DEPENDENCIES -->
+  <section class="card">
+    <h2>Module dependencies &amp; parallel tracks</h2>
+    <p style="font-size:14px">Not everything is sequential. There is one <b>hard "spine"</b> and several <b>independent tracks</b> that can run in parallel once the foundation (<b>00 + 01</b>) is done.</p>
+
+    <h3 style="font-size:15px;margin:14px 0 6px">Hard prerequisite chains (must be in order)</h3>
+    <ul style="font-size:14px">
+      <li><code>00 → 03 → 04 → 05</code> — the RAG build</li>
+      <li><code>06 → 07 → 08</code> — MLflow: observe → evaluate</li>
+      <li><code>(05 or 09) + 06 → 11 → 13</code> — deploy before you can monitor</li>
+      <li>everything → <b>17.7</b> (capstone)</li>
+    </ul>
+
+    <h3 style="font-size:15px;margin:14px 0 6px">Parallel tracks after 00 + 01</h3>
+    <table>
+      <thead><tr><th>Track</th><th>Modules</th><th>Depends only on</th></tr></thead>
+      <tbody>
+        <tr><td>α — RAG spine</td><td>03 → 04 → 05</td><td>00, 01 (05 also 02, 06)</td></tr>
+        <tr><td>β — MLflow MLOps</td><td>06 → 07 → 08</td><td>00 (08 needs an app)</td></tr>
+        <tr><td>γ — Prompt engineering</td><td>02</td><td>01 (02.5–02.7 need 06)</td></tr>
+        <tr><td>δ — Conversational analytics</td><td>15 → 14</td><td><b>00 only</b> — fully independent</td></tr>
+        <tr><td>ε — Agent Bricks (low-code)</td><td>10</td><td>00 (+03/04 for Knowledge Assistant)</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">📌 <b>Level 6 (Genie 14 + metric views 15) is fully independent</b> of the RAG/MLflow/agent spine — it only needs Unity Catalog data from Module 00, so do it any time in parallel. Soft links only: 15.6 feeds 14, and 09.11 (managed MCP for Genie) references 14.</div>
+
+    <h3 style="font-size:15px;margin:14px 0 6px">Dependency waves</h3>
+    <pre style="overflow-x:auto;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px;font-size:12px;line-height:1.45">                 ┌── α  RAG spine:      03 → 04 → 05
+                 ├── β  MLflow spine:   06 → 07 → 08
+00 → 01 ─────────┼── γ  Prompting:      02   (02.5+ needs 06)
+                 ├── δ  Analytics:      15 → 14        (independent)
+                 └── ε  Agent Bricks:   10             (low-code quick win)
+                              │
+      α + β + γ converge →  09 Agents
+      05/09 + 06         →  11 → 12 → 13   (production)
+                         →  16 → 17        (architect + capstone)
+
+Cross-cutting (parallel throughout): Track C (cert), Track D (FDE delivery)</pre>
+  </section>
+
   <!-- CAPSTONE -->
   <section class="card">
     <h2>🏁 Capstone (Topic 17.7)</h2>
@@ -172,6 +213,7 @@ const DATA=[
    ["00.3","Setting up a workspace + ML compute (sign-up, cluster, first notebook)","H","📗B2 Ch1"],
    ["00.4","The Mosaic AI product landscape — where each piece fits","T","🌐Agents · 📗B2 Ch9"],
    ["00.5","The \"Unity Airways\" running use case (book's end-to-end example)","T","📘B1 Ch1"],
+   ["00.6","Discovering data & models via Databricks Marketplace (e.g., NOAA datasets for a GenAI demo)","TH","🌐Docs"],
   ]},
  ]},
  {id:"L1",title:"Level 1 — GenAI Foundations",modules:[
@@ -203,14 +245,19 @@ const DATA=[
    ["03.5","Content filtering — removing redundancy & noise","TH","📗B2 Ch3"],
    ["03.6","Converting to Delta for querying","H","📗B2 Ch3"],
    ["03.7","Evaluating retrieval quality; corrective techniques","TH","📗B2 Ch3"],
+   ["03.8","Document parsing & extraction with AI Functions (ai_parse_document, ai_extract)","TH","🌐Docs"],
+   ["03.9","Building the RAG ingestion pipeline as a Lakeflow Spark Declarative Pipeline (SDP)","H","🌐Docs"],
   ]},
-  {id:"04",title:"Module 04 — Embeddings & Vector Search (Mosaic AI / \"AI Search\")",topics:[
-   ["04.1","Vector Search fundamentals — cosine vs dot-product, normalization","T","📗B2 Ch9"],
+  {id:"04",title:"Module 04 — Embeddings & Databricks AI Search (formerly Vector Search)",topics:[
+   ["04.1","AI Search (Vector Search) fundamentals — cosine vs dot-product, normalization","T","📗B2 Ch9"],
    ["04.2","Choosing an embedding model & context length","T","📗B2 Ch3, Ch9"],
    ["04.3","Creating & querying a Vector Search index","H","📗B2 Ch9 · 🌐Agents (AI Search)"],
    ["04.4","Metadata filtering on queries","H","📗B2 Ch9"],
    ["04.5","Retrievers & embedding models together","TH","📗B2 Ch9"],
    ["04.6","Tuning for latency & cost; endpoint optimization","TH","📗B2 Ch5, Ch9"],
+   ["04.7","Index & endpoint types — Delta Sync vs Direct Vector Access vs Full-text; standard vs storage-optimized","TH","🌐Docs"],
+   ["04.8","Hybrid search — combining keyword + vector retrieval","TH","🌐Docs"],
+   ["04.9","Reranking retrieved results (cross-encoder / reranker models)","TH","🌐Docs"],
   ]},
   {id:"05",title:"Module 05 — Building & versioning a RAG chain",topics:[
    ["05.1","What is a \"chain\"? RAG chain anatomy","T","📘B1 Ch4 · 📗B2 Ch4"],
@@ -231,6 +278,7 @@ const DATA=[
    ["06.5","Unity Catalog Model Registry — registration, aliases, tags","TH","📘B1 Ch1 · 📗B2 Ch6"],
    ["06.6","Model lifecycle, governance & access control","T","📗B2 Ch6"],
    ["06.7","Reproducibility, signatures, metadata, archiving/cleanup","TH","📗B2 Ch6"],
+   ["06.8","MLflow internals — backend store, artifact store, nested runs","TH","📘B1 Ch1"],
   ]},
   {id:"07",title:"Module 07 — MLflow Tracing & observability",topics:[
    ["07.1","Tracing concepts — Trace & Span","T","📘B1 Ch5"],
@@ -249,6 +297,7 @@ const DATA=[
    ["08.7","Qualitative assessment: quality, safety, hallucination rubrics","T","📗B2 Ch4, Ch8"],
    ["08.8","Calibrating evaluation metrics (e.g., groundedness)","TH","📗B2 Ch8"],
    ["08.9","Evidence-driven development & the minimum evaluable product (MEP) — the Develop-phase discipline","T","📘B1 Ch2"],
+   ["08.10","Traditional text-eval metrics — BLEU, ROUGE, perplexity, exact-match (and when to use them vs LLM judges)","T","📗B2 Ch8"],
   ]},
  ]},
  {id:"L4",title:"Level 4 — Agents",modules:[
@@ -263,26 +312,34 @@ const DATA=[
    ["09.8","MCP servers as tools","TH","📘B1 Ch7 · 🌐Agents"],
    ["09.9","Multi-agent orchestration & agents-as-tools; multi-agent system design","TH","📘B1 Ch7 · 📗B2 Ch2, Ch4"],
    ["09.10","Testing agent tools before packaging/deploy (pairs with 09.3)","H","📘B1 Ch7"],
+   ["09.11","Managed MCP servers on Databricks (Vector Search, UC functions, Genie)","TH","🌐Agents · Docs"],
   ]},
   {id:"10",title:"Module 10 — Agent Bricks & no/low-code agents",topics:[
    ["10.1","AI Playground — prototyping agents","H","🌐Agents"],
    ["10.2","Knowledge Assistant (Agent Bricks)","TH","🌐Agents"],
    ["10.3","Supervisor Agent (multi-agent orchestration)","TH","🌐Agents"],
    ["10.4","Custom Agents (Agent Bricks)","TH","🌐Agents"],
-   ["10.5","Agents on Databricks Apps","TH","🌐Agents"],
+   ["10.5","Build & deploy a GenAI app on Databricks Apps","TH","🌐Agents · Docs"],
    ["10.6","Get started with AI agents end-to-end","H","🌐Agents"],
+   ["10.7","Information Extraction (Agent Bricks) — unstructured docs/PDFs → structured table (Beta)","TH","🌐Agents"],
+   ["10.8","Custom LLM (Agent Bricks) — domain summarize/classify/transform/generate (Beta)","TH","🌐Agents"],
   ]},
  ]},
  {id:"L5",title:"Level 5 — Production: Deploy, Govern, Monitor",modules:[
   {id:"11",title:"Module 11 — Deployment & serving",topics:[
    ["11.1","Model Serving endpoints for GenAI","TH","📘B1 Ch8 · 📗B2 Ch5"],
    ["11.2","The Review App for stakeholder feedback","H","📘B1 Ch8"],
-   ["11.3","AI Gateway (MLflow → Databricks/Unity AI Gateway) — capabilities, fallbacks, supported LLM providers","TH","📘B1 Ch7, Ch8 · 🌐Agents"],
+   ["11.3","AI Gateway — guardrails, rate limits, fallbacks, usage & payload logging, supported LLM providers; Unity AI Gateway (budgets/cost caps, MCP-service governance)","TH","📘B1 Ch7, Ch8 · 🌐Agents · 🌐Docs"],
    ["11.4","PyFunc model structure; pre/post-processing","H","📗B2 Ch5"],
    ["11.5","Batch inference with ai_query","H","📗B2 Ch5, Ch9"],
    ["11.6","Access & version control for endpoints","TH","📗B2 Ch5"],
    ["11.7","Authentication for agent endpoints","T","📘B1 Ch8 · 🌐Agents"],
    ["11.8","LLMOps & AgentOps: environments, Champion vs Challenger, rollout","T","📘B1 Ch8"],
+   ["11.9","Databricks Apps authentication & authorization (service principal, OAuth, on-behalf-of-user)","T","🌐Docs"],
+   ["11.10","AI Functions for GenAI at scale — ai_query (incl. structured/JSON extraction), ai_classify, ai_analyze_sentiment, ai_extract, ai_gen, ai_mask, ai_summarize, ai_translate, ai_fix_grammar, vector_search","TH","🌐Docs"],
+   ["11.11","Orchestrating & scheduling GenAI/RAG pipelines with Lakeflow Jobs","H","🌐Docs"],
+   ["11.12","External model credentials & provider setup — secrets/API keys, external-model serving endpoints (e.g., Claude/OpenAI)","H","🌐Docs"],
+   ["11.13","Deploying open-source / Hugging Face models on Model Serving (custom models, transformers flavor)","H","📗B2 Ch5 · 🌐Docs"],
   ]},
   {id:"12",title:"Module 12 — Responsible GenAI: guardrails & governance",topics:[
    ["12.1","Guardrail techniques: prompt filtering, redaction, input validation","TH","📗B2 Ch7 · 📘B1 Ch8"],
@@ -292,6 +349,7 @@ const DATA=[
    ["12.5","Data governance & privacy with Unity Catalog","T","📗B2 Ch6, Ch7"],
    ["12.6","Licensing/legal requirements for data sources","T","📗B2 Ch7"],
    ["12.7","Risk frameworks, responsible-AI checklists, audit trails","T","📗B2 Ch7"],
+   ["12.8","Service principals & model identity — create SPs, grant UC & endpoint privileges, deploy-as-service-principal","H","📗B2 Ch6 · 🌐Docs"],
   ]},
   {id:"13",title:"Module 13 — Production monitoring & continuous improvement",topics:[
    ["13.1","Metric types: operational, quality, business impact","T","📘B1 Ch9 · 📗B2 Ch8"],
@@ -305,15 +363,15 @@ const DATA=[
  ]},
  {id:"L6",title:"Level 6 — Conversational Analytics & the Semantic Layer",modules:[
   {id:"14",title:"Module 14 — AI/BI Genie",topics:[
-   ["14.1","Genie Spaces concepts — how Genie works","T","🌐Genie"],
-   ["14.2","Create & manage a Genie Space","H","🌐Genie"],
-   ["14.3","Curate & tune a Genie Space (instructions, sample queries, quality)","TH","🌐Genie"],
-   ["14.4","Test & monitor a Genie Space","H","🌐Genie"],
+   ["14.1","Genie Agents (formerly Genie Spaces) concepts — how Genie works","T","🌐Genie"],
+   ["14.2","Create & manage a Genie Agent","H","🌐Genie"],
+   ["14.3","Curate & tune a Genie Agent (instructions, sample queries, quality)","TH","🌐Genie"],
+   ["14.4","Test & monitor a Genie Agent","H","🌐Genie"],
    ["14.5","Verified answers & trust/safety","T","🌐Genie"],
-   ["14.6","Agent mode in Genie Spaces","TH","🌐Genie"],
-   ["14.7","Embed a Genie Space in an external app","H","🌐Genie"],
-   ["14.8","Genie Spaces API","H","🌐Genie"],
-   ["14.9","Genie One — unified interface, account-level discovery, deep research, budgets","TH","🌐GenieOne"],
+   ["14.6","Agent mode in Genie Agents","TH","🌐Genie"],
+   ["14.7","Embed a Genie Agent in an external app","H","🌐Genie"],
+   ["14.8","Genie Agents API","H","🌐Genie"],
+   ["14.9","Genie One (formerly Databricks One) — unified interface, account-level discovery, deep research, budgets","TH","🌐GenieOne"],
   ]},
   {id:"15",title:"Module 15 — Business Semantics (Unity Catalog metric views)",topics:[
    ["15.1","What metric views are & why a semantic layer matters","T","🌐Semantics"],
@@ -332,6 +390,7 @@ const DATA=[
    ["16.3","Batch inference workloads suitable for ai_query()","TH","📗B2 Ch9"],
    ["16.4","Performance testing & profiling; high-throughput retrieval","H","📗B2 Ch9"],
    ["16.5","Controlling LLM/GenAI costs with Databricks features","T","📗B2 Ch6, Ch8"],
+   ["16.6","Fine-tuning & provisioned throughput — custom / fine-tuned weights (Mosaic AI Model Training); beyond the exam blueprint","T","🌐Docs"],
   ]},
   {id:"17",title:"Module 17 — Reference architectures & unifying GenAI systems",topics:[
    ["17.1","The 5-phase GenAI lifecycle (Develop→Evaluate→Deploy→Monitor→Improve) as architecture","T","📘B1 Ch2"],
@@ -385,6 +444,7 @@ const PATHS=[
  "<b>Agent-focused path:</b> (after RAG core) 07 → 08 → 09 → 10 → 11 → 13",
  "<b>Certification path:</b> Track C in parallel, Levels 1–6 in order",
  "<b>Architect path (full):</b> Level 0 → Level 7 in order, ending with capstone 17.7",
+ "<b>Parallel-team path:</b> after 00+01, split into RAG (03→04→05), MLflow MLOps (06→07→08), and Conversational analytics (15→14); converge on Agents (09→10) then Production (11→12→13), ending at 16→17",
 ];
 
 const STORE_KEY="dbx_genai_roadmap_progress_v1";

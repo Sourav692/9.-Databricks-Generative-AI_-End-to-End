@@ -1,0 +1,4 @@
+interface:
+  display_name: "Technical Blog Style"
+  short_description: "Practical, diagram-rich technical voice"
+  default_prompt: "Use $technical-blog-style to rewrite this as a practical, diagram-rich technical explainer."

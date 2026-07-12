@@ -46,14 +46,24 @@ procedure. The non-negotiable outputs and style are:
 1. A **Markdown file** (`.md`) — the written explanation.
 2. An **HTML file** (`.html`) — the same concept with **interactive diagrams**
    (clickable/collapsible/tabbed/hover), self-contained, opens in a browser by double-click.
-   It **must follow the "Databricks Field Almanac" design system** defined in the `genai-teacher`
-   skill (Step 4) — copy `templates/explainer.html`: editorial serif type (Fraunces/Spectral/IBM Plex
-   Mono), warm paper/ink + lava accent, day/night toggle, numbered entries, PLATE/FIG diagram frames,
-   theme-aware Mermaid. **No** generic dark-SaaS-dashboard look.
+   It **must follow the shared Databricks Tutor Field Guide front** defined in the `genai-teacher`
+   skill (Step 4) so it matches the DE, Delta, PySpark, and NetSec tutor outputs: warm paper
+   background, JetBrains Mono technical chrome, Source Serif 4 reading face, single accent,
+   section hairlines, code-rich interactive labs/diagrams, and inline CSS/JS. **No** generic
+   dark-SaaS-dashboard look.
 
 **Style rules for both:**
 - Explanations are **very simple and easy to understand** (assume smart but new-to-topic).
 - Use **bullet points** heavily; short paragraphs.
+- Apply the project style skill **`technical-blog-style`**
+  (`.claude/skills/technical-blog-style/SKILL.md`): real problem first, explain why the
+  naive approach fails, introduce the core idea plainly, break the system into components,
+  use diagrams, show implementation, then close with trade-offs/gotchas/field guidance.
+- Apply **`fe-workflows:humanize`**
+  (`/Users/sourav.banerjee/.codex/isaac-plugin-sync/marketplaces/isaac-sync-fe-vibe/plugins/fe-workflows/skills/humanize/SKILL.md`)
+  as the final copy pass for generated Markdown/HTML/notebook prose. Preserve facts,
+  citations, code, APIs, required callouts, and roadmap markers while removing AI filler,
+  banned phrases, and robotic phrasing.
 - **Include Mermaid diagram(s)** in the Markdown explainer (≥1 fenced `mermaid` code block — architecture/flow/sequence); mirror the same diagram(s) in the HTML.
 - Include a **"📝 Notes"** section.
 - Mark key takeaways with an **important-pointer marker**: `> 📌 IMPORTANT:` callouts.

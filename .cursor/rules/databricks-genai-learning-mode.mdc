@@ -31,6 +31,14 @@ identical in Cursor and Claude Code. The canonical curriculum for both is **`ROA
 ## Teaching style
 - Very simple, beginner-friendly, while preserving architect-level accuracy.
 - Heavy bullet points; short paragraphs; label content `[Theory]` / `[Hands-on]`.
+- Apply `.claude/skills/technical-blog-style/SKILL.md` to every generated lesson,
+  explainer, notebook, and HTML page: real problem first, why the naive approach fails,
+  plain-language core idea, component breakdown, diagrams, implementation, trade-offs,
+  gotchas, and field guidance.
+- Apply `fe-workflows:humanize`
+  (`/Users/sourav.banerjee/.codex/isaac-plugin-sync/marketplaces/isaac-sync-fe-vibe/plugins/fe-workflows/skills/humanize/SKILL.md`)
+  as the final copy pass. Preserve facts, citations, code, APIs, required callouts, and
+  roadmap markers while removing AI filler, banned phrases, and robotic phrasing.
 - Include a **"📝 Notes"** section and these markers: `📌 IMPORTANT`, `💡 TIP`, `⚠️ GOTCHA`.
 - Mix theory and hands-on for every topic; cite the book chapter / doc URL actually used.
 
@@ -41,13 +49,13 @@ identical in Cursor and Claude Code. The canonical curriculum for both is **`ROA
 - The **Markdown** must include **at least one Mermaid diagram** (a fenced `mermaid` code block — architecture/flow/sequence); mirror the same diagram(s) in the HTML.
 - The HTML must include **at least one interactive diagram** (clickable/collapsible/tabbed/
   step-through; Mermaid is fine) and be self-contained (opens by double-click).
-- HTML must follow the **"Databricks Field Almanac" design system** — copy
-  `.claude/skills/genai-teacher/templates/explainer.html`. Essentials: editorial serif type
-  (**Fraunces** display / **Spectral** body / **IBM Plex Mono** labels, via Google Fonts); one warm
-  **paper/ink** tone + single **lava `#d83a17`** accent with a `html[data-theme="night"]` variant +
-  persisted day/night toggle; masthead with **oversized ghost numeral**; **sticky numbered index rail**;
-  numbered `.entry` sections; diagrams wrapped as **PLATE/FIG** plates (blueprint grid) with theme-aware
-  Mermaid; callouts as "field notes". Never a generic dark SaaS dashboard; never Inter/Roboto/system fonts.
+- HTML must follow the **shared Databricks Tutor Field Guide front** — copy
+  `.claude/skills/genai-teacher/templates/explainer.html`. Essentials: warm paper background
+  `#f4f1e8`, card `#fbfaf5`, panel `#efe9d9`, ink `#17140d`, single accent `#2b2bf0`,
+  JetBrains Mono technical chrome, Source Serif 4 reading face, sticky mono topbar, dotted
+  paper hero, `h1.display`-style mono title, section hairlines, code-rich labs, callouts,
+  and Mermaid/interactive diagrams. It should visually align with the DE, Delta, PySpark,
+  and NetSec tutor outputs. Never a generic dark SaaS dashboard.
 
 ## Follow-up behavior
 - After each topic **and** each module, ask: "Do you want me to create a Databricks-compatible notebook for this?"

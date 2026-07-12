@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="paper">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GenAI App on Databricks Apps · Field Almanac 10.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Spectral:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f5efe4; --paper-2:#ece3d3; --card:#fbf7ef;
+    --ink:#1b1916; --ink-soft:#6b6253; --rule:#d9cfbc;
+    --lava:#d83a17; --lava-deep:#b62f12; --grid:rgba(27,25,22,.05);
+    --serif-display:"Fraunces","Iowan Old Style",Georgia,"Times New Roman",serif;
+    --serif-body:"Spectral","Iowan Old Style",Georgia,serif;
+    --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+    --maxw:1180px;
+  }
+  html[data-theme="night"]{
+    --paper:#14120d; --paper-2:#1d1a13; --card:#1b1812;
+    --ink:#efe6d4; --ink-soft:#a99d86; --rule:#322c20;
+    --lava:#ff5a2c; --lava-deep:#ff7a52; --grid:rgba(239,230,212,.05);
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif-body);font-size:18px;line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.05;mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  html[data-theme="night"] .grain{mix-blend-mode:screen;opacity:.06}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--lava);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .toggle{position:fixed;top:14px;right:16px;z-index:60;width:42px;height:42px;border-radius:50%;border:1px solid var(--rule);background:var(--card);color:var(--ink);cursor:pointer;font-size:18px;display:grid;place-items:center;transition:border-color .2s,transform .2s}
+  .toggle:hover{border-color:var(--lava);transform:rotate(-12deg)}
+  .toggle:focus-visible{outline:2px solid var(--lava);outline-offset:3px}
+  .masthead{position:relative;border-bottom:2px solid var(--ink);overflow:hidden}
+  .masthead-inner{max-width:var(--maxw);margin:0 auto;padding:46px 28px 26px}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--lava);font-weight:600}
+  .filed{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin-top:8px}
+  .masthead h1{font-family:var(--serif-display);font-weight:900;font-optical-sizing:auto;font-size:clamp(2.4rem,6vw,4.6rem);line-height:.98;letter-spacing:-.015em;margin:14px 0 0;max-width:16ch}
+  .dek{font-size:clamp(1rem,2vw,1.28rem);color:var(--ink-soft);max-width:58ch;margin:18px 0 6px;font-style:italic}
+  .ghost{position:absolute;right:-2vw;top:50%;transform:translateY(-50%);font-family:var(--serif-display);font-weight:900;font-size:clamp(8rem,26vw,22rem);color:transparent;-webkit-text-stroke:2px var(--rule);line-height:1;pointer-events:none;user-select:none;z-index:0;opacity:.55}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--maxw);margin:0 auto;padding:0 28px;display:grid;grid-template-columns:210px 1fr;gap:48px;align-items:start}
+  .index-rail{position:sticky;top:28px;padding-top:48px}
+  .index-rail .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--ink-soft);padding-bottom:10px;border-bottom:1px solid var(--rule);margin-bottom:10px}
+  .index-rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink-soft);font-family:var(--mono);font-size:12.5px;padding:7px 0;transition:color .2s}
+  .index-rail a .n{color:var(--lava);font-weight:600;min-width:22px}
+  .index-rail a:hover,.index-rail a.on{color:var(--ink)}
+  .index-rail a.on .n{text-decoration:underline}
+  @media(max-width:860px){.shell{grid-template-columns:1fr;gap:0}.index-rail{display:none}}
+  main{padding:18px 0 40px;min-width:0}
+  .entry{padding:42px 0;border-bottom:1px solid var(--rule);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:flex;align-items:baseline;gap:16px;margin-bottom:18px}
+  .entry-head .num{font-family:var(--serif-display);font-weight:900;font-size:clamp(2.2rem,5vw,3.4rem);color:transparent;-webkit-text-stroke:1.5px var(--lava);line-height:.8}
+  .entry-head h2{font-family:var(--serif-display);font-weight:600;font-size:clamp(1.5rem,3vw,2.1rem);margin:0;letter-spacing:-.01em}
+  p{margin:0 0 16px} .lead{font-size:1.18rem}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--lava)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--lava);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:12.5px;line-height:1.55;background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--lava);padding:14px 16px;overflow:auto;margin:8px 0 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--lava)}
+  .tabs button:focus-visible{outline:2px solid var(--lava);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--ink);background:var(--card);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:-1px;background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:5px 10px}
+  .plate-cap{font-family:var(--mono);font-size:11px;color:var(--ink-soft);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--lava);color:#fff;border-color:var(--lava)}
+  .stepbox{border:1px solid var(--ink);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--lava)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 10px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:var(--paper);border:0;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--lava);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--rule);padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--lava)} .note.imp .tag{color:var(--lava-deep)}
+  .note.tip::before{background:#3a7d44} .note.tip .tag{color:#3a7d44}
+  .note.gotcha::before{background:#b8860b} .note.gotcha .tag{color:#9c7209}
+  html[data-theme="night"] .note.tip::before{background:#7bc47f} html[data-theme="night"] .note.tip .tag{color:#7bc47f}
+  html[data-theme="night"] .note.gotcha::before{background:#e6b54a} html[data-theme="night"] .note.gotcha .tag{color:#e6b54a}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--lava);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--maxw);margin:0 auto;padding:28px;border-top:2px solid var(--ink);font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink-soft);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+<button class="toggle" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle day / night reading mode">☾</button>
+
+<header class="masthead">
+  <div class="ghost" aria-hidden="true">10.5</div>
+  <div class="masthead-inner">
+    <div class="kicker">Databricks GenAI · Field Almanac</div>
+    <div class="filed">Module 10 — Agent Bricks &amp; Apps · Entry 10.5 · Hands-on</div>
+    <h1>A GenAI App on Databricks Apps</h1>
+    <p class="dek">Put a real front-end on your agent: a chat UI hosted on Databricks' serverless platform, governed by Unity Catalog, talking to your Model Serving endpoint.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="index-rail" aria-label="Contents">
+    <div class="lbl">Contents</div>
+    <a href="#overview"><span class="n">01</span> Overview</a>
+    <a href="#build"><span class="n">02</span> Build it</a>
+    <a href="#markers"><span class="n">03</span> Field notes</a>
+    <a href="#check"><span class="n">04</span> Self-check</a>
+    <a href="#sources"><span class="n">05</span> Sources</a>
+  </aside>
+
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01</span><h2>The big idea</h2></div>
+      <p class="lead"><b>Databricks Apps</b> hosts an interactive web app — a chat UI, a dashboard — <b>directly on Databricks</b>, on serverless compute, with no separate infrastructure.</p>
+      <ul>
+        <li>Build with <b>Python</b> (Streamlit · Dash · Gradio) or <b>Node.js</b> (React · Angular · Svelte · Express).</li>
+        <li>An app = your code + an <code>app.yaml</code>; it declares <b>resources</b> (e.g. a Model Serving endpoint) and runs as an <b>app service principal</b> when deployed.</li>
+        <li>For GenAI it's a <b>thin client</b> over your agent/endpoint — keep the logic in the endpoint.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="build">
+      <div class="entry-head"><span class="num">02</span><h2>Build &amp; deploy</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Walkthrough</button>
+        <button role="tab" aria-selected="false" aria-controls="p-code" id="t-code" onclick="tab(this,'p-code')">Files &amp; deploy</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Frameworks &amp; identity</button>
+      </div>
+
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <div class="plate" data-fig="Fig. 01 — runtime architecture" style="margin-top:18px">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">The app is a thin UI; the agent/LLM logic stays in the endpoint. The app SP must be granted access.</div>
+        </div>
+      </div>
+
+      <div id="p-code" class="pane" role="tabpanel" aria-labelledby="t-code" hidden>
+        <div class="plate" data-fig="Listing 01 — Streamlit app + config + deploy">
+<pre><code># app.py — minimal Streamlit chat over a Databricks serving/agent endpoint
+import streamlit as st
+from databricks.sdk import WorkspaceClient
+from databricks.sdk.service.serving import ChatMessage, ChatMessageRole
+
+w = WorkspaceClient()                 # deployed app: auto-auths as the app service principal
+ENDPOINT = "unity-airways-agent"
+
+st.title("Unity Airways Assistant")
+st.session_state.setdefault("history", [])
+for m in st.session_state.history:
+    st.chat_message(m["role"]).write(m["content"])
+
+if q := st.chat_input("Ask about bookings, baggage, refunds..."):
+    st.session_state.history.append({"role": "user", "content": q})
+    st.chat_message("user").write(q)
+    resp = w.serving_endpoints.query(
+        name=ENDPOINT,
+        messages=[ChatMessage(role=ChatMessageRole.USER, content=q)],
+    )
+    answer = resp.choices[0].message.content
+    st.session_state.history.append({"role": "assistant", "content": answer})
+    st.chat_message("assistant").write(answer)
+
+# --- app.yaml -----------------------------------------
+# command: ["streamlit", "run", "app.py"]
+# env:
+#   - name: "SERVING_ENDPOINT"
+#     value: "unity-airways-agent"
+
+# --- requirements.txt ---------------------------------
+# streamlit
+# databricks-sdk
+
+# --- deploy -------------------------------------------
+# databricks apps create unity-airways-chat
+# databricks apps deploy unity-airways-chat --source-code-path "/Workspace/Users/me/unity-airways-chat"
+# (or, for CI/CD)  databricks bundle deploy</code></pre>
+          <div class="plate-cap">Grounded in current docs; verify exact app.yaml keys / CLI flags / SDK query shape for your workspace.</div>
+        </div>
+      </div>
+
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Aspect</th><th>Detail</th></tr></thead><tbody id="rows"></tbody></table>
+      </div>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">03</span><h2>Field notes</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>A <b>deployed app runs as an app service principal</b> — grant that SP access to the endpoint (and any UC data/secrets) it calls; declare them as <b>resources</b>. Keep the agent/LLM logic in the <b>endpoint</b>, not the UI.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Start from the official <b>e2e-chatbot-app-next</b> template (NextJS + React + AI SDK): streaming, tool-call rendering, persistent history. Use <b>Databricks Asset Bundles</b> (<code>databricks bundle deploy</code>) for repeatable deploys + GitHub-Actions CI/CD.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · docs-only, evolving</span>The project <b>books don't cover Databricks Apps</b> — this is docs-grounded; verify <code>app.yaml</code> keys, CLI flags &amp; the SDK query shape live. Apps run on <b>serverless, billed per hour while running</b> — stop unused apps.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">04</span><h2>Notes &amp; self-check</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>What two files minimally define a Databricks App, and what does each do?</li>
+          <li>What identity does a <b>deployed</b> app run as, and why does it matter for calling an endpoint?</li>
+          <li>Name two Python and two Node.js frameworks supported.</li>
+          <li>Why keep the agent logic in the endpoint rather than the app?</li>
+          <li>What's the recommended way to deploy repeatably (with CI/CD)?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">05</span><h2>Sources</h2></div>
+      <ul>
+        <li>🌐 Databricks docs — Databricks Apps (<code>/dev-tools/databricks-apps/</code>): overview, key concepts, configuration, deploy, CI/CD; serverless + per-hour billing.</li>
+        <li>🌐 Databricks docs — Agent Framework → chat app (<code>/generative-ai/agent-framework/chat-app</code>): the <b>e2e-chatbot-app-next</b> template, connecting to agents on Apps / Model Serving, <code>databricks bundle deploy</code>.</li>
+        <li>⚠️ Not in the project books (Apps postdates the Early Release). 🔗 Next: 11.7 + 11.9 (authentication).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Field Almanac · Entry 10.5</span>
+  <span>Grounded in current Databricks docs</span>
+</footer>
+
+<script>
+const STEPS=[
+ ['Streamlit app','A thin chat UI in app.py that calls your endpoint: <code>w.serving_endpoints.query(name="unity-airways-agent", messages=[...])</code> via the Databricks SDK.'],
+ ['app.yaml','Tell Databricks how to start it: <code>command: ["streamlit", "run", "app.py"]</code> plus an <code>env:</code> entry for the endpoint name.'],
+ ['requirements.txt','List dependencies: <code>streamlit</code> and <code>databricks-sdk</code>.'],
+ ['Deploy','<code>databricks apps create unity-airways-chat</code>, then <code>databricks apps deploy ... --source-code-path ...</code> — or <code>databricks bundle deploy</code> for CI/CD.'],
+ ['Grant + share','Grant the app service principal CAN QUERY on the endpoint (plus any UC data/secrets), then share the app URL.'],
+];
+const ROWS=[
+ ["Python frameworks","Streamlit · Dash · Gradio"],
+ ["Node.js frameworks","React · Angular · Svelte · Express"],
+ ["Compute / billing","Serverless · billed per hour while running"],
+ ["Deployed identity","App service principal (grant it access to resources)"],
+ ["Local dev identity","Your Databricks CLI auth"],
+];
+const MERMAID_SRC=`flowchart LR
+  U(["End user (browser)"]) --> APP["Databricks App<br/>Streamlit / React"]
+  APP -->|query| EP["Model Serving / Agent endpoint"]
+  EP --> VS["Vector Search"]
+  EP --> UC["Unity Catalog data"]
+  APP -. runs as .-> SP["App service principal"]
+  SP -. granted access .-> EP`;
+
+const root=document.documentElement;
+const saved=localStorage.getItem("almanac-theme");
+root.dataset.theme = saved || (matchMedia("(prefers-color-scheme: dark)").matches?"night":"paper");
+function setBtn(){const b=document.getElementById("themeBtn");if(b)b.textContent=root.dataset.theme==="night"?"☀":"☾";}
+function toggleTheme(){root.dataset.theme=root.dataset.theme==="night"?"paper":"night";localStorage.setItem("almanac-theme",root.dataset.theme);setBtn();drawMermaid();}
+setBtn();
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td></tr>`).join("");
+
+function drawMermaid(){if(!window.mermaid)return;const el=document.getElementById("mermaidGraph");if(!el)return;
+  const night=root.dataset.theme==="night";el.innerHTML=MERMAID_SRC;el.removeAttribute("data-processed");
+  try{mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"IBM Plex Mono, monospace",
+    themeVariables: night
+      ? {background:"#1b1812",primaryColor:"#211d15",primaryTextColor:"#efe6d4",primaryBorderColor:"#ff5a2c",lineColor:"#a99d86",secondaryColor:"#26211a",tertiaryColor:"#26211a"}
+      : {background:"#fbf7ef",primaryColor:"#fbf7ef",primaryTextColor:"#1b1916",primaryBorderColor:"#d83a17",lineColor:"#6b6253",secondaryColor:"#efe7d8",tertiaryColor:"#efe7d8"}});
+    mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){var el=document.getElementById("mermaidGraph");if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+  const spy=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting)document.querySelectorAll(".index-rail a").forEach(a=>a.classList.toggle("on",a.getAttribute("href")==="#"+e.target.id));});},{rootMargin:"-35% 0px -55% 0px"});
+  entries.forEach(s=>spy.observe(s));
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!-- ===================================================================
+ SHARED HOUSE STYLE for the DBX Delta Optimization track.
+ Copy this ENTIRE <head> (fonts + <style>) and the header/section/footer
+ structure into every lesson index.html so all pages look identical to
+ the existing lc.html (Liquid Clustering) page. Keep CSS INLINE (self-contained).
+ Vary only: the eyebrow text, h1 title + .drip word, lede, pills, and the
+ interactive-diagram JS (scope each diagram's JS to its own container id).
+ ==================================================================== -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOPIC · Databricks Delta Optimization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Spline+Sans+Mono:wght@400;500;600&family=Spline+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0c1116;
+    --paper:#f4efe6;
+    --paper-2:#ebe3d5;
+    --frost:#1f6f8b;       /* deep teal */
+    --frost-2:#3fa9c9;     /* bright cyan */
+    --ice:#9fe3f0;
+    --amber:#e07a2f;
+    --line:#d6cbb6;
+    --skip:#c9bfa9;
+    --hit:#1f6f8b;
+    --shadow:0 1px 0 rgba(0,0,0,.04),0 8px 28px -12px rgba(20,40,50,.35);
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Spline Sans",sans-serif;line-height:1.6;
+    background-image:radial-gradient(circle at 12% -10%,rgba(63,169,201,.12),transparent 40%),radial-gradient(circle at 100% 0,rgba(224,122,47,.08),transparent 35%);
+    background-attachment:fixed;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px}
+  code,.mono{font-family:"Spline Sans Mono",monospace}
+  code{background:var(--paper-2);padding:.08em .35em;border-radius:5px;font-size:.92em}
+
+  /* ---------- header ---------- */
+  header{padding:72px 0 40px;position:relative;overflow:hidden}
+  .eyebrow{font-family:"Spline Sans Mono",monospace;font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;color:var(--frost);margin:0 0 14px}
+  h1{font-family:"Fraunces",serif;font-weight:900;font-size:clamp(2.6rem,7vw,4.6rem);line-height:.98;margin:0 0 18px;letter-spacing:-.02em}
+  h1 .drip{color:var(--frost-2);font-style:italic}
+  .lede{font-size:1.18rem;max-width:60ch;color:#33414b}
+  .meta{margin-top:26px;display:flex;flex-wrap:wrap;gap:10px}
+  .pill{font-family:"Spline Sans Mono",monospace;font-size:.72rem;letter-spacing:.05em;background:var(--paper-2);border:1px solid var(--line);border-radius:999px;padding:6px 13px;color:#46535d}
+  .pill b{color:var(--amber);font-weight:600}
+  /* breadcrumb back-link to track index */
+  .crumb{font-family:"Spline Sans Mono",monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;margin:0 0 26px}
+  .crumb a{color:var(--frost);text-decoration:none;border-bottom:1px solid rgba(31,111,139,.3)}
+
+  /* ---------- sections ---------- */
+  section{padding:30px 0;border-top:1px solid var(--line)}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(1.6rem,3.5vw,2.2rem);margin:.2em 0 .5em;letter-spacing:-.01em}
+  h3{font-family:"Spline Sans",sans-serif;font-weight:700;font-size:1.08rem;margin:1.6em 0 .4em}
+  p{margin:.6em 0}
+  .num{font-family:"Spline Sans Mono",monospace;color:var(--frost);font-size:.85rem;margin-right:.5em}
+  ul{padding-left:1.1em}
+  li{margin:.35em 0}
+  strong{font-weight:600}
+  .callout{background:linear-gradient(180deg,#fff8ec,#fdf1dd);border:1px solid #ecd9b6;border-left:4px solid var(--amber);border-radius:10px;padding:16px 18px;margin:20px 0}
+  .callout .lbl{font-family:"Spline Sans Mono",monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:4px}
+  /* analogy + use-case chips */
+  .chip{display:inline-block;font-family:"Spline Sans Mono",monospace;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:999px;margin-bottom:6px}
+  .chip.analogy{background:#e7f4f7;color:#1f6f8b;border:1px solid #bfe3ec}
+  .chip.usecase{background:#fdeede;color:#b5641f;border:1px solid #f0d2a8}
+
+  /* ---------- table ---------- */
+  .tbl{width:100%;border-collapse:collapse;margin:18px 0;font-size:.95rem;background:#fff;border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+  .tbl th{background:var(--frost);color:#eafaff;text-align:left;padding:11px 14px;font-weight:600;font-size:.82rem;letter-spacing:.03em}
+  .tbl td{padding:11px 14px;border-top:1px solid var(--line);vertical-align:top}
+  .tbl tr:nth-child(even) td{background:var(--paper)}
+
+  /* ---------- code blocks ---------- */
+  pre{background:#0c1116;color:#e8eef2;border-radius:12px;padding:18px 20px;overflow-x:auto;font-size:.86rem;line-height:1.7;box-shadow:var(--shadow);margin:16px 0;position:relative}
+  pre code{background:none;padding:0}
+  pre .c{color:#7d8b96}      /* comment */
+  pre .k{color:#5fd0e8;font-weight:500} /* keyword */
+  pre .s{color:#e3a87a}      /* string */
+  pre .f{color:#b7e88f}      /* function/identifier accent (optional) */
+  .tag{position:absolute;top:10px;right:14px;font-family:"Spline Sans Mono",monospace;font-size:.66rem;letter-spacing:.1em;color:#5a6a74;text-transform:uppercase}
+
+  /* ---------- interactive lab shell ---------- */
+  .lab{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin:22px 0}
+  .lab-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:4px}
+  .lab-title{font-family:"Fraunces",serif;font-size:1.3rem;font-weight:600}
+  .lab-sub{color:#56636d;font-size:.93rem;margin:0 0 18px}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+  .seg{display:inline-flex;background:var(--paper-2);border:1px solid var(--line);border-radius:10px;padding:4px;gap:4px}
+  .seg button{font-family:"Spline Sans",sans-serif;font-weight:600;font-size:.84rem;border:none;background:transparent;color:#56636d;padding:7px 14px;border-radius:7px;cursor:pointer;transition:.18s}
+  .seg button:hover{color:var(--ink)}
+  .seg button[aria-pressed="true"]{background:var(--frost);color:#fff;box-shadow:0 2px 8px -2px rgba(31,111,139,.5)}
+  .filterbar{display:flex;align-items:center;gap:12px;margin:14px 0 6px;flex-wrap:wrap}
+  .filterbar label{font-size:.86rem;color:#46535d;font-weight:500}
+  .filterbar select{font-family:"Spline Sans Mono",monospace;font-size:.84rem;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);cursor:pointer}
+  .qstr{font-family:"Spline Sans Mono",monospace;font-size:.82rem;background:var(--ink);color:#9fe3f0;padding:8px 12px;border-radius:8px;display:inline-block;margin-top:4px}
+  /* file grid (data-skipping style) */
+  .gridwrap{margin:20px 0 6px}
+  .glabel{font-family:"Spline Sans Mono",monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#6a7780;margin-bottom:8px}
+  .grid{display:grid;grid-template-columns:repeat(8,1fr);gap:7px}
+  .file{aspect-ratio:1;border-radius:7px;background:var(--paper-2);border:1px solid var(--line);position:relative;display:flex;align-items:center;justify-content:center;font-family:"Spline Sans Mono",monospace;font-size:.6rem;color:#8a7f6b;transition:transform .35s cubic-bezier(.2,.9,.3,1.4),background .3s,opacity .3s,box-shadow .3s;overflow:hidden}
+  .file .v{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:600}
+  .file.clustered{background:linear-gradient(135deg,#bfeaf3,#8fd6e8);border-color:#6fc3da;color:#0d4d5e}
+  .file.hit{background:linear-gradient(135deg,var(--frost-2),var(--frost));border-color:#15596f;color:#eafaff;box-shadow:0 6px 16px -6px rgba(31,111,139,.7);transform:translateY(-3px) scale(1.04);z-index:2}
+  .file.skip{opacity:.32;filter:grayscale(.4)}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-size:.8rem;color:#56636d}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .sw{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid var(--line)}
+  .readout{margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .stat{background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:14px 16px}
+  .stat .big{font-family:"Fraunces",serif;font-weight:900;font-size:1.9rem;line-height:1;color:var(--frost)}
+  .stat .lbl{font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;color:#7a868f;margin-top:6px}
+  .stat.win .big{color:var(--amber)}
+  .verdict{margin-top:16px;font-size:.95rem;padding:12px 16px;border-radius:10px;background:var(--paper);border:1px dashed var(--line);min-height:1px}
+  .verdict b{color:var(--frost)}
+  /* clickable step / accordion (for lifecycle diagrams) */
+  .step{cursor:pointer;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:8px 0;background:#fff;transition:.18s;box-shadow:var(--shadow)}
+  .step:hover{border-color:var(--frost-2)}
+  .step .head{font-weight:600;display:flex;align-items:center;gap:10px}
+  .step .head .ix{font-family:"Spline Sans Mono",monospace;color:var(--frost);font-size:.85rem}
+  .step .detail{display:none;margin-top:10px;color:#3c4a53;font-size:.95rem}
+  .step.open{background:linear-gradient(180deg,#fff,#f0f7f9);border-color:var(--frost-2)}
+  .step.open .detail{display:block}
+
+  /* ---------- footer ---------- */
+  footer{padding:42px 0 70px;border-top:1px solid var(--line);color:#6a7780;font-size:.86rem}
+  footer a{color:var(--frost);text-decoration:none;border-bottom:1px solid rgba(31,111,139,.3)}
+  footer a:hover{border-color:var(--frost)}
+  .doclinks{display:flex;flex-direction:column;gap:6px;margin:14px 0}
+
+  @media(max-width:560px){
+    .grid{grid-template-columns:repeat(6,1fr)}
+    header{padding:48px 0 28px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <p class="crumb"><a href="../../index.html">&larr; Delta Optimization track</a></p>
+    <p class="eyebrow">Databricks · Delta Optimization · Lesson NN</p>
+    <h1>Topic<br><span class="drip">Title.</span></h1>
+    <p class="lede">One-line plain-language definition of the topic.</p>
+    <div class="meta">
+      <span class="pill">Status <b>GA / Preview</b></span>
+      <span class="pill">Verified <b>Jun 2026 docs</b></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- Required sections (mirror the markdown lesson):
+       What it is · Why it matters · Interactive diagram(s) · How it works (sub-topic deep dives) ·
+       The commands you'll use (code) · Comparison table · Uses, edge cases & limitations ·
+       Common gotchas · References.
+       Each code-bearing sub-topic shows a <pre> snippet using .c/.k/.s spans.
+       Add as MANY interactive diagrams as the concept warrants; scope each one's JS
+       to a unique container id so handlers don't collide. -->
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><strong>Sources — official Azure Databricks documentation:</strong></p>
+    <div class="doclinks"><!-- cite the exact pages used --></div>
+    <p style="margin-top:18px">Content verified against Azure Databricks docs, June 2026. Part of the Databricks Delta Optimization learning path. Naming reflects the 2025 Lakeflow rebrand.</p>
+  </div>
+</footer>
+
+<script>
+/* Scope every interactive diagram's JS in an IIFE keyed to its container id,
+   e.g. (function(){ const root=document.getElementById('lab-skipping'); ... })();
+   so multiple diagrams coexist on one page without id/handler collisions.
+   Reusable patterns: file-grid data-skipping simulator (see lc.html), clickable
+   .step accordion lifecycle, seg-button tabbed compare, Prev/Next step-through. */
+</script>
+</body>
+</html>

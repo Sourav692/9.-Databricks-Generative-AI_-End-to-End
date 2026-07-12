@@ -8,6 +8,18 @@
 - {{bullet}}
 - {{bullet}}
 
+## The problem
+- {{real-world pain this topic solves}}
+- {{why a Databricks FDE should recognize it in customer conversations}}
+
+## Why the naive approach fails
+- {{what the simple/default approach gets wrong}}
+- {{failure mode: quality, latency, governance, cost, reliability, or safety}}
+
+## What it is
+- **Plain-language definition:** {{definition}}
+- **Mental model:** {{simple educational analogy or picture}}
+
 ## Why it matters (for a Databricks FDE)
 - {{bullet}}
 
@@ -23,7 +35,18 @@ flowchart LR
   C --> D["{{output}}"]
 ```
 
-## How it works on Databricks
+## How it works — deep dive
+### {{Sub-topic 1}}
+- **Mechanism:** {{what happens}}
+- **Why it matters:** {{why this step exists}}
+- **Trade-off:** {{cost / limitation / decision rule}}
+
+### {{Sub-topic 2}}
+- **Mechanism:** {{what happens}}
+- **Why it matters:** {{why this step exists}}
+- **Trade-off:** {{cost / limitation / decision rule}}
+
+## How to do it on Databricks
 1. {{concrete step — name exact UI path / SDK / API}}
 2. {{...}}
 
@@ -31,8 +54,21 @@ flowchart LR
 # [Hands-on] minimal runnable snippet
 ```
 
+**How to verify it worked**
+- {{trace / UI / table / endpoint / evaluation signal to check}}
+
 ## Worked example (Unity Airways)
 - {{tie concept to the book's running use case}}
+
+## Uses, edge cases & limitations
+| Use it when | Be careful when | Better move |
+|---|---|---|
+| {{case}} | {{edge case}} | {{recommendation}} |
+
+## Common mistakes / gotchas
+| Mistake | Why it hurts | Better move |
+|---|---|---|
+| {{mistake}} | {{impact}} | {{fix}} |
 
 > 📌 **IMPORTANT:** {{must-remember point}}
 
