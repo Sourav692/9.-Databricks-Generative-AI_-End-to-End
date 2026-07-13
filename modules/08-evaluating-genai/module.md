@@ -93,7 +93,7 @@ flowchart TD
 ```mermaid
 flowchart LR
   Q{"Does the scorer compare<br/>against a known correct answer?"}
-  Q -->|"Yes — needs expectations"| GT["Correctness (expected_facts / expected_response)<br/>ExpectationsGuidelines (per-row guidelines)<br/>RetrievalSufficiency (benefits from expected facts)"]
+  Q -->|"Yes — needs expectations"| GT["Correctness (expected_facts / expected_response)<br/>RetrievalSufficiency (expected_facts / expected_response)<br/>ExpectationsGuidelines (per-row guidelines)"]
   Q -->|"No — judges the output/trace as-is"| NGT["RelevanceToQuery · Safety<br/>RetrievalGroundedness · RetrievalRelevance<br/>Guidelines (global rules)"]
 ```
 
@@ -237,7 +237,7 @@ def ua_response_length_scorer(outputs) -> Feedback:
 | `Safety` | Toxic/harmful content, PII disclosure | No |
 | `RetrievalGroundedness` | Is the answer supported by retrieved context (vs speculation)? | No |
 | `RetrievalRelevance` | Do the retrieved docs match the request? | No |
-| `RetrievalSufficiency` | Do retrieved docs contain everything needed to answer? | Benefits from expected facts |
+| `RetrievalSufficiency` | Do retrieved docs contain everything needed to answer? | **Yes** — `expected_facts` / `expected_response` |
 | `Correctness` | Does the answer match the ground-truth key? | **Yes** — `expected_facts` / `expected_response` |
 | `Guidelines` | Global pass/fail rules (tone, brand, disclaimers) | No (rules in the judge) |
 | `ExpectationsGuidelines` | Per-row rules supplied in the dataset | **Yes** — `guidelines` in `expectations` |
@@ -247,7 +247,7 @@ from mlflow.genai.scorers import (
     RelevanceToQuery, Safety, RetrievalGroundedness, Correctness, Guidelines,
 )
 
-eval_model = "databricks:/databricks-gpt-5-mini"   # override + pin the judge model for stability
+eval_model = "databricks:/databricks-claude-sonnet-4-5"   # override + pin the judge model for stability
 
 ua_relevancy_scorer   = RelevanceToQuery(model=eval_model)
 ua_safety_scorer      = Safety(model=eval_model)
@@ -277,7 +277,7 @@ ua_coherence = make_judge(
 )
 ```
 
-> 📌 **IMPORTANT — the ground-truth split (the core 08.4 fact):** `Correctness` and `ExpectationsGuidelines` **need** an answer key in `expectations`. `RelevanceToQuery`, `Safety`, `RetrievalGroundedness`, and `RetrievalRelevance` do **not** — they judge the output/trace as-is. So you can safely run the reference-free judges on every production trace, and invest in `expectations` only for the rows where correctness matters most.
+> 📌 **IMPORTANT — the ground-truth split (the core 08.4 fact), in three buckets:** (1) **Needs a ground-truth expected answer** (`expected_facts` / `expected_response` in `expectations`): **`Correctness`** *and* **`RetrievalSufficiency`** — the retrieval judge people forget belongs here, because it checks whether retrieval fetched enough to support the *expected* facts. (2) **Needs per-row `guidelines`** in `expectations` (criteria, not a factual answer key): **`ExpectationsGuidelines`**. (3) **Reference-free** (no labels): **`RelevanceToQuery`, `Safety`, `RetrievalGroundedness`, `RetrievalRelevance`, and plain `Guidelines`** — judge the output/trace as-is, so run them on every production trace. Invest in an `expected_facts`/`expected_response` answer key only for the rows where `Correctness` and `RetrievalSufficiency` matter most.
 
 > ⚠️ **GOTCHA:** Judges are Databricks-hosted LLMs by default; pass `model=` to override and **pin** it for reproducibility. `make_judge()` needs **MLflow ≥ 3.4** (older versions used the now-deprecated `custom_prompt_judge`). And do not use the MLflow-2 names — `groundedness`, `chunk_relevance`, `relevance_to_query`, `guideline_adherence`, `context_sufficiency` are the **old** identifiers (cheat-sheet §1).
 
@@ -292,7 +292,7 @@ An **evaluation run** binds one dataset version, one candidate build, and one sc
 ```python
 import mlflow
 from mlflow.genai.datasets import get_dataset
-from mlflow.genai.scorers import get_scorer
+from mlflow.genai.scorers import RelevanceToQuery, RetrievalGroundedness, Correctness
 
 CATALOG, SCHEMA = "unity_airways", "rag"
 eval_dataset = get_dataset(name=f"{CATALOG}.{SCHEMA}.eval_dataset")
@@ -304,10 +304,10 @@ loaded_chain = mlflow.langchain.load_model(
 def rag_chain_predict_fn(question: str) -> dict:
     return loaded_chain.invoke({"messages": [{"role": "user", "content": question}]})
 
-unity_airways_scorers = [get_scorer(name="relevance_to_query"),
-                         get_scorer(name="retrieval_groundedness"),
-                         get_scorer(name="correctness"),
-                         get_scorer(name="response_length")]
+unity_airways_scorers = [RelevanceToQuery(),
+                         RetrievalGroundedness(),
+                         Correctness(),                 # needs expectations
+                         ua_response_length_scorer]     # registered custom @scorer (08.3)
 
 with mlflow.start_run(run_name="ua_rag_eval"):
     mlflow.set_tag("candidate", "rag_chain")   # tag so runs are comparable later

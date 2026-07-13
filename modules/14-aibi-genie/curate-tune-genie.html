@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 14.3 ★ Curate & tune a Genie Agent (cornerstone deep-dive).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Curate &amp; tune a Genie Agent · Databricks GenAI Tutor 14.3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.3rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  h3.tk{font-family:var(--mono);font-size:.9rem;letter-spacing:.06em;margin:24px 0 6px}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI · Module 14</a>
+    <span class="loc">Topic 14.3 ★ · Cornerstone</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_14.3 · Cornerstone deep-dive · v1.0</span><span>Verified against databricks-genie skill (serialized_space v2) + cheat-sheet §7</span></div>
+    <div class="filed">Module 14 — AI/BI Genie · Entry 14.3 ★ · Theory + Hands-on</div>
+    <h1>Curate &amp; Tune a Genie Agent</h1>
+    <p class="dek">The topic that decides whether your Genie Agent is <em>trusted or ignored</em>. Accuracy comes from the <strong>briefing you give it</strong> — comments, a metric view, instructions, verified answers, synonyms — tuned against a benchmark loop, not the model.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>Genie's accuracy is curation, not the model</h2></div>
+      <p class="lead">The same model gives great answers on a well-briefed Agent and garbage on a bare one. You created <code>Unity Airways Revenue Analytics</code> in 14.2; here you turn it into the number the CFO trusts by writing the analyst's briefing.</p>
+      <ul>
+        <li><strong>The curation stack, weakest → strongest:</strong> table/column <strong>comments</strong> → <strong>general instructions</strong> → <strong>synonyms</strong> → <strong>trusted assets</strong> (verified example SQL) → <strong>verified answers</strong> → a <strong>metric view</strong> (strongest — defines KPIs once, governed).</li>
+        <li><strong>Tune with a benchmark loop</strong>, not vibes: question→expected-answer pairs, run, read the SQL, fix the miss with the right lever, re-run.</li>
+        <li><strong>Everything you curate is captured</strong> in the Agent config (<code>serialized_space</code>) — exportable and versionable.</li>
+        <li><strong>The through-line:</strong> Module 15's metric-view metadata (15.6 — synonyms, display names, formatting) <em>is</em> Genie curation. Define it once; Genie inherits it.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Important</span>Fix accuracy <strong>upstream first</strong>: add table/column <strong>comments</strong> and define KPIs in the <strong>metric view</strong> before writing a single instruction. Curation compounds from a good metadata base — good metadata + a metric view + a few verified answers beats a wall of prose.</div>
+    </section>
+
+    <section class="entry" id="problem">
+      <div class="entry-head"><span class="num">02 · The problem</span><h2>A confidently-wrong number kills the project</h2></div>
+      <p>You asked the bare Agent "total revenue last quarter by fare class." It summed only <code>base_fare_usd</code>, ignored <code>ancillary_usd</code>, and included cancelled bookings. The number is wrong — and it looks authoritative. Ask it three ways ("revenue", "sales", "how much we made") and you get three queries, sometimes three numbers. One bad number in a leadership meeting and trust is gone. Naive fixes fail:</p>
+      <ul>
+        <li><strong>"The model will figure out our schema"</strong> → it won't infer that revenue = base + ancillary from column names. Business logic isn't in the data types.</li>
+        <li><strong>"One giant instruction paragraph"</strong> → prose helps but doesn't pin a query; critical KPIs need deterministic assets (verified answers + a metric view).</li>
+        <li><strong>"Tune by eyeballing a few questions"</strong> → without a repeatable benchmark you can't tell a fix from churn.</li>
+        <li><strong>"Curate in Genie, define metrics elsewhere"</strong> → Genie drifts from the dashboards. Curation and semantics must be one source of truth.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">03 · Explore</span><h2>The curation stack, the 6 levers, the tuning loop, and the config</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-stack" id="t-stack" onclick="tab(this,'p-stack')">Curation stack</button>
+        <button role="tab" aria-selected="false" aria-controls="p-levers" id="t-levers" onclick="tab(this,'p-levers')">The 6 levers</button>
+        <button role="tab" aria-selected="false" aria-controls="p-loop" id="t-loop" onclick="tab(this,'p-loop')">Benchmark loop</button>
+        <button role="tab" aria-selected="false" aria-controls="p-cfg" id="t-cfg" onclick="tab(this,'p-cfg')">Config anatomy</button>
+      </div>
+
+      <!-- PANE A: curation stack — mirrors curate-tune-genie.md's Mermaid -->
+      <div id="p-stack" class="pane active" role="tabpanel" aria-labelledby="t-stack">
+        <div class="plate" data-fig="Fig. 01 — The curation stack (weak to strong)">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Add curation bottom-up (comments + a metric view first), and let a benchmark loop tell you which lever to reach for next. The metric view sits at the top because it makes the KPI definition governed and non-negotiable.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: the 6 levers explorer -->
+      <div id="p-levers" class="pane" role="tabpanel" aria-labelledby="t-levers" hidden>
+        <div class="plate" data-fig="Plate I — Curation levers">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a lever</div><h3>The curation levers</h3><p>Click a lever to see what it does, where it lives in the Agent config, and its trade-off.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: benchmark loop stepper -->
+      <div id="p-loop" class="pane" role="tabpanel" aria-labelledby="t-loop" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <div class="plate-cap" style="margin-top:14px">Tune by measurement: run → read the SQL → diagnose the miss type → fix with the matching lever → re-run.</div>
+      </div>
+
+      <!-- PANE D: serialized_space anatomy -->
+      <div id="p-cfg" class="pane" role="tabpanel" aria-labelledby="t-cfg" hidden>
+        <table><thead><tr><th>Config key (serialized_space v2)</th><th>What it holds</th></tr></thead><tbody id="rows"></tbody></table>
+        <div class="note tip" style="margin-top:16px"><span class="tag">💡 Tip</span>All of this exports as <code>serialized_space</code> (requires CAN EDIT) — back it up, diff it, and promote it dev→prod (remap the catalog inside the string). Curation is versionable, not tribal knowledge.</div>
+      </div>
+    </section>
+
+    <section class="entry" id="deepdive">
+      <div class="entry-head"><span class="num">04 · Deep dive</span><h2>Each lever, and why the order matters</h2></div>
+      <h3 class="tk">1 · Comments + the metric view come first</h3>
+      <p>Before a single instruction, make sure every table/key column has a <code>COMMENT</code> and KPIs live in <code>bookings_metrics</code>, not re-derived. Most wrong answers are an <em>upstream</em> problem — fix the metadata, then curate. The metric view carries <code>total_revenue = SUM(base_fare_usd + ancillary_usd)</code>, <code>cancellation_rate</code>, and <code>ancillary_attach_rate</code> with the synonyms/display names from 15.6.</p>
+      <pre><code>-- Comments are curation Genie reads as ground truth. Do this before touching instructions.
+COMMENT ON TABLE unity_airways.analytics.fct_bookings
+  IS 'One row per booking. base_fare_usd + ancillary_usd = revenue; status in (booked, flown, cancelled).';
+COMMENT ON COLUMN unity_airways.analytics.fct_bookings.ancillary_usd
+  IS 'Ancillary spend (bags, seats, upgrades) in USD. Part of total revenue.';
+COMMENT ON COLUMN unity_airways.analytics.fct_bookings.status
+  IS 'booked, flown, or cancelled. Exclude cancelled from revenue unless asked.';</code></pre>
+      <h3 class="tk">2 · General instructions — the team's rules</h3>
+      <p><em>"Revenue = <code>total_revenue</code> from <code>bookings_metrics</code>; exclude cancelled unless asked; 'last quarter' = previous full calendar quarter (booking_date); match tier values Blue/Silver/Gold/Platinum."</em> Flexible and cheap, but <em>interpreted</em> each time — great for conventions, not a substitute for a pinned query on a critical KPI.</p>
+      <h3 class="tk">3 · Synonyms + column configs</h3>
+      <p>Map business words to schema: "top cabin" → <code>fare_class = 'First'</code>; "attach rate" → <code>ancillary_attach_rate</code>; "churn" → <code>cancellation_rate</code>. Column configs add value-matching ("Gold" → the right <code>loyalty_tier</code>) and formatting (USD, %, dates). Most accuracy loss is vocabulary mismatch — synonyms close it directly.</p>
+      <h3 class="tk">4 · Trusted assets — example question → SQL</h3>
+      <p>Verified query patterns Genie reuses instead of improvising: a <code>revenue_by_fare_class</code> example teaches the exact join, grouping, and measure usage in one shot (config: <code>example_question_sqls</code>, backed by <code>join_specs</code> + <code>sql_snippets</code>). More setup than instructions, far more reliable — the workhorse lever.</p>
+      <h3 class="tk">5 · Verified answers — certify the queries that matter</h3>
+      <p>For the handful of questions leadership actually asks, mark the correct question→SQL as <strong>verified</strong> (14.5). Genie reuses that exact SQL with a trust badge — removing model variance entirely for the important numbers.</p>
+      <h3 class="tk">6 · The benchmark quality loop</h3>
+      <p>Build 15–30 question→expected-answer pairs (real questions + edge cases). Run → read the generated SQL for each miss → diagnose the type (metadata / vocabulary / join / metric) → fix with the matching lever → re-run. This loop <em>is</em> tuning; every production thumbs-down becomes a new benchmark row.</p>
+    </section>
+
+    <section class="entry" id="worked">
+      <div class="entry-head"><span class="num">05 · Worked example</span><h2>Turning the wrong revenue answer into a trusted one</h2></div>
+      <ol>
+        <li><strong>Upstream:</strong> add <code>COMMENT</code>s to <code>fct_bookings</code> and confirm <code>bookings_metrics</code> defines <code>total_revenue</code>.</li>
+        <li><strong>Instruction:</strong> "Revenue = <code>total_revenue</code>; exclude cancelled; 'last quarter' = previous full calendar quarter."</li>
+        <li><strong>Synonym:</strong> "sales" / "how much we made" → <code>total_revenue</code>; "top cabin" → First.</li>
+        <li><strong>Trusted example:</strong> the <code>revenue_by_fare_class</code> SELECT grouping <code>total_revenue</code> by <code>fare_class</code>, filtered to the quarter.</li>
+        <li><strong>Benchmark:</strong> add "total revenue last quarter by fare class" with the expected number; run — it now matches.</li>
+        <li><strong>Verify:</strong> mark that question a verified answer → deterministic + badged.</li>
+        <li><strong>Loop:</strong> a week later a thumbs-down on "ancillary attach rate by tier" becomes a new benchmark row → add a synonym + example → re-run → fixed.</li>
+      </ol>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">06 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Fix accuracy upstream first (comments + metric view), then add in-Agent curation. The <strong>metric view is the strongest lever</strong> — 15.6's synonyms/display names/formatting are Genie curation you get for free. Tune against a benchmark, not by eyeballing.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Keep a living benchmark set; append every production thumbs-down. For each miss, diagnose the <em>type</em> (metadata / vocabulary / join / metric) and use the matching lever — don't reflexively add more prose. Verify your top ~10 leadership questions; let the rest ride on instructions + the metric view.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Curation surfaces/labels move between releases ("trusted assets" naming) — confirm the UI live (JS-rendered docs; live re-check pending). Export needs <strong>CAN EDIT</strong>; promoting across workspaces means <strong>remapping the catalog</strong> inside <code>serialized_space</code>. A metric view needs a <strong>Pro/Serverless SQL warehouse</strong>.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">07 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Order the curation stack weakest→strongest, and say which one you always do first and why.</li>
+          <li>Why is attaching the <code>bookings_metrics</code> metric view stronger curation than a general instruction that defines revenue?</li>
+          <li>What is the benchmark loop, and what four <em>types</em> of miss should you diagnose when reading a wrong query's SQL?</li>
+          <li>When do you use a <strong>verified answer</strong> instead of an <strong>example SQL</strong> trusted asset?</li>
+          <li>What is stored in <code>serialized_space</code>, and why does that matter for dev→prod promotion?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">08 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📎 <strong>Project cheat-sheet</strong> — <code>.claude/skills/genai-teacher/references/naming-conventions.md</code> <strong>§7</strong> (verified July 2026): Genie Agents (formerly Genie Spaces) GA; curation-driven accuracy.</li>
+        <li>🧩 <strong>Skill — <code>databricks-genie</code></strong> (<code>spaces.md</code>, <code>conversation.md</code>): the <code>serialized_space</code> (v2) anatomy that defines every lever — <code>config.sample_questions</code>, <code>data_sources.tables[].column_configs</code>, <code>instructions.example_question_sqls</code> (verified Q&amp;A), <code>join_specs</code>, <code>sql_snippets</code> (filters + measures), <code>benchmarks</code>; "descriptive comments + sample questions + instructions improve SQL generation"; export/import (CAN EDIT, catalog remap) for versioning curation.</li>
+        <li>📎 <strong>Shared P5 build brief</strong> — <code>unity_airways.analytics</code> star schema; <code>bookings_metrics</code> measures (<code>total_revenue</code>, <code>cancellation_rate</code>, <code>ancillary_attach_rate</code>) + dimensions; 15.6 agent metadata (synonyms, display names, formatting) → Module 14 continuity.</li>
+        <li>🌐 <strong>Databricks Docs</strong> (page titles confirmed live, deeper content JS-rendered — <strong>live re-check pending</strong>): Genie trusted assets / curation (set up) <code>docs.databricks.com/aws/en/genie/set-up</code>; Genie best practices <code>.../genie/best-practices</code>; metric views for Genie (Module 15).</li>
+        <li>📗 <strong>B2 — Study Guide</strong> — AI/BI Genie curation for accurate governed analytics (verify chapter; predates the "Genie Agents" rename — prefer current names).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 14.3 ★</span>
+  <span>Grounded in databricks-genie (serialized_space v2) · cheat-sheet §7 · P5 brief</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Upstream metadata (do first)",spine:true,comps:[
+   ["Table & column comments","UC metadata · base layer","COMMENT ON text is read by Genie as ground truth about what each table/column means. Cheapest, most underused lever. Fix this before writing instructions.","data_sources + UC comments"],
+   ["Metric view (bookings_metrics)","Strongest lever · GA","Defines KPI logic ONCE (dimensions + measures) with synonyms/display names from 15.6. Governed and shared, so Genie and dashboards agree. Needs a Pro/Serverless SQL warehouse.","a UC data source"],
+ ]},
+ {name:"In-Agent curation",spine:false,comps:[
+   ["General instructions","Flexible · interpreted","Plain-English rules applied to every question: metric definitions, default filters (exclude cancelled), time conventions ('last quarter'), tone. Great for conventions, not a substitute for a pinned query.","instructions"],
+   ["Synonyms + column configs","Closes vocabulary gaps","Map business words to columns/values ('top cabin'->First; 'attach rate'->ancillary measure) and add value-matching + formatting (USD, %, dates). Most accuracy loss is vocabulary, not reasoning.","column_configs"],
+   ["Trusted assets: example SQL","Workhorse lever","Verified question->SQL patterns Genie reuses instead of improvising joins/grouping. Teaches the exact query shape in one shot.","example_question_sqls / join_specs / sql_snippets"],
+   ["Verified answers","Deterministic · GA","Certify the correct question->SQL for the numbers leadership watches; Genie reuses it verbatim with a blue-check badge. Removes model variance entirely.","verified (question->SQL)"],
+ ]},
+ {name:"Measurement",spine:false,comps:[
+   ["Benchmarks + quality loop","How you tune","15-30 question->expected-answer pairs re-run after each change. Run -> read SQL -> diagnose miss type -> fix with the matching lever -> re-run. Every production thumbs-down becomes a new row.","benchmarks"],
+ ]},
+];
+const STEPS=[
+  ["1 · Run","Run the benchmark set (question->expected-answer pairs) against the current Agent."],
+  ["2 · Read the SQL","For each miss, read the GENERATED SQL - not just the number. A right number from wrong SQL is a latent bug."],
+  ["3 · Diagnose the type","Is it a metadata gap, a vocabulary gap, a join error, or a metric-definition gap? The type tells you the lever."],
+  ["4 · Fix with the matching lever","Metadata -> comment; metric -> metric view; vocabulary -> synonym; shape -> example SQL; critical KPI -> verified answer."],
+  ["5 · Re-run & compare","Re-run the benchmark. Accuracy should trend up; a change that helps one question and breaks another is visible immediately."],
+];
+const ROWS=[
+  ["config.sample_questions","Sample questions shown in the UI (teach vocabulary)"],
+  ["data_sources.tables[].identifier","The tables/metric views the Agent can query"],
+  ["data_sources.tables[].column_configs","Per-column formatting + entity/value matching"],
+  ["instructions.example_question_sqls","Certified question -> SQL trusted-asset patterns"],
+  ["instructions.join_specs","How the star-schema tables join"],
+  ["instructions.sql_snippets","Reusable named filters + measures with usage notes"],
+  ["benchmarks","Question -> expected-answer pairs driving the quality loop"],
+];
+const MERMAID_SRC=`flowchart TD
+  Q["Question in English<br/>'total revenue last quarter by fare class'"]
+  subgraph STACK["Curation stack (weak to strong)"]
+    C["Comments<br/>what tables/columns mean"]
+    I["General instructions<br/>'revenue = base + ancillary; exclude cancelled'"]
+    S["Synonyms + column configs<br/>'top cabin'=First; 'attach rate'=ancillary measure"]
+    T["Trusted assets: example SQL<br/>revenue_by_fare_class pattern"]
+    V["Verified answers<br/>certified question to SQL"]
+    M["Metric view bookings_metrics<br/>governed KPI definitions (15.6)"]
+  end
+  SQL["Grounded SQL"]
+  BM["Benchmark loop<br/>run · read SQL · fix · re-run"]
+  Q --> C --> I --> S --> T --> V --> M --> SQL
+  SQL --> BM
+  BM -. "fix misses with the right lever" .-> STACK`;
+
+/* ---------- light tutor front ---------- */
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0].split(" · ")[1];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline) ---------- */
+function drawMermaid(){if(!window.mermaid)return;const el=document.getElementById("mermaidGraph");if(!el)return;
+  el.innerHTML=MERMAID_SRC;el.removeAttribute("data-processed");
+  try{mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+    mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){var el=document.getElementById("mermaidGraph");if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

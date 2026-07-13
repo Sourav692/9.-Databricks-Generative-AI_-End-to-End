@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 11 Deployment and serving (module hub).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Deployment and Serving · Databricks GenAI Tutor 11</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  /* ============ DESIGN SYSTEM — tokens (do not rename) ============ */
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line);
+    --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .toggle{display:none}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:16ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .ghost{display:none}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  .index-rail{display:none}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tag-pill{display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--line);border-radius:20px;color:var(--muted);margin-left:8px;vertical-align:middle}
+  .tag-pill.h{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.t{color:var(--accent-2);border-color:var(--accent-soft)}
+  .tag-pill.star{color:var(--danger);border-color:var(--danger-soft)}
+  .tag-pill.ga{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.beta{color:var(--danger);border-color:var(--danger-soft)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.3rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  h3.tk{font-family:var(--mono);font-size:.9rem;letter-spacing:.06em;margin:24px 0 6px}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.md">Databricks GenAI</a>
+    <span class="loc">Module 11 · Topics 11.1–11.13</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_11 · GenAI lesson · v1.0</span><span>Verified against naming cheat-sheet §4/§5/§6 (Jul 2026) + books B1 Ch7-8 / B2 Ch5</span></div>
+    <div class="filed">Module 11 — Deployment and serving · Topics 11.1–11.13 · Theory + Hands-on</div>
+    <h1>Deployment and Serving</h1>
+    <p class="dek">Taking the <em>Unity Airways support agent</em> from "works in my notebook" to a <strong>governed production endpoint</strong> — packaged with MLflow, served on <strong>Model Serving</strong>, metered by <strong>AI Gateway</strong>, run at scale with <strong>AI Functions</strong>, and promoted safely with Champion vs Challenger.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>A deployed model is a governed asset, not a script you curl</h2></div>
+      <p class="lead">Module 09 built the engine and Module 10 built the dashboard. <strong>Module 11 is the whole delivery system</strong> — the assembly line that packages the car, the road it drives on (<strong>Model Serving</strong>), the tollgate and speed limits (<strong>AI Gateway</strong>), the test-drive desk (<strong>Review App</strong>), and the fleet-scheduling office (batch <code>ai_query</code> + <strong>Lakeflow Jobs</strong>).</p>
+      <ul>
+        <li><strong>Package</strong> — a <code>ResponsesAgent</code>/PyFunc logged with MLflow 3.1 and registered to <strong>Unity Catalog</strong> as <code>unity_airways.rag.ua_support_agent</code> (11.4, 11.13).</li>
+        <li><strong>Serve</strong> — one of three <strong>Model Serving</strong> families (custom / foundation / external), created for you by <code>agents.deploy()</code> (11.1 ★, 11.12).</li>
+        <li><strong>Govern the edge</strong> — <strong>AI Gateway</strong> adds rate limits, guardrails, fallbacks, and payload logging with no code change (11.3 ★).</li>
+        <li><strong>Feedback + scale + operate</strong> — the <strong>Review App</strong> (11.2), batch <code>ai_query</code> and <strong>AI Functions</strong> (11.5, 11.10 ★), <strong>Lakeflow Jobs</strong> (11.11), and an LLMOps promotion loop (11.6–11.9).</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 The rule that shapes this module</span>Every deployment follows the same stages, each with a managed Databricks surface: <strong>package (MLflow + UC) → serve (Model Serving) → govern (AI Gateway) → clients (App / Review App / <code>ai_query</code> / REST) → log (inference tables) → monitor (Module 13) → promote the next Champion.</strong> Name maturity as you go: GA — Model Serving, AI Gateway, Review App, AI Functions, Lakeflow Jobs; <strong>Beta</strong> — Unity AI Gateway; <strong>Preview</strong> — AI Gateway PII guardrails.</div>
+    </section>
+
+    <section class="entry" id="problem">
+      <div class="entry-head"><span class="num">02 · The problem</span><h2>Why "it worked in the cell" is not production</h2></div>
+      <p>A real deployment has to survive things a notebook never sees — and it has to run in two very different modes.</p>
+      <ul>
+        <li><strong>Share the notebook or a <code>curl</code></strong> → no version pin, no access control, no rate limit, no logging. The first spike or prompt-injection attempt is an incident you cannot trace to a version.</li>
+        <li><strong>Hard-code the provider key</strong> → keys leak and cannot be governed; external providers belong behind an <strong>external-model endpoint</strong> with the key in a <strong>Databricks secret</strong> (11.12).</li>
+        <li><strong>Deploy over the old version</strong> → no rollback, no A/B, no eval gate. Champion-vs-Challenger exists so a bad version never becomes a bad afternoon (11.8).</li>
+        <li><strong>Loop the real-time endpoint for the nightly batch</strong> → slow and expensive. Batch is one <code>ai_query</code> over a table, scheduled by a Lakeflow Job (11.5, 11.11).</li>
+        <li><strong>Ship the endpoint and stop</strong> → with no Review App and no monitoring you learn it is wrong only when a customer does.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">03 · Explore</span><h2>The topology, the 13 topics, the rollout thread, and the serving surfaces</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Serving topology</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The 13 topics</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Rollout thread</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Serving surfaces</button>
+      </div>
+
+      <!-- PANE A: production topology — mirrors module.md's first Mermaid -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — Production serving topology">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Package once to Unity Catalog, serve on one governed endpoint; AI Gateway meters and logs, inference tables capture, monitoring scores, the next eval winner becomes Champion.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the 13 topics -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — Topic index">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a topic</div><h3>The 13 topics</h3><p>Click a topic to see what it covers, its Theory/Hands-on label, and GA/Beta status. ★ marks a cornerstone with its own deep-dive page.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: rollout stepper + rollout mermaid -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="plate" data-fig="Fig. 02 — Champion vs Challenger rollout" style="margin-bottom:18px">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">Promotion is a controlled traffic shift plus a UC alias flip, gated on evaluation — never an in-place overwrite. Rollback is keeping the old Champion.</div>
+        </div>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <div class="plate-cap" style="margin-top:14px">Taking ua_support_agent from a logged model to a governed, monitored, scheduled production system.</div>
+      </div>
+
+      <!-- PANE D: the serving surfaces table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Surface</th><th>What it is for</th><th>Status</th></tr></thead><tbody id="rows"></tbody></table>
+        <div class="note imp" style="margin-top:16px"><span class="tag">📌 Name the maturity</span>GA on the main path: <strong>custom / foundation / external</strong> Model Serving endpoints, <strong>AI Gateway</strong>, <strong>Review App</strong>, <strong>AI Functions</strong>, <strong>Lakeflow Jobs</strong>. <strong>Beta:</strong> <strong>Unity AI Gateway</strong> (budgets, MCP governance). <strong>Preview:</strong> AI Gateway PII guardrails. Verify Beta/Preview enrollment before a customer commitment.</div>
+      </div>
+    </section>
+
+    <section class="entry" id="serving">
+      <div class="entry-head"><span class="num">04 · Cornerstone</span><h2>11.1 ★ — Model Serving endpoints for GenAI</h2></div>
+      <p>Full deep-dive — the three endpoint families, <code>agents.deploy()</code> vs a raw endpoint, provisioned throughput vs scale-to-zero, payloads, and validation — in the <a href="model-serving.html">Model Serving deep-dive</a> (<code>model-serving.md</code> / <code>model-serving.html</code>).</p>
+      <h3 class="tk">11.1 Model Serving <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span> <span class="tag-pill ga">GA</span></h3>
+      <p>The home for every GenAI endpoint — three families, all GA:</p>
+      <ul>
+        <li><strong>Custom models</strong> — your MLflow-packaged <code>ua_support_agent</code> (or an open-source model).</li>
+        <li><strong>Foundation models</strong> — Databricks-hosted (e.g. <code>databricks-claude-sonnet-4-5</code>), pay-per-token or provisioned throughput.</li>
+        <li><strong>External models</strong> — a governed proxy to OpenAI / Anthropic / Google.</li>
+      </ul>
+      <pre><code># the easy button for an agent
+from databricks import agents
+agents.deploy("unity_airways.rag.ua_support_agent", version)
+# -> Model Serving endpoint + Review App + feedback model
+#    + tracing + inference tables + monitoring, in one call</code></pre>
+      <div class="note tip"><span class="tag">💡 Tip</span>Use <strong>scale-to-zero</strong> for dev and spiky traffic; reach for <strong>provisioned throughput</strong> only when production latency/throughput needs a guarantee. Served foundation-model names churn — confirm on the supported-models page at authoring time.</div>
+    </section>
+
+    <section class="entry" id="reviewapp">
+      <div class="entry-head"><span class="num">05 · Feedback</span><h2>11.2 — The Review App for stakeholder feedback</h2></div>
+      <h3 class="tk">11.2 Review App <span class="tag-pill h">Hands-on</span> <span class="tag-pill ga">GA</span></h3>
+      <ul>
+        <li><strong>What it is:</strong> a chat UI <code>agents.deploy()</code> creates via the <strong>feedback model</strong>, so test users and domain experts try the Unity Airways agent and leave 👍/👎 + comments — no notebook.</li>
+        <li><strong>Where feedback lands:</strong> responses and reviewer labels are captured as <strong>MLflow traces / labels</strong>, ready to seed the Module 08 eval set and the Module 13 improve loop.</li>
+        <li><strong>Structured labeling:</strong> <code>mlflow.genai.labeling</code> (<code>create_labeling_session</code>, <code>get_review_app</code>) organizes a formal expert review against a dataset.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Important</span>The Review App is the cheapest way to close the loop with stakeholders before a formal eval — the feedback you collect here becomes labeled evaluation data, not throwaway comments.</div>
+    </section>
+
+    <section class="entry" id="gateway">
+      <div class="entry-head"><span class="num">06 · Cornerstone</span><h2>11.3 ★ — AI Gateway: guardrails, rate limits, fallbacks, logging</h2></div>
+      <p>Full deep-dive — enabling each feature on an endpoint, guardrail/PII config, provider fallbacks, usage system tables, payload logging, and Unity AI Gateway budgets — in the <a href="ai-gateway.html">AI Gateway deep-dive</a> (<code>ai-gateway.md</code> / <code>ai-gateway.html</code>).</p>
+      <h3 class="tk">11.3 AI Gateway <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span> <span class="tag-pill ga">GA</span></h3>
+      <p>The control plane in front of a serving endpoint — added with no change to agent code:</p>
+      <ul>
+        <li><strong>Rate limiting</strong> (per user / endpoint), <strong>AI guardrails</strong> (safety filtering + PII detection/redaction, <em>Preview</em>), <strong>provider fallbacks</strong>, <strong>usage tracking</strong> (system tables), and <strong>payload logging → inference tables</strong>. Providers include OpenAI, Anthropic, Google, and others.</li>
+        <li><strong>Unity AI Gateway</strong> <span class="tag-pill beta">Beta</span> — the recommended go-forward: richer observability, <strong>MCP-service governance</strong>, and <strong>budget management</strong> (spend thresholds / hard cost caps).</li>
+      </ul>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>This is the answer to "keep it from leaking PII or blowing the budget." Turn on rate limits + payload logging the moment the endpoint exists — they cost nothing and save you during the first spike.</div>
+    </section>
+
+    <section class="entry" id="package">
+      <div class="entry-head"><span class="num">07 · Package the model</span><h2>11.4 + 11.5 — PyFunc structure, and batch ai_query</h2></div>
+      <h3 class="tk">11.4 PyFunc model structure; pre/post-processing <span class="tag-pill h">Hands-on</span></h3>
+      <ul>
+        <li><code>mlflow.pyfunc.PythonModel</code> with <code>predict()</code> (and optional <code>load_context()</code>) packages <em>any</em> Python logic as a servable model.</li>
+        <li><strong>Pre-process</strong> the request (normalize the question, inject context) and <strong>post-process</strong> the output (extract JSON, strip unsafe content) inside the PyFunc.</li>
+        <li>Prefer <strong>Models-from-Code</strong> (<code>mlflow.models.set_model()</code>) over pickling; a <code>ResponsesAgent</code> is itself a PyFunc-compatible model.</li>
+      </ul>
+      <h3 class="tk">11.5 Batch inference with ai_query <span class="tag-pill h">Hands-on</span> <span class="tag-pill ga">GA</span></h3>
+      <ul>
+        <li><code>ai_query('&lt;endpoint&gt;', request =&gt; &lt;column&gt;)</code> calls a served model for <strong>every row</strong> of a table — parallelized by Spark / serverless SQL.</li>
+        <li><strong>Unity Airways:</strong> one query drafts a category, sentiment, and one-line summary for last night's tickets. Request JSON/structured output for clean typed columns.</li>
+        <li>Wrap it in a <strong>Lakeflow Job</strong> (11.11); same engine as the wider AI Functions family (11.10 ★).</li>
+      </ul>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Do not loop the real-time endpoint row-by-row for batch work — it is slow and expensive. Batch is a single <code>ai_query</code>.</div>
+    </section>
+
+    <section class="entry" id="operate1">
+      <div class="entry-head"><span class="num">08 · Access + identity</span><h2>11.6 + 11.7 — Access/version control, and endpoint auth</h2></div>
+      <h3 class="tk">11.6 Access and version control for endpoints <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span></h3>
+      <ul>
+        <li><strong>Versioning:</strong> UC holds model <strong>versions</strong> and <strong>aliases</strong> (<code>@champion</code> / <code>@challenger</code>); the endpoint <strong>pins a version</strong>, so what is live is explicit and auditable.</li>
+        <li><strong>Access control:</strong> endpoint permissions (<code>CAN_QUERY</code> / <code>CAN_MANAGE</code>) plus UC grants on the model, functions, and data — least-privilege, granted to users / groups / service principals.</li>
+        <li><strong>Roll forward / back:</strong> change the served-model version and traffic split, or flip the UC alias — no code redeploy.</li>
+      </ul>
+      <h3 class="tk">11.7 Authentication for agent endpoints <span class="tag-pill t">Theory</span></h3>
+      <ul>
+        <li><strong>Who is calling:</strong> query-time auth is a <strong>PAT</strong>, <strong>OAuth (M2M service principal)</strong>, or <strong>on-behalf-of-user</strong>.</li>
+        <li><strong>What the agent uses downstream:</strong> <code>agents.deploy()</code> sets up <strong>automatic authentication passthrough</strong> so the agent's declared <strong>resources</strong> (AI Search index, UC functions, a foundation model) get scoped credentials — no hand-managed tokens inside the agent.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="operate2">
+      <div class="entry-head"><span class="num">09 · Operate</span><h2>11.8 + 11.9 — LLMOps/AgentOps rollout, and Databricks Apps auth</h2></div>
+      <h3 class="tk">11.8 LLMOps and AgentOps: environments, Champion vs Challenger, rollout <span class="tag-pill t">Theory</span></h3>
+      <ul>
+        <li><strong>Environments:</strong> promote a version through <strong>dev → staging → prod</strong>, tracked by UC aliases rather than copying artifacts.</li>
+        <li><strong>Champion vs Challenger:</strong> run the new candidate against current prod on the same eval set (or shadow/split traffic); promote only if quality/latency/cost win.</li>
+        <li><strong>Rollout:</strong> canary the challenger on a small <strong>traffic percentage</strong>, watch monitoring, flip <code>@champion</code> to 100%. Rollback is keeping the previous Champion.</li>
+      </ul>
+      <h3 class="tk">11.9 Databricks Apps authentication and authorization for GenAI <span class="tag-pill t">Theory</span></h3>
+      <ul>
+        <li>A Databricks App (Module 10.5) runs as its <strong>own service principal</strong> — never the developer's token — and reaches the endpoint through a scoped <strong>resource</strong>.</li>
+        <li><strong>OAuth scopes</strong> limit what the app can do; <strong>on-behalf-of-user</strong> lets it act with the signed-in user's permissions when the answer must respect that user's data access.</li>
+      </ul>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Never overwrite the production version in place — you lose the rollback path. And do not assume the app uses your personal token; it uses its service principal with scoped resources.</div>
+    </section>
+
+    <section class="entry" id="aifunctions">
+      <div class="entry-head"><span class="num">10 · Cornerstone</span><h2>11.10 ★ — AI Functions for GenAI at scale</h2></div>
+      <p>Full deep-dive — each function's signature, structured/JSON extraction with <code>ai_query</code>, <code>vector_search</code> in SQL, cost/scale patterns, and when to reach for which — in the <a href="ai-functions-at-scale.html">AI Functions at scale deep-dive</a> (<code>ai-functions-at-scale.md</code> / <code>ai-functions-at-scale.html</code>).</p>
+      <h3 class="tk">11.10 AI Functions at scale <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span> <span class="tag-pill ga">GA</span></h3>
+      <p>GenAI <strong>in SQL at Spark scale</strong>, governed by Unity Catalog — the family (all GA):</p>
+      <ul>
+        <li><code>ai_query</code> (general — any served model + prompt), <code>ai_classify</code>, <code>ai_analyze_sentiment</code>, <code>ai_extract</code>, <code>ai_gen</code>, <code>ai_mask</code>, <code>ai_summarize</code>, <code>ai_translate</code>, <code>ai_fix_grammar</code>, and <code>vector_search</code> (query an AI Search index from SQL).</li>
+        <li><strong>Unity Airways:</strong> <code>ai_classify</code> to route tickets, <code>ai_analyze_sentiment</code> to flag angry passengers, <code>ai_mask</code> to redact PII before analytics, <code>ai_summarize</code> for queue dispositions.</li>
+      </ul>
+      <div class="note tip"><span class="tag">💡 Tip</span>Analysts and pipelines get LLM power without writing agent code — this is the scaled counterpart to the real-time endpoint.</div>
+    </section>
+
+    <section class="entry" id="providers">
+      <div class="entry-head"><span class="num">11 · Providers, scheduling, OSS</span><h2>11.11 + 11.12 + 11.13 — Lakeflow Jobs, external creds, Hugging Face models</h2></div>
+      <h3 class="tk">11.11 Orchestrating and scheduling with Lakeflow Jobs <span class="tag-pill h">Hands-on</span> <span class="tag-pill ga">GA</span></h3>
+      <ul>
+        <li><strong>Lakeflow Jobs</strong> (formerly Databricks Workflows) schedules the multi-task pipeline: ingest → <code>ai_parse_document</code>/chunk → embed → refresh the AI Search index → batch <code>ai_query</code> → <code>mlflow.genai.evaluate</code>.</li>
+        <li>Task <strong>dependencies (DAG)</strong>, <strong>triggers</strong> (cron / file-arrival), <strong>retries</strong>, serverless compute; system-table schema moved <code>workflow</code> → <code>lakeflow</code>.</li>
+      </ul>
+      <h3 class="tk">11.12 External model credentials and provider setup <span class="tag-pill h">Hands-on</span></h3>
+      <ul>
+        <li>Put the provider API key (Claude/OpenAI) in a <strong>Databricks secret</strong> — never plaintext — and reference it from an <strong>external-model serving endpoint</strong>.</li>
+        <li>Callers use the <strong>endpoint name</strong>, so swapping providers is a config change; the endpoint sits behind AI Gateway (11.3) and UC access control.</li>
+      </ul>
+      <h3 class="tk">11.13 Deploying open-source / Hugging Face models <span class="tag-pill h">Hands-on</span></h3>
+      <ul>
+        <li>Log a Hugging Face model with the <strong><code>transformers</code> flavor</strong> (<code>mlflow.transformers.log_model</code>) — or wrap a pipeline in a custom PyFunc — then register to UC and serve as a <strong>custom model</strong> endpoint on GPU (B2 Ch5, Example 7-7).</li>
+        <li>For a specialized model (small classifier, domain embedder, fine-tune) not on the Foundation Model APIs list.</li>
+      </ul>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · verify live</span>Rebrands: it is <strong>AI Gateway / Unity AI Gateway</strong> (not "Mosaic AI Gateway") and <strong>Lakeflow Jobs</strong> (not "Workflows"); the Vector Search SDK is still <code>databricks-vectorsearch</code> despite the "AI Search" rename. <em>(Doc pages are partly JS-rendered; verify Beta/Preview status live before a customer commitment.)</em></div>
+    </section>
+
+    <section class="entry" id="worked">
+      <div class="entry-head"><span class="num">12 · Worked thread</span><h2>Unity Airways — deploy to operate, end to end</h2></div>
+      <ol>
+        <li><strong>Package (11.4 / 11.13):</strong> log <code>ua_support_agent</code> with Models-from-Code, register to <code>unity_airways.rag.ua_support_agent</code>; log a small OSS ticket-classifier with the <code>transformers</code> flavor.</li>
+        <li><strong>Serve (11.1 ★):</strong> <code>agents.deploy(...)</code> provisions the endpoint, Review App, feedback model + tracing/inference tables/monitoring.</li>
+        <li><strong>Govern the edge (11.3 ★):</strong> enable AI Gateway — rate limits, PII guardrails (Preview), a provider fallback, payload logging to an inference table.</li>
+        <li><strong>External provider (11.12):</strong> the OpenAI key lives in a Databricks secret behind an external-model endpoint, so a GPT fallback is a config change.</li>
+        <li><strong>Feedback (11.2):</strong> support leads use the Review App; labels flow into the Module 08 eval set.</li>
+        <li><strong>Batch + scale (11.5 / 11.10 ★):</strong> a nightly <code>ai_query</code> scores each ticket (category / sentiment / summary); <code>ai_mask</code> redacts PII first.</li>
+        <li><strong>Schedule (11.11):</strong> a Lakeflow Job runs index refresh → batch <code>ai_query</code> → <code>mlflow.genai.evaluate</code> on cron with retries.</li>
+        <li><strong>Operate (11.6–11.9):</strong> endpoint ACLs + UC aliases control access/versioning; the App calls the endpoint as its service principal; a new version ships as a Challenger on 10% canary and is promoted to Champion only after it wins the eval.</li>
+      </ol>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">13 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>A deployed model is a governed asset: package (MLflow + UC) → serve (Model Serving) → govern (AI Gateway) → log (inference tables) → monitor (Module 13) → promote. <code>agents.deploy()</code> gives you the endpoint, Review App, feedback model, and tracing/inference-tables/monitoring in one call. Promotion is a traffic shift + alias flip gated on eval.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Turn on AI Gateway the moment the endpoint exists. Use provisioned throughput only when latency/throughput demands it; scale-to-zero otherwise. Reach for <code>ai_query</code> for batch first. Keep the external-model endpoint name stable so provider swaps are config, not code.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Unity AI Gateway is <strong>Beta</strong> and PII guardrails are <strong>Preview</strong> — label maturity, verify enrollment. Served foundation-model names churn (DBRX treated as retired). Never overwrite prod in place. Do not hard-code provider keys — use a Databricks secret + external-model endpoint.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">14 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Name the three Model Serving endpoint families and give a Unity Airways example of each. Which one is <code>databricks-claude-sonnet-4-5</code>?</li>
+          <li>What four things does <code>agents.deploy()</code> create/enable in one call?</li>
+          <li>List four things AI Gateway adds in front of an endpoint, and one thing Unity AI Gateway (Beta) adds on top.</li>
+          <li>When would you use batch <code>ai_query</code> instead of the real-time endpoint, and how would you schedule it?</li>
+          <li>Describe a safe Champion-vs-Challenger rollout, and how you roll it back with zero code change.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">15 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📎 <strong>Project cheat-sheet (primary for current names/APIs)</strong> — <code>.claude/skills/genai-teacher/references/naming-conventions.md</code>: <strong>§4</strong> Model Serving three families + Foundation Model APIs (pay-per-token vs provisioned throughput; served-model names churn; DBRX retired); <strong>§5</strong> AI Functions (<code>ai_query</code>, <code>ai_classify</code>, <code>ai_extract</code>, <code>ai_gen</code>, <code>ai_summarize</code>, <code>ai_translate</code>, <code>ai_mask</code>, <code>ai_analyze_sentiment</code>, <code>ai_fix_grammar</code>, <code>vector_search</code> — all GA); <strong>§6</strong> AI Gateway (rate limits, guardrails + PII redaction <em>Preview</em>, fallbacks, usage tracking, payload logging) and <strong>Unity AI Gateway</strong> (<em>Beta</em> — budgets/cost caps, MCP-service governance); <strong>§2</strong> <code>agents.deploy()</code> → endpoint + Review App + feedback model + tracing/inference tables/monitoring; <strong>§8</strong> Workflows → <strong>Lakeflow Jobs</strong>. Verified July 2026 — re-verify Beta/Preview live.</li>
+        <li>📘 <strong>B1 — <em>Practical MLflow for GenAI on Databricks</em></strong> (Early Release): <strong>Ch 7</strong> "MLflow AI Gateway transitioning to Databricks AI Gateway" (unified secure interface over OpenAI/Anthropic/Azure OpenAI; swap providers by endpoint name; UC integration, usage rate limits, guardrails, real-time usage tracking, logging inputs/outputs to tables) + the Unity Airways agent/tools framing; <strong>Ch 8</strong> <code>agents.deploy()</code>, <code>deploy_feedback_model</code>, and the <strong>Review App</strong>; <strong>Champion vs Challenger</strong> before deploying a new iteration (p332).</li>
+        <li>📗 <strong>B2 — <em>Databricks Certified GenAI Engineer Associate Study Guide</em></strong> (Ch 5): Databricks Model Serving + endpoint optimization; controlling access to resources from serving endpoints; <strong>PyFunc model structure</strong> with pre/post-processing (p308–309); <strong>batch inference with <code>ai_query</code></strong> (p359–360); open-source models via the <strong><code>transformers</code></strong> flavor (Example 7-7, p441–442).</li>
+        <li>🌐 <strong>Databricks Docs</strong> (live-confirmed at authoring): Model Serving overview — custom / foundation / external <code>docs.databricks.com/aws/en/machine-learning/model-serving/</code>; Foundation Model APIs <code>.../foundation-model-apis/</code>; AI Functions (<code>ai_query</code>, <code>ai_extract</code>, <code>ai_classify</code>, batch inference) <code>docs.databricks.com/aws/en/large-language-models/ai-functions</code>; AI Gateway <code>docs.databricks.com/aws/en/ai-gateway/</code>; Agent deploy <code>docs.databricks.com/aws/en/generative-ai/agent-framework/deploy-agent</code>; Lakeflow Jobs <code>docs.databricks.com/aws/en/jobs/</code>.</li>
+      </ul>
+      <div class="note imp" style="margin-top:18px"><span class="tag">Next module → Module 12: Responsible GenAI</span>Module 12 goes deep on the safety and governance layer this module met at the edge: guardrail techniques, AI Guardrails config, PII masking, rate limiting for abuse, Unity Catalog data governance, licensing/legal, risk frameworks and audit trails, and <strong>service principals and model identity</strong>. Module 11 served and metered the agent; Module 12 makes it safe and accountable.</div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 11</span>
+  <span>Grounded in naming cheat-sheet §4/§5/§6 (Jul 2026) · B1 Ch7-8 · B2 Ch5 · Model Serving / AI Gateway / AI Functions docs</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Serve — the cornerstone (11.1)",spine:true,comps:[
+   ["11.1 Model Serving ★","Theory + Hands-on · GA","Home for every GenAI endpoint. Three families, all GA: custom models (your MLflow-packaged ua_support_agent), foundation models (databricks-claude-sonnet-4-5, pay-per-token or provisioned throughput), external models (governed proxy to OpenAI/Anthropic/Google). agents.deploy() is the easy button. Scale-to-zero vs provisioned throughput.","model-serving.html"],
+ ]},
+ {name:"Govern the edge — the cornerstone (11.3)",spine:true,comps:[
+   ["11.3 AI Gateway ★","Theory + Hands-on · GA","Control plane in front of the endpoint, no code change: rate limits, AI guardrails (safety + PII redaction, Preview), provider fallbacks, usage tracking (system tables), payload logging to inference tables. Unity AI Gateway (Beta) adds budgets/cost caps + MCP-service governance.","ai-gateway.html"],
+ ]},
+ {name:"Scale in SQL — the cornerstone (11.10)",spine:true,comps:[
+   ["11.10 AI Functions at scale ★","Theory + Hands-on · GA","GenAI in SQL at Spark scale, UC-governed. ai_query (general) + ai_classify, ai_analyze_sentiment, ai_extract, ai_gen, ai_mask, ai_summarize, ai_translate, ai_fix_grammar, vector_search. All GA. Unity Airways: classify/route tickets, flag angry passengers, mask PII, summarize queue.","ai-functions-at-scale.html"],
+ ]},
+ {name:"Feedback (11.2)",spine:false,comps:[
+   ["11.2 Review App","Hands-on · GA","Chat UI agents.deploy() creates via the feedback model, so stakeholders/domain experts try the agent and leave labels. Responses + labels captured as MLflow traces/labels -> Module 08 eval set. Structured labeling via mlflow.genai.labeling (create_labeling_session, get_review_app).","module.md 11.2"],
+ ]},
+ {name:"Package the model (11.4, 11.12, 11.13)",spine:false,comps:[
+   ["11.4 PyFunc structure","Hands-on","mlflow.pyfunc.PythonModel with predict()/load_context() packages any Python logic. Pre-process the request and post-process the output inside the PyFunc. Prefer Models-from-Code (mlflow.models.set_model()) over pickling; a ResponsesAgent is a PyFunc-compatible model.","module.md 11.4"],
+   ["11.12 External model creds","Hands-on","Provider API key (Claude/OpenAI) in a Databricks secret -> referenced by an external-model serving endpoint. Callers use the endpoint name, so swapping providers is config, not code. Sits behind AI Gateway + UC access control.","module.md 11.12"],
+   ["11.13 Hugging Face / OSS models","Hands-on","Log with the transformers flavor (mlflow.transformers.log_model) or wrap a pipeline in a custom PyFunc; register to UC; serve as a custom model endpoint on GPU (B2 Ch5, Example 7-7). For specialized models not on Foundation Model APIs.","module.md 11.13"],
+ ]},
+ {name:"Batch and schedule (11.5, 11.11)",spine:false,comps:[
+   ["11.5 Batch ai_query","Hands-on · GA","ai_query(endpoint, request => column) calls a served model for every row of a table, parallelized by Spark/serverless SQL. Unity Airways: one query drafts category/sentiment/summary for last night's tickets. Request JSON for clean typed columns.","module.md 11.5"],
+   ["11.11 Lakeflow Jobs","Hands-on · GA","Lakeflow Jobs (formerly Workflows) schedules ingest -> parse/chunk -> embed -> refresh index -> batch ai_query -> mlflow.genai.evaluate. Task DAG, cron/file triggers, retries, serverless. System-table schema workflow -> lakeflow.","module.md 11.11"],
+ ]},
+ {name:"Operate and govern (11.6, 11.7, 11.8, 11.9)",spine:false,comps:[
+   ["11.6 Access & version control","Theory + Hands-on","UC holds versions + aliases (@champion/@challenger); endpoint pins a version. Endpoint ACLs (CAN_QUERY/CAN_MANAGE) + UC grants, least-privilege. Roll forward/back via version + traffic split or alias flip, no code redeploy.","module.md 11.6"],
+   ["11.7 Endpoint authentication","Theory","Query-time auth: PAT, OAuth (M2M service principal), or on-behalf-of-user. agents.deploy() sets up automatic authentication passthrough so the agent's declared resources (AI Search, UC functions, FM) get scoped credentials.","module.md 11.7"],
+   ["11.8 LLMOps & AgentOps","Theory","dev -> staging -> prod via UC aliases. Champion vs Challenger: run candidate against prod on the same eval set (or shadow/split traffic); promote only if quality/latency/cost win. Canary traffic %, flip @champion to 100%, rollback = keep old champion.","module.md 11.8"],
+   ["11.9 Databricks Apps auth/authz","Theory","App runs as its own service principal (never your token) and reaches the endpoint via a scoped resource. OAuth scopes limit the app; on-behalf-of-user lets it act with the signed-in user's permissions when data access must be respected.","module.md 11.9"],
+ ]},
+];
+const STEPS=[
+  ["1 · Package","Log ua_support_agent with Models-from-Code, register to unity_airways.rag.ua_support_agent; log a small OSS ticket-classifier with the transformers flavor (11.4, 11.13)."],
+  ["2 · Serve","agents.deploy('unity_airways.rag.ua_support_agent', version) -> endpoint + Review App + feedback model + tracing/inference tables/monitoring (11.1 ★)."],
+  ["3 · Govern the edge","Enable AI Gateway: rate limits, PII guardrails (Preview), a provider fallback, payload logging to an inference table (11.3 ★)."],
+  ["4 · External provider","OpenAI key in a Databricks secret behind an external-model endpoint, so a GPT fallback is a config change (11.12)."],
+  ["5 · Feedback","Support leads use the Review App to try the agent and label answers; labels flow into the Module 08 eval set (11.2)."],
+  ["6 · Batch & scale","Nightly ai_query scores each ticket (category/sentiment/summary); ai_mask redacts PII first (11.5, 11.10 ★)."],
+  ["7 · Schedule","A Lakeflow Job runs index refresh -> batch ai_query -> mlflow.genai.evaluate on cron with retries (11.11)."],
+  ["8 · Operate","Endpoint ACLs + UC aliases; the App calls as its service principal; a new version ships as a Challenger on 10% canary, promoted to Champion only after it wins the eval (11.6-11.9)."],
+];
+const ROWS=[
+  ["Custom model endpoint","Serve your MLflow-packaged agent or an OSS / Hugging Face model","GA"],
+  ["Foundation Model API","Databricks-hosted LLMs (pay-per-token or provisioned throughput)","GA"],
+  ["External model endpoint","Governed proxy to OpenAI / Anthropic / Google (key in a secret)","GA"],
+  ["AI Gateway","Rate limits, guardrails, fallbacks, usage + payload logging","GA (PII redaction Preview)"],
+  ["Unity AI Gateway","Budgets / cost caps, MCP-service governance, richer observability","Beta"],
+  ["Review App","Stakeholder feedback chat UI + feedback model","GA"],
+  ["ai_query / AI Functions","Batch GenAI in SQL at Spark scale","GA"],
+  ["Lakeflow Jobs","Schedule multi-task GenAI / RAG pipelines (DAG, triggers, retries)","GA"],
+];
+const MERMAID_SRC=`flowchart LR
+  DEV["Agent code<br/>ua_support_agent (ResponsesAgent)<br/>MLflow 3.1 log_model"]
+  UC["Unity Catalog model<br/>unity_airways.rag.ua_support_agent<br/>versions + @champion / @challenger"]
+  DEP["agents.deploy(model, version)<br/>or endpoint config"]
+  subgraph SERVE["Model Serving endpoint"]
+    GW["AI Gateway<br/>rate limits, guardrails,<br/>fallbacks, payload logging"]
+    EP["Served models<br/>Champion vs Challenger traffic split"]
+  end
+  CLIENTS["Clients<br/>Databricks App - Review App<br/>ai_query batch - REST / SDK"]
+  IT["Inference tables (UC)<br/>request and response logs"]
+  MON["MLflow monitoring + scorers<br/>(Module 13)"]
+  DEV --> UC --> DEP --> EP
+  CLIENTS --> GW --> EP
+  EP --> GW
+  GW --> IT --> MON
+  MON -. "promote next Challenger" .-> UC`;
+const MERMAID_SRC2=`flowchart TD
+  A["New agent version<br/>logged to MLflow, evaluated (Module 08)"]
+  B["Register to UC<br/>set @challenger alias"]
+  C["Add to endpoint as second served model<br/>small canary traffic percent"]
+  D{"Eval + monitor<br/>quality / latency / cost OK?"}
+  E["Promote: set @champion<br/>shift traffic to 100 percent"]
+  F["Roll back<br/>keep previous champion, drop challenger"]
+  A --> B --> C --> D
+  D -->|"yes"| E
+  D -->|"no"| F`;
+
+/* ---------- light tutor front ---------- */
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0].split(" · ")[1];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline) ---------- */
+function drawMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

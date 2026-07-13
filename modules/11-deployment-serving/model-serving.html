@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Topic 11.1 (cornerstone): Model Serving endpoints for GenAI.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Model Serving · Databricks GenAI Tutor 11.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbox pre{margin:8px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI</a>
+    <span class="loc">Module 11 · Topic 11.1 ★</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_11.1 · Cornerstone · v1.0</span><span>Verified against docs (July 2026) · naming cheat-sheet · B1 Ch8 / B2 Ch5</span></div>
+    <div class="filed">Module 11 — Deployment and Serving · Topic 11.1 · Theory + Hands-on ★</div>
+    <h1>Model Serving</h1>
+    <p class="dek">A registered agent is a stored artifact, not a service. Model Serving turns <code>unity_airways.rag.ua_support_agent</code> into an autoscaling, governed HTTPS endpoint — one <code>agents.deploy()</code> call that also stands up the Review App, feedback model, tracing, and monitoring. <em>Three endpoint families, one query interface.</em></p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>One governed surface, three sources of model</h2></div>
+      <p class="lead">Your Module 09 agent is registered in Unity Catalog but nothing can call it yet. Model Serving is the managed, serverless service that runs the container, autoscales it, secures it behind workspace auth, and meters usage — so any app, phone system, or batch job hits the <em>same</em> endpoint.</p>
+      <ul>
+        <li><strong>Three endpoint families, all GA.</strong> <strong>Custom models</strong> (your MLflow-packaged RAG chain / <code>ResponsesAgent</code>), <strong>Foundation Models</strong> (Databricks-hosted LLMs), and <strong>External Models</strong> (a governed proxy to OpenAI / Anthropic / Google).</li>
+        <li><strong>For an agent, one command.</strong> <code>from databricks import agents; agents.deploy(uc_model_name, version)</code> creates the endpoint <em>and</em> the Review App <em>and</em> a feedback model, and enables tracing, inference tables, and monitoring.</li>
+        <li><strong>Config is small but load-bearing:</strong> <code>workload_size</code>, <code>scale_to_zero_enabled</code>, <code>workload_type</code> (CPU vs GPU), environment vars / secrets, and which served-entity version takes traffic.</li>
+        <li><strong>Same query interface everywhere:</strong> REST <code>POST /serving-endpoints/&lt;name&gt;/invocations</code>, the SDK, or SQL <code>ai_query</code> for batch. Agents add <code>stream=True</code>, <code>return_trace</code>, and <code>custom_inputs</code>.</li>
+        <li><strong>Governance carries over.</strong> Unity Catalog permissions, audit logs, and lineage follow the model from notebook to endpoint.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>The families, the config, and the ship order</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Flow</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">Families and config</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Deploy walkthrough</button>
+        <button role="tab" aria-selected="false" aria-controls="p-builds" id="t-builds" onclick="tab(this,'p-builds')">What deploy builds</button>
+        <button role="tab" aria-selected="false" aria-controls="p-res" id="t-res" onclick="tab(this,'p-res')">Query patterns</button>
+      </div>
+
+      <!-- PANE A: flow mermaid — mirrors model-serving.md diagram 1 -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — three families; the custom agent endpoint calls a Foundation Model endpoint">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">A custom agent endpoint is orchestration (CPU); the GPU-heavy LLM work happens on a separate Foundation Model endpoint it calls. Same governed surface for all three families.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of families + config -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — pick a family, then set the config knobs">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select an item</div><h3>Families and knobs</h3><p>Click one to see what it serves and where it bites.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: stepper walkthrough of the deploy -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE D: what agents.deploy builds (mermaid 2) -->
+      <div id="p-builds" class="pane" role="tabpanel" aria-labelledby="t-builds" hidden>
+        <div class="plate" data-fig="Fig. 02 — one agents.deploy() call builds five things">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">Registration stores the agent; agents.deploy() serves it AND wires the review + observability plumbing teams usually forget.</div>
+        </div>
+      </div>
+
+      <!-- PANE E: query patterns -->
+      <div id="p-res" class="pane" role="tabpanel" aria-labelledby="t-res" hidden>
+        <table>
+          <thead><tr><th>Pattern</th><th>Code shape</th><th>When</th></tr></thead>
+          <tbody>
+            <tr><td class="k">REST /invocations</td><td>POST https://&lt;host&gt;/serving-endpoints/&lt;name&gt;/invocations with a bearer token; ResponsesAgent body uses an "input" array</td><td>Any downstream app / service</td></tr>
+            <tr><td class="k">SDK query</td><td>WorkspaceClient().serving_endpoints.query(...) or the OpenAI-compatible chat client</td><td>Python callers, notebooks</td></tr>
+            <tr><td class="k">ai_query (SQL)</td><td>SELECT ai_query('&lt;endpoint&gt;', request =&gt; ...) FROM delta_table</td><td>Batch inference at scale</td></tr>
+            <tr><td class="k">stream=True</td><td>"stream": true (needs predict_stream on the agent) — tokens as they generate</td><td>Chat UX, long answers</td></tr>
+            <tr><td class="k">return_trace</td><td>"databricks_options": {"return_trace": true} — MLflow trace alongside the answer</td><td>Debugging / front-end insight</td></tr>
+            <tr><td class="k">custom_inputs</td><td>"custom_inputs": {...} — side-data (tier, locale, binary) that never enters the prompt</td><td>Per-request behavior control</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">A ResponsesAgent expects an "input" array (Responses schema), not the classic chat "messages" schema. Query params grounded in B1 Ch8.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="how">
+      <div class="entry-head"><span class="num">03 · How it works</span><h2>Pick the family, right-size the endpoint</h2></div>
+      <p>Model selection and endpoint choice is a decision tree, not a default. Serving your own logic is a custom endpoint; the LLM your agent calls is a Foundation Model endpoint; a mandated outside provider goes behind an External Model endpoint.</p>
+      <div class="plate" data-fig="Fig. 03 — choosing an endpoint family and deploy path">
+        <div class="mermaid" id="mermaidGraph3"></div>
+        <div class="plate-cap">Agent Framework agents take the agents.deploy() path (endpoint + Review App + monitoring). Non-agent models use the SDK / MLflow deployments / UI.</div>
+      </div>
+      <ul>
+        <li><strong>Custom models</strong> package your logic — the Unity Airways <code>ResponsesAgent</code> shows up with Task = <em>Agent (Responses)</em>. You own its dependencies and behavior.</li>
+        <li><strong>Foundation Models</strong> are the shared LLM utility. Two modes: <strong>pay-per-token</strong> (zero setup, billed per token, great to start and for bursty load) and <strong>provisioned throughput</strong> (reserved tokens/second, SLA latency, required for fine-tuned / custom weights).</li>
+        <li><strong>External Models</strong> exist for governance: one Databricks endpoint fronts OpenAI/Anthropic so keys, spend, and rate limits are centralized (pairs with AI Gateway — 11.3).</li>
+        <li><strong>Right-size the endpoint.</strong> <code>scale_to_zero_enabled</code> trades idle cost for cold-start latency; <code>workload_size</code> sets the concurrency band; <code>workload_type</code> is CPU for agents, GPU only for in-process heavy inference.</li>
+        <li><strong>Versions + traffic %.</strong> One endpoint can hold several served-entity versions and split traffic — the basis for canary rollout (11.6).</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="dothis">
+      <div class="entry-head"><span class="num">04 · Run this</span><h2>Deploy the agent, then query it</h2></div>
+      <p><strong>Prereqs:</strong> the agent registered in Unity Catalog (Module 09), <code>mlflow&gt;=3.1</code>, <code>databricks-agents</code>, and rights to create a serving endpoint. Deploy the version you validated in Module 08.</p>
+      <p><strong>Path A — <code>agents.deploy()</code> (recommended for agents):</strong></p>
+      <pre><code>from databricks import agents
+
+CATALOG, SCHEMA = "unity_airways", "rag"
+UC_MODEL = f"{CATALOG}.{SCHEMA}.ua_support_agent"   # the ResponsesAgent from Module 09
+VERSION  = 7                                        # the version you evaluated in Module 08
+
+deployment = agents.deploy(
+    model_name=UC_MODEL,
+    model_version=VERSION,
+    scale_to_zero=True,                 # dev: cheap idling. Prod latency-critical: False.
+    environment_vars={                  # config + secret references, never plaintext keys
+        "APP_ENV": "dev",
+        "API_TOKEN": "{{secrets/ua_scope/api_token}}",
+    },
+    deploy_feedback_model=True,         # also stands up the Review App feedback loop
+)
+
+# Read the REAL endpoint name + Review App URL from the output — do not guess them.
+print(deployment.endpoint_name)        # e.g. agents_unity_airways-rag-ua_support_agent
+print(deployment.review_app_url)</code></pre>
+      <p><strong>Path B — SDK, for any (non-agent) UC model:</strong></p>
+      <pre><code>from databricks.sdk import WorkspaceClient
+from databricks.sdk.service.serving import EndpointCoreConfigInput, ServedEntityInput
+# NOTE: confirm class names against your installed databricks-sdk version.
+
+w = WorkspaceClient()
+w.serving_endpoints.create_and_wait(
+    name="ua-support-agent",
+    config=EndpointCoreConfigInput(served_entities=[
+        ServedEntityInput(
+            entity_name="unity_airways.rag.ua_support_agent",
+            entity_version="7",
+            workload_size="Small",         # concurrency band
+            workload_type="CPU",           # agent orchestration -> CPU
+            scale_to_zero_enabled=True,
+        )
+    ]),
+)</code></pre>
+      <p><strong>Invoke it over REST</strong> (ResponsesAgent uses an <code>input</code> array):</p>
+      <pre><code>import requests
+from databricks.sdk import WorkspaceClient
+
+w = WorkspaceClient()
+ENDPOINT = "agents_unity_airways-rag-ua_support_agent"   # from the deploy output
+
+resp = requests.post(
+    f"{w.config.host}/serving-endpoints/{ENDPOINT}/invocations",
+    headers={"Authorization": f"Bearer {w.config.token}",
+             "Content-Type": "application/json"},
+    json={
+        "input": [{"role": "user",
+                   "content": "My flight is at 4pm — what's the check-in cutoff?"}],
+        "databricks_options": {"return_trace": True},    # get the MLflow trace back too
+    },
+    timeout=120,
+)
+resp.raise_for_status()
+print(resp.json())</code></pre>
+      <p><strong>Batch inference</strong> over a Delta table with <code>ai_query</code>:</p>
+      <pre><code>SELECT
+  ticket_id,
+  ai_query(
+    'agents_unity_airways-rag-ua_support_agent',
+    request =&gt; to_json(named_struct('input',
+      array(named_struct('role','user','content', question_text))))
+  ) AS agent_reply
+FROM unity_airways.rag.overnight_tickets;</code></pre>
+      <p><strong>Verify:</strong> the endpoint reads <em>Ready</em> on the Serving page (Task = Agent (Responses)); the REST call returns <code>200</code> with an assistant <code>output</code> array; the <code>ai_query</code> job writes one reply per row; every call lands in the endpoint's inference table and in MLflow traces (Module 07).</p>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Model Serving has <strong>three GA families</strong> — <strong>Custom models</strong>, <strong>Foundation Models</strong> (pay-per-token vs provisioned throughput), and <strong>External Models</strong> — behind one query interface and one governance model. For an <strong>agent</strong>, <code>agents.deploy(uc_model_name, version)</code> is the single call that also creates the <strong>Review App + feedback model</strong> and enables <strong>tracing, inference tables, and monitoring</strong>. The custom agent endpoint runs on <strong>CPU</strong>; the GPU-heavy LLM work sits on a separate Foundation Model endpoint.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Start <strong>pay-per-token</strong>; move to <strong>provisioned throughput</strong> only when traffic is steady/high, you need SLA latency, or you serve custom weights. Keep <code>scale_to_zero=True</code> in dev; turn it <strong>off</strong> for the customer-facing path so cold starts don't read as "the model is slow." Add <code>"databricks_options": {"return_trace": true}</code> while integrating to see the agent's reasoning next to its answer, and right-size <code>workload_size</code> from the <strong>inference table</strong>, not a guess.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>The endpoint name from <code>agents.deploy()</code> is auto-generated (pattern <code>agents_&lt;catalog&gt;-&lt;schema&gt;-&lt;model&gt;</code>) — <strong>read it from the deploy output</strong>. The deploy-agent doc page is JS-rendered, so the exact parameter list and name pattern here are grounded in <strong>B1 Ch8 + the naming cheat-sheet</strong> — treat as <strong>live re-check pending</strong>. The book's "Mosaic AI Agent Framework" is now moving to plain "Agent Framework" branding (API unchanged). Foundation-model endpoint names churn (DBRX retired) — confirm on the supported-models page; this lesson uses <code>databricks-claude-sonnet-4-5</code> per the project's shared conventions.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Name the three Model Serving families and give one example of what each serves.</li>
+          <li>What does <code>agents.deploy()</code> create <em>besides</em> the serving endpoint? Name at least three things.</li>
+          <li>When would you choose provisioned throughput over pay-per-token for a Foundation Model?</li>
+          <li>Why does the Unity Airways agent endpoint run on CPU rather than GPU? Where does the LLM inference actually happen?</li>
+          <li>Give two ways to invoke a deployed endpoint, and name the request-body field a <code>ResponsesAgent</code> expects.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📘 <strong>B1 — Practical MLflow for Generative AI on Databricks, Ch 8</strong> "Deploying GenAI Application with MLflow": <code>agents.deploy()</code> and its params (<code>model_name</code>, <code>model_version</code>, <code>scale_to_zero</code>, <code>environment_vars</code>, <code>deploy_feedback_model</code>); the Model Serving Endpoint UI (compute size, traffic routing, usage metrics); querying (Browser/Curl/Python/SQL); <strong>streaming</strong> (<code>stream=True</code>, <code>predict_stream</code>), <strong>return_trace</strong> (<code>databricks_options</code>), <strong>custom_inputs</strong>; the <strong>Review App</strong>. <em>O'Reilly Early Release — RAW &amp; UNEDITED; verify against docs.</em></li>
+        <li>📗 <strong>B2 — Databricks Certified GenAI Engineer Associate Study Guide, Ch 5</strong>: Model Serving UI and endpoint optimization; model sizes and <strong>cost/latency/quality</strong> trade-offs; <strong>model cards &amp; metadata</strong>; Foundation Model APIs; token-based vs compute-based pricing; access control from serving endpoints.</li>
+        <li>🧭 <strong>naming-conventions.md</strong> §4 (three GA families; FM API pay-per-token vs provisioned throughput; volatile served-model names), §2 (<code>agents.deploy()</code> creates endpoint + Review App + feedback model, enables tracing/inference tables/monitoring; <code>ResponsesAgent</code>), §5 (<code>ai_query</code> GA for batch inference), §6 (AI Gateway).</li>
+        <li>🌐 <strong>Databricks Docs — Model Serving</strong> (<code>docs.databricks.com/aws/en/machine-learning/model-serving/</code>): <em>live-verified July 2026</em> — the page lists <strong>Custom models</strong>, <strong>Foundation Model APIs</strong> (pay-per-token, provisioned throughput), and <strong>External models</strong>. Create/manage endpoints (<code>.../create-manage-serving-endpoints</code>): <em>live-verified</em> config fields <code>scale_to_zero_enabled</code>, <code>workload_size</code>, <code>workload_type</code>, and inference tables.</li>
+        <li>🌐 <strong>Databricks Docs — Foundation Model APIs</strong> (<code>docs.databricks.com/aws/en/machine-learning/foundation-model-apis/</code>): <em>live-verified</em> — two modes (pay-per-token, provisioned throughput). Deploy-agent page (<code>.../agent-framework/deploy-agent</code>) is JS-rendered — <strong>live re-check pending</strong>.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Topic 11.1 ★</span>
+  <span>Grounded in B1 Ch8 / B2 Ch5 · docs (July 2026) · naming cheat-sheet</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"The three endpoint families",spine:false,comps:[
+   ["Custom models","serve your own logic","Any model YOU packaged with MLflow and registered in Unity Catalog: a pyfunc, a LangChain RAG chain, or the ResponsesAgent unity_airways.rag.ua_support_agent. This is where the Unity Airways agent lives. You own its dependencies and behavior; Task shows as Agent (Responses).","GA · your artifact, your endpoint"],
+   ["Foundation Models","the shared LLM utility","Databricks-hosted LLMs reachable out of the box (databricks-claude-sonnet-4-5, databricks-gte-large-en) via the Foundation Model APIs. Your agent CALLS these — it does not embed a 70B model.","GA · pay-per-token OR provisioned throughput"],
+   ["External Models","govern an outside provider","One Databricks endpoint that proxies to OpenAI / Anthropic / Google. Store the provider key once as a secret; every app calls Databricks, so keys, spend, and rate limits are centralized.","GA · pairs with AI Gateway (11.3)"],
+ ]},
+ {name:"FM API modes and config knobs",spine:true,comps:[
+   ["pay-per-token","start here","Billed per input+output token, zero capacity to manage. Best for prototyping and bursty / low-volume traffic. Not designed for high sustained throughput.","variable cost · effortless"],
+   ["provisioned throughput","production capacity","Reserve a tokens/second band with guaranteed latency/throughput. REQUIRED for fine-tuned / custom weights; the right call for steady, high, SLA-bound load.","predictable cost · reserved"],
+   ["scale_to_zero_enabled","idle cost vs cold start","True = scale to zero replicas when idle (cheap) but the next request pays a cold-start delay. Dev: on. Latency-critical prod: off (keep a warm replica).","dev on · prod usually off"],
+   ["workload_size","concurrency band","Small / Medium / Large. Sets how many concurrent requests the endpoint serves (Small approx 0-4 in the book example). Size to observed peak, not to hope.","bigger = more concurrency + cost"],
+   ["workload_type","CPU vs GPU","CPU (default) for agents / orchestration. GPU only when the endpoint itself runs heavy inference. The agent is CPU because the LLM lives on a separate FM endpoint.","agent = CPU"],
+ ]},
+];
+const STEPS=[
+  ["Register the agent in Unity Catalog","From Module 09: the ResponsesAgent is logged with MLflow (models-from-code) and registered to unity_airways.rag.ua_support_agent. Pick the VERSION you evaluated in Module 08."],
+  ["Call agents.deploy()","from databricks import agents; agents.deploy(model_name, model_version, scale_to_zero=True, environment_vars={...}, deploy_feedback_model=True). One call does the plumbing."],
+  ["Databricks builds five things","(1) the serving endpoint, (2) a Review App, (3) a feedback model, plus (4) tracing + (5) inference tables + monitoring — all enabled automatically."],
+  ["Read the real endpoint name","The output gives the generated name (pattern agents_&lt;catalog&gt;-&lt;schema&gt;-&lt;model&gt;) and the Review App URL. Read them; never hardcode a guess."],
+  ["Verify it is Ready","Serving page shows Ready, Task = Agent (Responses). Use > Open review app opens the SME UI; Use > Query opens the JSON console."],
+  ["Invoke it","REST POST /serving-endpoints/&lt;name&gt;/invocations with an 'input' array; or the SDK; or SQL ai_query for batch. Add return_trace while integrating."],
+  ["Right-size and harden","Tune workload_size from the inference table; turn scale_to_zero off for the prod path; layer AI Gateway (11.3), auth (11.7), and canary versions (11.6)."],
+];
+const MERMAID_SRC=`flowchart TB
+  client["Client: app, phone system, batch job"]
+  subgraph MS["Databricks Model Serving (one governed surface)"]
+    direction TB
+    custom["Custom model endpoint<br/>ua_support_agent (ResponsesAgent)<br/>CPU Small, scale-to-zero"]
+    fm["Foundation Model endpoint<br/>databricks-claude-sonnet-4-5<br/>pay-per-token or provisioned throughput"]
+    ext["External Model endpoint<br/>governed proxy to OpenAI / Anthropic"]
+  end
+  uc["Unity Catalog: permissions, lineage, audit"]
+  client -->|"POST /invocations"| custom
+  custom -->|"LLM calls + embeddings"| fm
+  client -->|"direct LLM / batch ai_query"| fm
+  client -->|"unified key + rate limits"| ext
+  MS --- uc`;
+const MERMAID_SRC2=`flowchart LR
+  reg["UC registered model<br/>unity_airways.rag.ua_support_agent v7"]
+  dep["agents.deploy(model_name, version)"]
+  reg --> dep
+  dep --> ep["Serving endpoint<br/>agents_unity_airways-rag-ua_support_agent"]
+  dep --> ra["Review App<br/>SME feedback UI"]
+  dep --> fb["Feedback model<br/>stores thumbs + comments"]
+  dep --> obs["Tracing + Inference tables + Monitoring<br/>enabled automatically"]
+  ep --> q["Query: REST · SDK · ai_query · AI Playground"]`;
+const MERMAID_SRC3=`flowchart TD
+  q1{"What are you serving?"}
+  q1 -->|"Your own MLflow model or agent"| q2{"Is it an Agent Framework agent?"}
+  q1 -->|"A Databricks-hosted LLM"| fm["Foundation Model APIs<br/>pay-per-token to start,<br/>provisioned throughput for prod"]
+  q1 -->|"A model hosted by OpenAI / Anthropic / Google"| ext["External Model endpoint<br/>store key as secret, proxy + govern"]
+  q2 -->|"Yes (ResponsesAgent)"| ad["agents.deploy(uc_model, version)<br/>endpoint + Review App + monitoring"]
+  q2 -->|"No (pyfunc / sklearn / chain)"| sdk["SDK / MLflow deployments / UI<br/>create a custom model endpoint"]`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2],["mermaidGraph3",MERMAID_SRC3]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2","mermaidGraph3"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

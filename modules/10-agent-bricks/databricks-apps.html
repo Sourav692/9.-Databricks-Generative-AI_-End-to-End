@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Topic 10.5 (cornerstone): Build and deploy a GenAI app on Databricks Apps.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Databricks Apps · Databricks GenAI Tutor 10.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbox pre{margin:8px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI</a>
+    <span class="loc">Module 10 · Topic 10.5 ★</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_10.5 · Cornerstone · v1.0</span><span>Verified against databricks-apps skills · CLI v0.298.0 · docs</span></div>
+    <div class="filed">Module 10 — Agent Bricks and low-code agents · Topic 10.5 · Hands-on ★</div>
+    <h1>Databricks Apps</h1>
+    <p class="dek">A serving endpoint is an API, not a product. Put a real chat UI in front of the Unity Airways agent and ship it on Databricks Apps — a managed platform that runs your <code>app.py</code> next to your models, as a scoped service principal, behind SSO. <em>Two files, one CLI, no secrets in code.</em></p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>A source directory the platform runs for you</h2></div>
+      <p class="lead">Your Module 09 agent (<code>unity_airways.rag.ua_support_agent</code>) already sits behind a serving endpoint after <code>agents.deploy()</code>. Databricks Apps is the last mile: a thin, branded chat UI that queries that endpoint, hosted in the workspace so it never leaves Unity Catalog governance.</p>
+      <ul>
+        <li><strong>Databricks Apps hosts interactive Python apps</strong> (Streamlit, Dash, Gradio, Flask, FastAPI) inside your workspace, next to data and models, each with a URL behind SSO.</li>
+        <li><strong>An app is a directory.</strong> Two files matter: <code>app.py</code> (your chat UI) and <code>app.yaml</code> (the <code>command</code> to start it + <code>env</code> vars, including <code>valueFrom</code> resource references).</li>
+        <li><strong>Resources + a service principal.</strong> Declare the serving endpoint as a resource with <strong>Can Query</strong>; the app runs as its own service principal and the SDK's <code>Config()</code> reads the auto-injected creds. No PAT, no secret in code.</li>
+        <li><strong>The UI is thin.</strong> It calls the agent endpoint with an OpenAI-compatible client (<code>client.chat.completions.create(model=ENDPOINT, ...)</code>) or a REST <code>POST /invocations</code>. The agent does the work.</li>
+        <li><strong>Ship with the CLI:</strong> <code>databricks apps create</code> → upload source → <code>databricks apps deploy</code>. <code>databricks apps get</code> returns the URL; share with <code>CAN USE</code>.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>The files, the ship order, and the two surfaces</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Flow</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The pieces</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Walkthrough</button>
+        <button role="tab" aria-selected="false" aria-controls="p-compare" id="t-compare" onclick="tab(this,'p-compare')">App vs Review App</button>
+        <button role="tab" aria-selected="false" aria-controls="p-res" id="t-res" onclick="tab(this,'p-res')">Query patterns</button>
+      </div>
+
+      <!-- PANE A: flow mermaid — mirrors databricks-apps.md diagram 1 -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — source → deploy → app (SP + endpoint resource) → query → user">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">You ship a small source directory; the platform runs it as a scoped identity and hands you a URL. The app is a thin UI over the endpoint you already deployed.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the pieces -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — What you build and how it runs">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select an item</div><h3>Files, identity, and CLI</h3><p>Click one to see what it does and where it bites.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: stepper walkthrough of the ship -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE D: App vs Review App -->
+      <div id="p-compare" class="pane" role="tabpanel" aria-labelledby="t-compare" hidden>
+        <table>
+          <thead><tr><th>Dimension</th><th>Review App (agents.deploy)</th><th>Databricks App</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Audience</td><td>SMEs / reviewers during evaluation</td><td>End users (support team, customers)</td></tr>
+            <tr><td class="k">Purpose</td><td>Grade answers: thumbs, comments, feedback loop</td><td>A branded, production chat experience</td></tr>
+            <tr><td class="k">You write</td><td>Nothing — auto-created by agents.deploy()</td><td>app.py + app.yaml (your UI + config)</td></tr>
+            <tr><td class="k">Look</td><td>Databricks-branded review UI</td><td>Your branding, layout, and flow</td></tr>
+            <tr><td class="k">Backend</td><td>The deployed agent serving endpoint</td><td>The SAME serving endpoint</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Review App = review quality during eval. Databricks App = the product for real users. "Export to Databricks Apps" in the AI Playground (10.1) scaffolds the App for you. Deep dive on app auth is 11.9.</p>
+      </div>
+
+      <!-- PANE E: query patterns -->
+      <div id="p-res" class="pane" role="tabpanel" aria-labelledby="t-res" hidden>
+        <table>
+          <thead><tr><th>Pattern</th><th>Code shape</th><th>When</th></tr></thead>
+          <tbody>
+            <tr><td class="k">OpenAI-compatible client</td><td>WorkspaceClient().serving_endpoints.get_open_ai_client() → client.chat.completions.create(model=ENDPOINT, messages=[...])</td><td>Chat agents; cleanest for message history</td></tr>
+            <tr><td class="k">REST /invocations</td><td>POST https://&lt;host&gt;/serving-endpoints/&lt;name&gt;/invocations with Config().authenticate() headers</td><td>Dependency-light; custom / Responses schema</td></tr>
+            <tr><td class="k">Auth</td><td>SDK Config() reads injected DATABRICKS_CLIENT_ID / _SECRET — no token in code</td><td>Always (app service principal)</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">The endpoint name comes from valueFrom: serving-endpoint (declared resource) — not hardcoded. Confirm the exact SDK OpenAI-client helper name against current docs.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="how">
+      <div class="entry-head"><span class="num">03 · How it works</span><h2>Scoped identity, declared resources, one thin UI</h2></div>
+      <p>The platform runs your directory as a service principal and injects scoped credentials. You declare the endpoint as a resource, reference it with <code>valueFrom</code>, and call it from <code>app.py</code>. Pick the deployment surface by audience.</p>
+      <div class="plate" data-fig="Fig. 02 — when to use an App vs the agent Review App">
+        <div class="mermaid" id="mermaidGraph2"></div>
+        <div class="plate-cap">The Review App is for reviewing quality during eval; the Databricks App is the product. They can point at the same endpoint.</div>
+      </div>
+      <ul>
+        <li><strong>The directory.</strong> <code>app.py</code> + <code>app.yaml</code> (+ <code>requirements.txt</code> for extras). Runtime is Python 3.11, ~2 vCPU / 6 GB, with Streamlit/Dash/Gradio/Flask/FastAPI pre-installed. Bind <code>DATABRICKS_APP_PORT</code> (default 8000); never 8080.</li>
+        <li><strong>app.yaml.</strong> <code>command</code> (e.g. <code>["streamlit","run","app.py"]</code>) plus <code>env</code> entries that are literal <code>value</code>s or <code>valueFrom</code> resource references — so no IDs or secrets in the repo.</li>
+        <li><strong>Resources + SP.</strong> Attach the serving endpoint as a resource with <strong>Can Query</strong>. The app runs as its own service principal; <code>DATABRICKS_CLIENT_ID</code>/<code>_SECRET</code> are auto-injected and the SDK <code>Config()</code> uses them.</li>
+        <li><strong>Per-user governance (optional).</strong> Turn on user auth and read <code>x-forwarded-access-token</code> so queries respect the signed-in user's Unity Catalog permissions. That trade-off is 11.9.</li>
+        <li><strong>Query the endpoint.</strong> OpenAI-compatible client or REST <code>/invocations</code>. The LLM work stays on the endpoint; the app stays thin.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="dothis">
+      <div class="entry-head"><span class="num">04 · Run this</span><h2>Build app.py + app.yaml, then deploy</h2></div>
+      <p><strong>Prereqs:</strong> a deployed agent/chain serving endpoint (Module 09 <code>agents.deploy("unity_airways.rag.ua_support_agent", version)</code>, a Module 05 chain, or a 10.2 Knowledge Assistant); the <code>databricks</code> CLI (v0.294.0+); rights to create an app and grant it <strong>Can Query</strong> on the endpoint.</p>
+      <p><strong>1. app.py</strong> — a Streamlit chat UI that queries the agent endpoint:</p>
+      <pre><code>import os
+import streamlit as st
+from databricks.sdk import WorkspaceClient
+
+st.set_page_config(page_title="Unity Airways Support", layout="centered")  # must be first
+
+# Injected from app.yaml (valueFrom: serving-endpoint) — the name of the endpoint
+# that agents.deploy() created for unity_airways.rag.ua_support_agent.
+ENDPOINT = os.environ["SERVING_ENDPOINT"]
+
+@st.cache_resource                      # one client across reruns
+def get_client():
+    # WorkspaceClient() auto-detects the app SP creds via SDK Config().
+    # get_open_ai_client() returns an OpenAI-compatible client on /serving-endpoints.
+    return WorkspaceClient().serving_endpoints.get_open_ai_client()
+
+client = get_client()
+st.title("Unity Airways — Support Assistant")
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+for m in st.session_state.messages:
+    with st.chat_message(m["role"]):
+        st.markdown(m["content"])
+
+if prompt := st.chat_input("Ask about a flight, refund, or baggage rule…"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+    with st.chat_message("assistant"):
+        resp = client.chat.completions.create(
+            model=ENDPOINT, messages=st.session_state.messages,
+        )
+        answer = resp.choices[0].message.content
+        st.markdown(answer)
+    st.session_state.messages.append({"role": "assistant", "content": answer})</code></pre>
+      <p><strong>2. app.yaml</strong> — start command + the endpoint injected via <code>valueFrom</code> (no hardcoded ID):</p>
+      <pre><code>command:
+  - "streamlit"
+  - "run"
+  - "app.py"
+
+env:
+  - name: SERVING_ENDPOINT
+    valueFrom: serving-endpoint</code></pre>
+      <p><strong>3. requirements.txt</strong> — only the extras (frameworks are pre-installed):</p>
+      <pre><code>databricks-sdk
+openai</code></pre>
+      <p><strong>4. Create, upload, deploy</strong> with the <code>databricks apps</code> CLI:</p>
+      <pre><code># name: &lt;=26 chars, lowercase letters/numbers/hyphens, no underscores
+databricks apps create ua-support-chat
+
+databricks workspace mkdirs /Workspace/Users/me@unity.com/apps/ua-support-chat
+databricks workspace import-dir . /Workspace/Users/me@unity.com/apps/ua-support-chat
+
+databricks apps deploy ua-support-chat \
+  --source-code-path /Workspace/Users/me@unity.com/apps/ua-support-chat</code></pre>
+      <p><strong>5. Add the endpoint resource, then verify</strong> — in the UI (Configure → + Add resource → serving endpoint → <strong>Can Query</strong>), redeploy so <code>valueFrom</code> resolves:</p>
+      <pre><code>databricks apps get ua-support-chat    # app_status.state: RUNNING + the app URL
+databricks apps logs ua-support-chat   # [SYSTEM]/[APP] lines; "App started successfully"
+# Share: grant CAN USE to the support group, CAN MANAGE to developers.</code></pre>
+      <p><strong>Alternative query pattern</strong> — dependency-light REST call (or when your agent uses the Responses schema):</p>
+      <pre><code>import os, requests
+from databricks.sdk.core import Config
+
+cfg = Config()                                  # picks up the app SP credentials
+
+def ask_agent(messages):
+    headers = cfg.authenticate()                # adds the Authorization bearer header
+    headers["Content-Type"] = "application/json"
+    endpoint = os.environ["SERVING_ENDPOINT"]
+    r = requests.post(
+        f"https://{cfg.host}/serving-endpoints/{endpoint}/invocations",
+        headers=headers, json={"messages": messages}, timeout=120,
+    )
+    r.raise_for_status()
+    return r.json()</code></pre>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>A Databricks App is just <strong>a source directory (<code>app.py</code> + <code>app.yaml</code>) that the platform runs as a scoped service principal</strong>. The two rules that keep it safe and portable: <strong>declare the serving endpoint as a resource</strong> (permission <strong>Can Query</strong>) and <strong>reference it with <code>valueFrom</code></strong> — never a hardcoded ID or token. The app is a thin UI; the agent endpoint does the work.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Start from the <strong>AI Playground → "Export to Databricks Apps"</strong> (10.1) to get an <code>app.py</code> + <code>app.yaml</code> already wired to your endpoint, then customize. Iterate with <code>databricks apps run-local</code> before you deploy, and watch <code>databricks apps logs</code> on first boot — the "App started successfully" line is your green light. Keep the app at <code>CAN USE</code> for the team, <code>CAN MANAGE</code> for yourself.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span><code>databricks apps logs</code> needs OAuth auth (not a PAT) — use <code>databricks apps get</code> for status if you used a token. The endpoint name from <code>agents.deploy()</code> is auto-generated (commonly <code>agents_&lt;catalog&gt;-&lt;schema&gt;-&lt;model&gt;</code>, e.g. <code>agents_unity_airways-rag-ua_support_agent</code>) — <strong>read it from the deploy output</strong>, don't guess. The SDK helper <code>get_open_ai_client()</code> and the exact <code>serving-endpoint</code> resource key are grounded in the databricks-apps skills + docs; the doc pages are JS-rendered, so treat the precise strings as <strong>live re-check pending</strong> and confirm against current docs before asserting to a customer.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>What are the two files that define a Databricks App, and what does each do? Which <code>app.yaml</code> key injects a resource without hardcoding its ID?</li>
+          <li>What identity does an app run as, and how does it get credentials to call the endpoint with no secret in code? What permission does the app SP need on the endpoint?</li>
+          <li>Give the three <code>databricks apps</code> CLI steps to ship the app, and say where the URL comes from and how you share it.</li>
+          <li>Write the core of the chat UI: how does <code>app.py</code> read input, call the endpoint, and render the reply? Name one client option.</li>
+          <li>When do you use the <code>agents.deploy()</code> Review App vs a Databricks App? What do they share?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>🧰 <strong>databricks-apps skill</strong> (<code>~/.agents/skills/databricks-apps/SKILL.md</code>): app name rules (≤26 chars, lowercase/hyphens), scaffold/validate/deploy flow, post-deploy verification (<code>databricks apps get</code>, <code>databricks apps logs</code>), Other-Frameworks path for Streamlit/Flask/etc. The Analytics-vs-Lakebase Data Access Decision Gate is skipped here — a pure endpoint-query chat app reads no Unity Catalog tables directly.</li>
+        <li>🧰 <strong>databricks-apps-python skill</strong>: <code>1-authorization.md</code> (service-principal auth via <code>Config()</code>, injected <code>DATABRICKS_CLIENT_ID</code>/<code>_SECRET</code>, on-behalf-of-user <code>x-forwarded-access-token</code>, OAuth scopes); <code>2-app-resources.md</code> (resource types incl. <strong>serving-endpoint</strong> with <strong>Can Query</strong>, <code>valueFrom</code>, REST <code>POST /serving-endpoints/&lt;name&gt;/invocations</code>); <code>3-frameworks.md</code> / <code>4-deployment.md</code> (Streamlit command, <code>app.yaml</code> <code>command</code>+<code>env</code>, <code>databricks apps create</code>/<code>deploy --source-code-path</code>, <code>DATABRICKS_APP_PORT</code>, Python 3.11 runtime, pre-installed frameworks); <code>examples/llm_config.py</code> (OpenAI-compatible client on <code>/serving-endpoints</code>).</li>
+        <li>🧭 Naming cross-check: <code>references/naming-conventions.md</code> §2 — <code>agents.deploy()</code> creates a Serving endpoint + <strong>Review App</strong> + feedback model, and "for new use cases, <strong>Databricks Apps</strong> deployment is increasingly recommended"; AI Playground "<strong>Export to Databricks Apps</strong>"; served model <code>databricks-claude-sonnet-4-5</code>.</li>
+        <li>🌐 Databricks Docs — Databricks Apps: get-started, app-development, resources, auth, app.yaml/runtime. <em>Verified live (July 2026):</em> the get-started page mentions <code>app.yaml</code>, <code>databricks apps create</code>, <code>databricks apps deploy</code>, <code>databricks apps run</code>, and "service principal". The <code>databricks</code> CLI (v0.298.0) confirms <code>apps create NAME</code>, <code>apps deploy [APP_NAME] --source-code-path</code>, and <code>apps get/logs/start/stop/list/run-local</code>. Resource-page strings are JS-rendered — the exact <code>serving-endpoint</code> key and the SDK OpenAI-client helper are grounded on the skills above; treat as <strong>live re-check pending</strong>.</li>
+        <li>📗 B2 — <em>Databricks Certified GenAI Engineer Associate Study Guide</em> (deployment/productionization): serving endpoints as the interface to a deployed agent; delivering the application to end users.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Topic 10.5 ★</span>
+  <span>Grounded in databricks-apps skills · CLI v0.298.0 · docs + naming cheat-sheet</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"The app you ship",spine:false,comps:[
+   ["app.py","the chat UI","A Streamlit app that captures the user message, calls the agent serving endpoint, and renders the reply. Thin by design — the LLM work stays on the endpoint. st.set_page_config() must be the FIRST Streamlit call; cache the client with @st.cache_resource.","Streamlit pre-installed on Python 3.11"],
+   ["app.yaml","the manifest","Two keys matter: command (argv list, e.g. ['streamlit','run','app.py']) and env. Use valueFrom to bind an env var to a declared resource — so no endpoint ID or secret lives in the repo.","command + env (value | valueFrom)"],
+   ["requirements.txt","extras only","Frameworks (Streamlit/Dash/Gradio/Flask/FastAPI) are pre-installed — don't list them. Add only extras: databricks-sdk, openai. Bind DATABRICKS_APP_PORT (default 8000); never 8080.","psycopg2/asyncpg are NOT pre-installed"],
+   ["serving-endpoint resource","the governed handle","Declare the agent's serving endpoint as a resource with permission Can Query. The platform injects scoped creds the SDK reads. valueFrom: serving-endpoint resolves the name at runtime.","Can Query = minimal permission for a chat app"],
+ ]},
+ {name:"How it runs and ships",spine:true,comps:[
+   ["service principal","the app's identity","Each app runs as its own SP — not you, not your permissions. DATABRICKS_CLIENT_ID/SECRET are auto-injected; SDK Config() finds them with no code. Grant the SP only what it needs.","No PAT, no standing credential in code"],
+   ["query the endpoint","OpenAI or REST","WorkspaceClient().serving_endpoints.get_open_ai_client() → client.chat.completions.create(model=ENDPOINT, messages=...). Or REST POST /serving-endpoints/&lt;name&gt;/invocations. (Confirm the helper name in current docs.)","model = the agent endpoint name"],
+   ["databricks apps create / deploy","ship it","create the app, workspace import-dir the source, then apps deploy --source-code-path. apps get returns the URL and RUNNING state; apps logs streams boot output.","CLI v0.294.0+ (verified v0.298.0)"],
+   ["App vs Review App","pick the surface","Review App (from agents.deploy()) = SMEs grading answers during eval. Databricks App = branded product for end users. Same endpoint underneath. 'Export to Databricks Apps' (AI Playground) scaffolds the App.","Review = eval · App = product"],
+ ]},
+];
+const STEPS=[
+  ["Write app.py (the chat UI)","Streamlit: read st.chat_input, call the endpoint, render st.chat_message, keep st.session_state.messages. st.set_page_config() first; @st.cache_resource for the client."],
+  ["Write app.yaml","command: ['streamlit','run','app.py']; env: SERVING_ENDPOINT valueFrom serving-endpoint. No endpoint ID or secret in the repo."],
+  ["List extra deps","requirements.txt: databricks-sdk, openai. Frameworks are pre-installed — don't relist them."],
+  ["Create the app","databricks apps create ua-support-chat. Name <=26 chars, lowercase letters/numbers/hyphens, no underscores."],
+  ["Upload the source","databricks workspace import-dir . /Workspace/Users/&lt;you&gt;/apps/ua-support-chat (SDK upload auto-excludes node_modules/.venv)."],
+  ["Deploy","databricks apps deploy ua-support-chat --source-code-path /Workspace/.../ua-support-chat. It starts as the app service principal."],
+  ["Add the endpoint resource","UI: Configure → + Add resource → serving endpoint → Can Query. Redeploy so valueFrom resolves."],
+  ["Get URL, share, verify","databricks apps get (state RUNNING + url); databricks apps logs ('App started successfully'). Grant CAN USE to the team, CAN MANAGE to devs."],
+];
+const MERMAID_SRC=`flowchart TB
+  subgraph SRC["1 · App source directory"]
+    py["app.py — Streamlit chat UI"]
+    yml["app.yaml — command + env (valueFrom)"]
+    req["requirements.txt — databricks-sdk, openai"]
+  end
+  subgraph CLI["2 · databricks apps CLI"]
+    cr["databricks apps create ua-support-chat"]
+    up["workspace import-dir (upload source)"]
+    dp["databricks apps deploy --source-code-path ..."]
+  end
+  SRC --> cr --> up --> dp
+  subgraph RUN["3 · Running App on Databricks Apps"]
+    sp["Runs as a service principal"]
+    rs["serving-endpoint resource, Can Query<br/>scoped creds injected, no secrets in code"]
+  end
+  dp --> RUN
+  RUN --> ep["4 · Queries the deployed agent endpoint<br/>OpenAI-compatible client or POST /invocations"]
+  ep --> u["5 · User chats in the browser (App URL + SSO)"]
+  u -. next question .-> RUN`;
+const MERMAID_SRC2=`flowchart TD
+  q{"Who is the audience,<br/>and what for?"}
+  q -->|"SMEs grade answers during eval<br/>(thumbs, comments, no UI code)"| ra["Review App<br/>auto-created by agents.deploy()"]
+  q -->|"end users need a real product UX<br/>(branding, custom flow, your own UI)"| app["Databricks App<br/>you write app.py + app.yaml"]
+  ra --> shared["Both talk to the SAME<br/>deployed agent serving endpoint"]
+  app --> shared`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

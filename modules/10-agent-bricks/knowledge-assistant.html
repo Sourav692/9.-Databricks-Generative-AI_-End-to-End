@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Topic 10.2 (cornerstone): Knowledge Assistant (Agent Bricks) — a cited Q&A chatbot, no code.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Knowledge Assistant · Databricks GenAI Tutor 10.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbox pre{margin:8px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI</a>
+    <span class="loc">Module 10 · Topic 10.2 ★</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_10.2 · Cornerstone · v1.0</span><span>Verified against naming cheat-sheet §2 · databricks-agent-bricks skill</span></div>
+    <div class="filed">Module 10 — Agent Bricks · Topic 10.2 · Theory + Hands-on ★</div>
+    <h1>Knowledge Assistant</h1>
+    <p class="dek">In Modules 04–05 you hand-built a cited RAG bot. Here you point Databricks at your documents and it stands up the same thing — retrieval, a quality loop, and citations, all managed — from the console, with no agent code. <em>Same outcome, a fraction of the build.</em></p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>A managed, cited Q&amp;A chatbot over your docs — no code</h2></div>
+      <p class="lead">Most "answer questions over our documents" requests don't need anything bespoke. They need retrieval, a grounding prompt, citations, and a quality signal. A Knowledge Assistant gives you all four from the console — you supply the documents and a few settings.</p>
+      <ul>
+        <li><strong>Knowledge Assistant (Agent Bricks)</strong> — a managed, cited Q&amp;A chatbot over your documents. Build it in the console: attach a knowledge source, name it, describe it, click create. <strong>No agent code. GA (Jan 2026).</strong></li>
+        <li><strong>Knowledge source = one or both:</strong> a <strong>UC Volume folder</strong> of documents (PDF / TXT / MD), or an existing <strong>AI Search index</strong> — reuse your Module 04 <code>unity_airways.rag.ua_rag_chunks_index</code>.</li>
+        <li><strong>Databricks manages the hard parts:</strong> chunking + indexing (when the source is a Volume), retrieval, generation, a <strong>judge-backed quality loop</strong>, guardrails, and <strong>inline citations</strong> back to the source document.</li>
+        <li><strong>Same outcome as the hand-coded RAG chain (Module 05), far less code.</strong> You trade fine control over chunking/retriever/prompt for speed and a managed quality loop.</li>
+        <li><strong>Consume it</strong> via the serving <strong>endpoint</strong> it creates, the built-in tile chat, or <strong>Export to a Databricks App</strong> — the hand-off to Topic 10.5.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>The flow, the pieces, the build order</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Flow</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The pieces</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Build steps</button>
+        <button role="tab" aria-selected="false" aria-controls="p-compare" id="t-compare" onclick="tab(this,'p-compare')">Low-code vs custom</button>
+        <button role="tab" aria-selected="false" aria-controls="p-res" id="t-res" onclick="tab(this,'p-res')">Consume it</button>
+      </div>
+
+      <!-- PANE A: flow mermaid — mirrors knowledge-assistant.md diagram 1 -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — knowledge source → Knowledge Assistant → endpoint/app → user">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">You supply the documents and a few settings; Databricks runs retrieval, generation, the quality loop, and citations, then serves the result on an endpoint.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the pieces -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — What you set vs what Databricks manages">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select an item</div><h3>Inputs and managed parts</h3><p>Click one to see what it does and where it bites.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: stepper walkthrough of the console build -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE D: low-code vs custom -->
+      <div id="p-compare" class="pane" role="tabpanel" aria-labelledby="t-compare" hidden>
+        <table>
+          <thead><tr><th>Dimension</th><th>Knowledge Assistant (low-code)</th><th>Hand-coded RAG + ResponsesAgent</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Build effort</td><td>console form, no agent code</td><td>chunking, retriever, prompt, eval — all by hand</td></tr>
+            <tr><td class="k">Chunking / retriever</td><td>managed; not tunable</td><td>full control (Module 04–05)</td></tr>
+            <tr><td class="k">Quality loop</td><td>built-in judge-backed loop</td><td>you build it (mlflow.genai, Module 07)</td></tr>
+            <tr><td class="k">Tools / orchestration</td><td>doc Q&amp;A only</td><td>tools (09.3), multi-step planning</td></tr>
+            <tr><td class="k">Choose it when</td><td>standard cited doc Q&amp;A, fast</td><td>bespoke retrieval, tools, custom flow</td></tr>
+            <tr><td class="k">Outcome</td><td colspan="2">both reach a governed, cited Q&amp;A serving endpoint</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Both roads reach the same governed, cited endpoint. Pick low-code for standard document Q&amp;A; pick custom when you need control the console does not expose.</p>
+      </div>
+
+      <!-- PANE E: how to consume it -->
+      <div id="p-res" class="pane" role="tabpanel" aria-labelledby="t-res" hidden>
+        <table>
+          <thead><tr><th>Path</th><th>How</th><th>Use it for</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Tile chat</td><td>built-in chat in the KA tile</td><td>testing + quick demos; see citations live</td></tr>
+            <tr><td class="k">Serving endpoint</td><td>query <code>ka-...-endpoint</code> like any Model Serving endpoint (SDK / REST)</td><td>wiring into apps and clients</td></tr>
+            <tr><td class="k">Databricks App</td><td>Export to Databricks Apps (one click)</td><td>shareable branded chat UI → Topic 10.5</td></tr>
+            <tr><td class="k">Supervisor Agent</td><td>register the KA as one routed agent</td><td>multi-agent orchestration → Topic 10.3</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Endpoint name pattern and payload schema change between releases and the docs pages are JS-rendered — confirm the exact name and request/response shape in the console's Query/Use panel.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="how">
+      <div class="entry-head"><span class="num">03 · How it works</span><h2>Pick a source, and Databricks manages the rest</h2></div>
+      <p>Point the assistant at a UC Volume folder or an AI Search index, add a description, instructions, and sample questions — then Databricks handles retrieval, generation, the quality loop, and citations. The decision that matters is when this is enough versus when you need the custom chain.</p>
+      <div class="plate" data-fig="Fig. 02 — low-code vs custom: the decision you actually make">
+        <div class="mermaid" id="mermaidGraph2"></div>
+        <div class="plate-cap">Both roads reach a governed, cited Q&amp;A endpoint. Low-code for standard doc Q&amp;A; custom when you need control the console doesn't expose.</div>
+      </div>
+      <ul>
+        <li><strong>Knowledge source.</strong> A <strong>UC Volume folder</strong> (Databricks chunks + indexes for you) or an existing <strong>AI Search index</strong> (retrieves against what you already built). Attach one or both. Both are Unity Catalog objects, so your grants carry over.</li>
+        <li><strong>Managed retrieval + generation.</strong> At question time the KA fetches relevant chunks and generates a grounded answer with a managed foundation model. You don't write or tune the retriever or the prompt.</li>
+        <li><strong>Judge-backed quality loop.</strong> An LLM-as-judge scores answers — the same idea you formalize in Module 07 with <code>mlflow.genai</code>. Your <strong>sample questions</strong> seed it.</li>
+        <li><strong>Citations.</strong> Every answer points back to the source document/chunk. This is the trust feature: a human can verify, and a wrong answer is traceable rather than a silent hallucination.</li>
+        <li><strong>What you give up.</strong> Chunk size, retriever <code>k</code>, embedding model, prompt internals, judge config — all managed. Need those? Drop to the hand-coded chain (Module 05) + <code>ResponsesAgent</code> (Module 09).</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="dothis">
+      <div class="entry-head"><span class="num">04 · Run this</span><h2>Build it in the console, then consume the endpoint</h2></div>
+      <p><strong>Prereqs:</strong> no cluster needed to author (it's console-driven), but you need a <strong>knowledge source in Unity Catalog</strong> — a Volume of documents <em>or</em> the AI Search index <code>unity_airways.rag.ua_rag_chunks_index</code> — and permission to create Agent Bricks. Provisioning uses serverless capacity.</p>
+      <p><strong>1–6. Console build (no code):</strong></p>
+      <pre><code># Console-driven — nav labels can shift between releases; confirm in the current console.
+1. Left nav → Agent Bricks → Knowledge Assistant → New
+2. Name        : Unity Airways Policy Assistant
+3. Description : Answers customer questions about refunds, baggage,
+                 cancellations, and travel policy.
+4. Instructions: Always cite the specific policy document.
+                 If the answer is not in the docs, say so plainly.
+                 Use short bullet points for multi-part answers.
+5. Knowledge source (pick one or both):
+     - UC Volume folder : /Volumes/unity_airways/rag/ua_policy_docs   (managed chunk + index)
+     - AI Search index  : unity_airways.rag.ua_rag_chunks_index       (reuse Module 04)
+6. (Optional) Sample questions — seed the quality loop, onboard users:
+     "What is the checked-bag allowance in Economy?"
+     "How do I rebook after a cancellation?"
+   → Create. Status moves PROVISIONING → ONLINE (a few minutes).</code></pre>
+      <p><strong>7. Consume the serving endpoint</strong> — standard Model Serving query pattern. Confirm the endpoint name and the exact request/response schema in the console before wiring a client:</p>
+      <pre><code>from databricks.sdk import WorkspaceClient
+
+w = WorkspaceClient()
+resp = w.serving_endpoints.query(
+    name="ka-&lt;your-ka-id&gt;-endpoint",          # exact name shown in the console
+    messages=[{"role": "user",
+               "content": "Can I get a refund on a Basic Economy fare?"}],
+)
+print(resp)   # answer text plus citation metadata (schema per the endpoint signature)</code></pre>
+      <p><strong>Or skip the code:</strong> use the built-in chat in the tile to test, then <strong>Export to Databricks Apps</strong> to embed the assistant in a shareable chat UI — that's Topic 10.5.</p>
+      <p><em>How to verify:</em> an answer in the tile cites a real source document, the status is ONLINE, and an endpoint query returns the same grounded, cited answer.</p>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>A Knowledge Assistant gives you the <strong>same outcome as a hand-coded RAG chain — grounded, cited answers on a governed endpoint — with essentially no code.</strong> The whole build is: pick a <strong>knowledge source</strong> (UC Volume folder <em>or</em> AI Search index), name it, describe it, add instructions and sample questions, create. Databricks manages chunking/indexing, retrieval, generation, the judge-backed quality loop, and citations. It is <strong>GA (Jan 2026)</strong>.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Your two highest-leverage inputs are the <strong>instructions</strong> and the <strong>sample questions</strong> — the only real levers you have, so spend your effort there ("always cite; say so if it's not in the docs"). Already built the Module 04 index? Attach it as the source instead of re-uploading files: you keep your chunking/embedding choices and still get the managed assistant on top.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Don't present exact console field labels, the endpoint name pattern (<code>ka-&lt;id&gt;-endpoint</code>), or the endpoint's request/response schema as fixed — Agent Bricks UI and endpoint signatures change between releases, and the docs pages are JS-rendered (a static fetch returns nothing). Confirm nav labels, the endpoint name, and the payload shape in the <strong>current console</strong> before wiring a client or asserting them to a customer. When doc Q&amp;A isn't enough (tools, multi-step planning), the KA is the wrong tool — reach for a custom <code>ResponsesAgent</code> (Module 09) or a Supervisor Agent (10.3).</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>What are the two valid knowledge-source types for a Knowledge Assistant, and when would you pick each? Which Module 04 object can you reuse?</li>
+          <li>List four things Databricks manages for you inside a Knowledge Assistant that you had to hand-build in Modules 03–05.</li>
+          <li>Which two console inputs give you the most control over answer quality, and why? What role do sample questions play?</li>
+          <li>Give two concrete signals that a customer should use a custom <code>ResponsesAgent</code> (Module 09) instead of a Knowledge Assistant.</li>
+          <li>Name three ways to consume a Knowledge Assistant once it is online, and say which one bridges to Topic 10.5.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>🧭 Naming cross-check: <code>references/naming-conventions.md</code> §2 — <strong>Agent Bricks → Knowledge Assistant: GA (Jan 2026)</strong>, "Cited Q&amp;A chatbot over a UC-volume folder or an AI Search index"; <strong>Supervisor Agent</strong> GA (Feb 2026) for the 10.3 bridge; <strong>AI Playground</strong> "Export to Databricks Apps" for the 10.5 bridge. §3 — knowledge source can be an <strong>AI Search index</strong> (SDK stays <code>databricks-vectorsearch</code>). §4 — reference served model <code>databricks-claude-sonnet-4-5</code>.</li>
+        <li>🛠️ Skill: <code>databricks-agent-bricks</code> (SKILL.md and <code>1-knowledge-assistants.md</code>) — KA is document-based cited Q&amp;A over a Volume; console inputs are name / description / instructions / knowledge source / sample questions; provisioning goes PROVISIONING → ONLINE; a KA exposes a serving endpoint (pattern <code>ka-&lt;id&gt;-endpoint</code>) and can be used inside a Supervisor Agent. Console field labels + endpoint name pattern: confirm in the current console.</li>
+        <li>🌐 Databricks Docs — "Agent Bricks: Knowledge Assistant" (<code>docs.databricks.com/aws/en/generative-ai/agent-bricks/knowledge-assistant</code>). Live fetch returned no static text (JS-rendered) — treat as <strong>live re-check pending</strong>; grounded on the naming cheat-sheet §2 + the <code>databricks-agent-bricks</code> skill.</li>
+        <li>🔗 Curriculum cross-refs: Modules 04–05 (the hand-coded index + RAG chain this replaces), Module 07 (<code>mlflow.genai</code> scorers/judges behind the quality loop), Module 09 (<code>ResponsesAgent</code>, the custom counterpart), Topic 10.1 (AI Playground), Topic 10.3 (Supervisor Agent), Topic 10.5 (Databricks Apps).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Topic 10.2 ★</span>
+  <span>Grounded in naming cheat-sheet §2 · databricks-agent-bricks skill · docs (re-check pending)</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"What you set (console inputs)",spine:false,comps:[
+   ["Name + Description","identity","A clear name (Unity Airways Policy Assistant) and a one-sentence description of what it answers. Spaces are typically sanitized to underscores. Confirm exact field labels in the current console.","You type it in the tile"],
+   ["Instructions","tone + rules","Free-text answering rules — the closest thing to a prompt you control. 'Always cite the specific policy; if it is not in the docs, say so; use bullets for multi-part answers.' One of your two real quality levers.","Highest-leverage input"],
+   ["Knowledge source","where answers live","A UC Volume folder of documents OR an existing AI Search index (reuse unity_airways.rag.ua_rag_chunks_index). Attach one or both. Both are UC objects, so grants carry over.","Volume → managed indexing; index → reuse Module 04"],
+   ["Sample questions","seed the loop","A handful of real questions. They seed the judge-backed quality loop and show users what to ask. Skipping them leaves the loop unseeded.","Your second quality lever"],
+ ]},
+ {name:"What Databricks manages",spine:true,comps:[
+   ["Chunk + index","managed prep","When the source is a Volume, Databricks parses, chunks, and indexes every file — the Module 03–04 work, done for you. Skipped when you attach an existing index.","No chunk size / embedding knobs"],
+   ["Retrieval + generation","managed answer","At question time it fetches relevant chunks and generates a grounded answer with a managed foundation model. You write no retriever and no prompt.","Model managed by Databricks"],
+   ["Judge-backed quality loop","managed eval","An LLM-as-judge scores answers (same idea as mlflow.genai in Module 07). Sample questions seed it. Improve quality by editing instructions + questions, not retriever internals.","You tune inputs, not internals"],
+   ["Citations + guardrails","trust + safety","Every answer links back to the source doc/chunk so a human can verify; guardrails + PII handling ride on AI Gateway. This is what makes a support bot trustworthy.","Auditable answers"],
+   ["Serving endpoint","managed deploy","Creating the KA stands up a governed Model Serving endpoint (pattern ka-...-endpoint). Apps, other agents, and REST clients call it. Export to a Databricks App in one click (10.5).","Confirm exact name in console"],
+ ]},
+];
+const STEPS=[
+  ["Prepare a knowledge source","Upload Unity Airways policy files to a UC Volume (e.g. /Volumes/unity_airways/rag/ua_policy_docs), OR reuse the Module 04 AI Search index unity_airways.rag.ua_rag_chunks_index. Verify: files list in Catalog Explorer, or the index shows online."],
+  ["Open Agent Bricks → Knowledge Assistant","Left nav → Agent Bricks → Knowledge Assistant → New. Confirm the exact nav path and tile label in the current console."],
+  ["Name, describe, instruct","Name it Unity Airways Policy Assistant; describe what it answers; add instructions that demand citations and honesty about gaps ('if it is not in the docs, say so')."],
+  ["Attach the knowledge source","Pick the UC Volume folder or the AI Search index. Add a second source if you have both. It appears in the assistant's configuration."],
+  ["(Optional) Add sample questions","A handful of real questions ('checked-bag allowance in Economy?', 'how do I rebook after a cancellation?'). They seed the quality loop and onboard users."],
+  ["Create and wait for ONLINE","Provisioning takes a few minutes; status moves PROVISIONING → ONLINE. Verify: the tile shows an online endpoint and the built-in chat responds."],
+  ["Test in the tile","Ask questions in the built-in chat; confirm answers carry citations to real source documents. This is your fastest demo surface."],
+  ["Consume: endpoint or app","Query the serving endpoint (WorkspaceClient().serving_endpoints.query on ka-...-endpoint) — confirm payload shape first — or Export to Databricks Apps (10.5). Or register the KA inside a Supervisor Agent (10.3)."],
+];
+const MERMAID_SRC=`flowchart LR
+  subgraph KS["Knowledge source — pick one or both"]
+    vol["UC Volume folder<br/>/Volumes/unity_airways/rag/ua_policy_docs<br/>PDF, TXT, MD"]
+    idx["AI Search index<br/>unity_airways.rag.ua_rag_chunks_index<br/>reuse Module 04"]
+  end
+  subgraph KA["Knowledge Assistant — Agent Bricks, GA (Jan 2026)"]
+    ing["Managed chunk plus index<br/>only when source is a Volume"]
+    ret["Managed retrieval"]
+    gen["Generate grounded answer<br/>managed foundation model"]
+    judge["Judge-backed quality loop"]
+    cite["Inline citations to source docs"]
+  end
+  ep["Model Serving endpoint<br/>ka-...-endpoint"]
+  app["Export to Databricks App / embed (10.5)"]
+  user["Unity Airways customer or support agent"]
+  vol --> ing --> ret
+  idx --> ret
+  ret --> gen --> cite --> ep
+  judge -.scores and improves.-> gen
+  ep --> app --> user
+  ep --> user`;
+const MERMAID_SRC2=`flowchart TD
+  q{"Cited Q and A over your documents?"}
+  q -->|"standard doc Q&A,<br/>want it fast, little or no code"| ka["Knowledge Assistant<br/>Agent Bricks console"]
+  q -->|"custom chunking or retrieval,<br/>extra tools, bespoke orchestration"| custom["Hand-coded RAG chain (Module 05)<br/>plus ResponsesAgent (Module 09)"]
+  ka --> same["Same outcome:<br/>grounded, cited answers on a governed serving endpoint"]
+  custom --> same
+  same --> next["Compose it: Supervisor Agent (10.3)<br/>or Export to Databricks App (10.5)"]`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

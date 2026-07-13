@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Capstone C1: Unity Airways Support RAG Knowledge Base (project brief).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+  Project brief structure (not a lesson): Scenario · Build · Prereqs · Architecture · Milestones · Deliverables · Rubric · Stretch · Cert.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Capstone C1 · Unity Airways Support RAG · Databricks GenAI Tutor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .mermaid{display:flex;justify-content:center;margin-top:16px;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top;font-size:.94rem}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2);white-space:nowrap}
+  .rubric td.lvl0{color:var(--muted)} .rubric td.lvl2{color:var(--ink)}
+  .tablewrap{overflow-x:auto}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.16rem;font-weight:600;margin:4px 0 4px}
+  .stepbox .maps{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+  .stepbox .accept{border-left:3px solid var(--ok);background:var(--ok-soft);padding:10px 14px;margin-top:14px;border-radius:0 6px 6px 0;font-size:.92rem}
+  .stepbox .accept b{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ok);display:block;margin-bottom:4px}
+  .stepbox pre{margin:12px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .checklist{list-style:none;padding:0;margin:8px 0 0}
+  .checklist li{margin:0;border:1px solid var(--rule);border-bottom:0;padding:0}
+  .checklist li:last-child{border-bottom:1px solid var(--rule)}
+  .checklist button{width:100%;text-align:left;display:flex;gap:12px;align-items:flex-start;background:var(--card);border:0;cursor:pointer;
+    padding:13px 15px;font-family:var(--serif-body);font-size:.98rem;color:var(--ink);transition:background .15s}
+  .checklist button:hover{background:var(--accent-soft)}
+  .checklist .box{font-family:var(--mono);font-size:.9rem;color:var(--faint);border:1px solid var(--rule);width:20px;height:20px;flex:none;
+    display:inline-flex;align-items:center;justify-content:center;margin-top:2px;border-radius:4px}
+  .checklist li.done button{color:var(--muted)}
+  .checklist li.done .box{background:var(--ok);border-color:var(--ok);color:#fff}
+  .checklist li.done .lab{text-decoration:line-through;text-decoration-color:var(--faint)}
+  .checklist .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-2);margin-left:auto;flex:none;padding-top:3px}
+  .progress-note{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin:12px 0 0}
+  .artgrid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:6px}
+  .artcard{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:14px 16px}
+  .artcard .an{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .artcard .ad{font-size:.94rem;color:var(--muted);margin-top:4px}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../modules/05-building-rag-chain/module.html">Databricks GenAI</a>
+    <span class="loc">Capstone C1 · Build after P1</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Capstone C1 · Project brief · v1.0</span><span>Integrates Modules 00–05 · 📗B2 Ch3/4/9 · 📘B1 Ch4</span></div>
+    <div class="filed">Capstone C1 — Unity Airways Support RAG Knowledge Base · Build after Level 2 / Module 05 · [Project]</div>
+    <h1>Support RAG Knowledge Base</h1>
+    <p class="dek">Turn a folder of airline policy documents into a governed, registered RAG chain that answers support questions <em>with citations</em>. Ingest → chunk → index → chain → register — the first capstone, and the one that creates the Unity Airways artifacts every later capstone extends.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+
+    <section class="entry" id="scenario">
+      <div class="entry-head"><span class="num">01 · Scenario</span><h2>A support desk drowning in policy PDFs</h2></div>
+      <p class="lead">Unity Airways' support agents field the same policy questions all day — refunds on Basic Economy, checked-bag fees, cancelled connections, booking changes. The answers all exist in official documents, but they are scattered across thousands of files, so agents burn minutes hunting for the exact clause.</p>
+      <p>The support lead wants a knowledge base an agent can ask in plain language and get back <strong>a grounded answer plus the document it came from</strong> — so the agent can verify it and paste the citation into the ticket.</p>
+      <p><strong>The business problem, precisely:</strong></p>
+      <ul>
+        <li>The corpus is real-world messy: typed policy PDFs, an FAQ dump, and image-only <strong>scanned refund forms</strong>.</li>
+        <li>Questions are worded nothing like the documents. "Can I rebook for free if my connection is cancelled?" must find a chunk that says <em>involuntary re-accommodation</em> and never uses the words "rebook" or "free".</li>
+        <li>A confident wrong answer is worse than none. Every response must be traceable to a source chunk, or an agent could relay a policy the airline doesn't have.</li>
+      </ul>
+      <p><strong>Success criteria — what "done" means for the business:</strong></p>
+      <ul>
+        <li>An agent asks in natural language and gets a correct, grounded answer in seconds.</li>
+        <li>Every answer names <strong>which source document</strong> backs it.</li>
+        <li>When a policy PDF changes, refreshing is <strong>incremental</strong> — re-index what changed, not the whole corpus.</li>
+        <li>The result is a <strong>governed, registered UC model</strong>, not a notebook someone re-runs by hand.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Important</span>"Answers with citations" is the acceptance bar, not a nice-to-have. A chain that returns fluent text with no traceable source has failed this capstone even if the prose reads well. Groundedness and the source reference are what make it usable at a support desk.</div>
+    </section>
+
+    <section class="entry" id="build">
+      <div class="entry-head"><span class="num">02 · What you'll build</span><h2>One spine, three named artifacts</h2></div>
+      <p><strong>Objective:</strong> turn a folder of Unity Airways documents into a queryable, registered RAG chain — end to end, on Databricks, with governance and versioning baked in. The concrete target in one line: an <strong>ingestion pipeline → AI Search index → a registered, queryable RAG chain that answers policy questions with citations</strong>.</p>
+      <div class="artgrid">
+        <div class="artcard"><span class="an">unity_airways.rag.ua_rag_chunks</span><div class="ad">Governed Delta chunk table — one clean, self-contained row per chunk, with metadata and Change Data Feed on. Built in M2 (Module 03.6).</div></div>
+        <div class="artcard"><span class="an">unity_airways.rag.ua_rag_chunks_index</span><div class="ad">Delta Sync Index with managed embeddings from <code>databricks-gte-large-en</code>, on a Standard endpoint. Built in M3 (Module 04.3).</div></div>
+        <div class="artcard"><span class="an">unity_airways.rag.ua_rag_chain</span><div class="ad">Registered UC model — the LCEL chain over <code>databricks-claude-sonnet-4-5</code>, logged as Models-from-Code and versioned as a LoggedModel. Built in M4–M5 (Module 05).</div></div>
+      </div>
+      <p><strong>One design choice worth naming up front:</strong> the chain's prompt is not a string baked into the code. You <strong>author it once and register it</strong> in the MLflow Prompt Registry (Module 02.5, <strong>Beta</strong>) as <code>unity_airways.rag.ua_rag_prompt</code>, then the chain <strong>loads it by URI</strong> — so the prompt is a governed, versioned Unity Catalog artifact from day one. Here you author v1; C2 versions and evaluates it later.</p>
+      <div class="note tip"><span class="tag">💡 Tip</span>Build in milestone order. Each output feeds the next — the table feeds the index, the index feeds the retriever, the retriever feeds the chain, the chain gets logged and registered. Building the index before Change Data Feed is on the table is the fastest way to a mid-build stall.</div>
+    </section>
+
+    <section class="entry" id="prereqs">
+      <div class="entry-head"><span class="num">03 · Prerequisites</span><h2>What must be true before you start</h2></div>
+      <ul>
+        <li><strong>Modules 00–05 ✅:</strong> UC/Volumes/Delta + the Unity Airways use case (00); embeddings (01.3); prompt engineering + Prompt Registry (02, incl. 02.5); parsing &amp; chunking (03); embeddings &amp; AI Search (04); the RAG chain + packaging (05).</li>
+        <li><strong>Workspace:</strong> Unity Catalog enabled; rights to create a schema, UC Volume, tables, a Vector Search index, and a UC model in <code>unity_airways.rag</code>.</li>
+        <li><strong>Compute:</strong> serverless or a recent DBR-ML runtime. <code>ai_parse_document</code> needs a recent DBR/serverless (docs disagree: DBR 17.3+ on the function reference vs 18.2+/serverless v3+ on the overview — verify in-workspace). Not a Classic/Pro SQL warehouse.</li>
+        <li><strong>MLflow ≥ 3.1</strong> (Models-from-Code, <code>set_active_model</code>/LoggedModel).</li>
+        <li><strong>MLflow Prompt Registry (Beta):</strong> <code>mlflow[databricks]&gt;=3.1.0</code>, a UC schema (<code>unity_airways.rag</code>) where you hold <code>CREATE FUNCTION</code> + <code>EXECUTE</code> + <code>MANAGE</code>, and the feature enabled on the workspace <strong>Previews</strong> page — used to register and load the chain's prompt (02.5).</li>
+        <li><strong>FM endpoints:</strong> <code>databricks-gte-large-en</code> (embeddings) and <code>databricks-claude-sonnet-4-5</code> (chat) — confirm names on the supported-models page; they churn.</li>
+        <li><strong>Packages:</strong> <code>databricks-vectorsearch</code> (the <code>VectorSearchClient</code> SDK), <code>databricks-langchain</code> (<code>ChatDatabricks</code>, <code>DatabricksVectorSearch</code>, <code>DatabricksEmbeddings</code>), and <code>mlflow</code>.</li>
+      </ul>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>The package is <code>databricks-vectorsearch</code> even though the product is now <strong>Databricks AI Search</strong> — there is no <code>databricks-ai-search</code> package and no <code>AISearchClient</code>. And the LangChain integration is <code>databricks-langchain</code>, not <code>langchain-databricks</code> or <code>langchain_community</code>. Import errors from getting these wrong are the two most common build-blockers.</div>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">04 · Explore the brief</span><h2>Scenario, architecture, milestones, rubric</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-scn" id="t-scn" onclick="tab(this,'p-scn')">Scenario</button>
+        <button role="tab" aria-selected="false" aria-controls="p-arch" id="t-arch" onclick="tab(this,'p-arch')">Architecture</button>
+        <button role="tab" aria-selected="false" aria-controls="p-mile" id="t-mile" onclick="tab(this,'p-mile')">Milestones</button>
+        <button role="tab" aria-selected="false" aria-controls="p-rub" id="t-rub" onclick="tab(this,'p-rub')">Rubric</button>
+      </div>
+
+      <!-- PANE: Scenario recap + success criteria -->
+      <div id="p-scn" class="pane active" role="tabpanel" aria-labelledby="t-scn">
+        <div class="plate" data-fig="At a glance — the job to be done">
+          <p style="margin-top:0"><strong>Input:</strong> a UC Volume of Unity Airways policy PDFs, an FAQ export, and scanned refund forms.</p>
+          <p><strong>Output:</strong> a registered RAG chain that answers support questions in natural language, grounded in the docs, and names its source.</p>
+          <p style="margin-bottom:0"><strong>The hard part:</strong> questions don't share vocabulary with the documents, the source files are mixed-quality, and the answer has to be <em>traceable</em> — fluent-but-uncited fails.</p>
+        </div>
+      </div>
+
+      <!-- PANE: Architecture mermaid — mirrors the .md Fig C1 -->
+      <div id="p-arch" class="pane" role="tabpanel" aria-labelledby="t-arch" hidden>
+        <div class="plate" data-fig="Fig. C1 — ingest → chunk → index → chain → register">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Everything left of the RAG chain is Modules 03–04; the chain and its registration are Module 05. The dashed line is the incremental refresh — the Delta Sync index reads the table's Change Data Feed and re-embeds only changed rows.</div>
+        </div>
+        <div class="note imp"><span class="tag">📌 Important</span>The retriever the chain calls is the <em>exact</em> object Module 04 built — Module 05 does not re-create it. The one hand-off from "retrieval" to "application" is <code>DatabricksVectorSearch(...).as_retriever(...)</code>. Keep the endpoint name, index name, and returned <code>columns</code> identical on both sides or the chain retrieves nothing.</div>
+      </div>
+
+      <!-- PANE: Milestones stepper -->
+      <div id="p-mile" class="pane" role="tabpanel" aria-labelledby="t-mile" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <p class="progress-note">Five milestones, each mapping to specific module topics, each with an acceptance criterion you check before moving on. Track your build in the checklist under section 05.</p>
+      </div>
+
+      <!-- PANE: Rubric table -->
+      <div id="p-rub" class="pane" role="tabpanel" aria-labelledby="t-rub" hidden>
+        <div class="tablewrap">
+          <table class="rubric">
+            <thead><tr><th>Criterion</th><th>Not yet</th><th>Meets</th><th>Exceeds</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="k">Retrieval relevance</td>
+                <td class="lvl0">Semantic queries miss obviously relevant chunks; keyword-only matching</td>
+                <td>Top-k returns the correct chunk for paraphrased questions ("rebook for free" → re-accommodation)</td>
+                <td class="lvl2">Adds HYBRID and/or a reranker so the best chunk lands at rank 1; measured on a labeled set (precision/recall/MRR)</td>
+              </tr>
+              <tr>
+                <td class="k">Answer groundedness / citations</td>
+                <td class="lvl0">Fluent answers with no source, or unsupported by any retrieved chunk</td>
+                <td>Every demo answer is grounded in a retrieved chunk <b>and names the source document</b></td>
+                <td class="lvl2">Refuses/hedges when context is missing rather than hallucinating; citation names the specific source + chunk</td>
+              </tr>
+              <tr>
+                <td class="k">Chunking quality</td>
+                <td class="lvl0">Fixed-length splits break sentences; boilerplate pollutes chunks; whole docs embedded</td>
+                <td>Content-appropriate chunking (paragraph/sentence + overlap ~200 tokens); noise filtered; one idea per chunk</td>
+                <td class="lvl2">Tuned against retrieval metrics; scanned forms handled cleanly; metadata rich enough for filtered retrieval</td>
+              </tr>
+              <tr>
+                <td class="k">Runs from the registered model</td>
+                <td class="lvl0">Only runs in the notebook; not registered, or <code>load_model</code> fails / 401s</td>
+                <td><code>ua_rag_chain</code> registered; <code>load_model(...).invoke(...)</code> reproduces the answer with <code>signature</code> + <code>resources</code> present</td>
+                <td class="lvl2">Versioned LoggedModels with params; ready to serve; rollback-friendly aliasing considered</td>
+              </tr>
+              <tr>
+                <td class="k">Prompt registered &amp; loaded by URI</td>
+                <td class="lvl0">Prompt is an inline string literal in the chain code — no version, no governance</td>
+                <td>RAG prompt registered as <code>unity_airways.rag.ua_rag_prompt</code> (v1); chain loads it by URI (<code>prompts:/unity_airways.rag.ua_rag_prompt/1</code>), not a hardcoded string</td>
+                <td class="lvl2">Prompt carries commit message + tags, loaded by alias (<code>@champion</code>) for promotion — ready for C2 to version + evaluate</td>
+              </tr>
+              <tr>
+                <td class="k">Code reproducibility</td>
+                <td class="lvl0">Config hard-coded; artifacts on <code>/mnt/...</code>; no version linkage</td>
+                <td>Config in YAML (<code>ModelConfig</code>); UC-first tables/Volumes; Models-from-Code saves source, not a pickle</td>
+                <td class="lvl2">Version named by Git SHA; DBR + source Delta table version recorded; a fresh run rebuilds the same result</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">"Meets" is the pass bar. The two criteria that separate passing from excellent are <strong>groundedness/citations</strong> and <strong>reproducibility</strong> — a chain that answers well but can't be reloaded from the registry, or that cites nothing, is not production-ready.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="track">
+      <div class="entry-head"><span class="num">05 · Build tracker</span><h2>Check off each milestone as its acceptance criterion passes</h2></div>
+      <p>Click a milestone to mark it done. Open the <strong>Milestones</strong> tab above for the full detail and acceptance criterion of each.</p>
+      <ul class="checklist" id="checklist"></ul>
+      <p class="progress-note" id="checkcount"></p>
+    </section>
+
+    <section class="entry" id="deliverables">
+      <div class="entry-head"><span class="num">06 · Deliverables</span><h2>Three artifacts + a five-question demo</h2></div>
+      <p>Submit the three named artifacts (built across M2–M5) plus a short demo that proves the chain works:</p>
+      <ul>
+        <li><code>unity_airways.rag.ua_rag_chunks</code> — governed Delta chunk table (CDF on).</li>
+        <li><code>unity_airways.rag.ua_rag_chunks_index</code> — ONLINE Delta Sync index (managed embeddings).</li>
+        <li><code>unity_airways.rag.ua_rag_chain</code> — registered UC model, Models-from-Code, ≥ 1 LoggedModel version.</li>
+      </ul>
+      <p><strong>Demo — five representative policy questions answered by the registered chain, each with its source cited:</strong></p>
+      <ol>
+        <li>"Can I get a refund on a Basic Economy fare?"</li>
+        <li>"Can I rebook for free if my connection is cancelled?"</li>
+        <li>"What's the checked-bag fee?"</li>
+        <li>"How do I change an existing booking?"</li>
+        <li>"What happens if my flight is delayed overnight?"</li>
+      </ol>
+      <p>Each answer must be grounded in a retrieved chunk and name where it came from. An ungrounded or uncited answer fails the demo.</p>
+    </section>
+
+    <section class="entry" id="stretch">
+      <div class="entry-head"><span class="num">07 · Stretch goals</span><h2>Once the five milestones pass</h2></div>
+      <ul>
+        <li><strong>Hybrid search (04.8)</strong> — switch queries carrying booking codes, fare classes, or airport codes (<code>UA-8842</code>, fare <code>Q</code>, <code>SFO</code>) to <code>query_type="HYBRID"</code> so exact tokens match alongside semantic recall. ~2x ANN cost — use it selectively.</li>
+        <li><strong>Reranking (04.9)</strong> — retrieve a wider candidate set (top 25–50), run a cross-encoder over the (query, chunk) pairs, keep the top 5. Fixes "right chunk retrieved but ranked 4th."</li>
+        <li><strong>Lakeflow / SDP pipeline (03.9)</strong> — rebuild M1–M2 as a Lakeflow Declarative Pipeline: bronze (<code>FROM STREAM read_files(...)</code>), silver (<code>ai_parse_document</code> + chunk). Incremental, serverless, UC-governed.</li>
+        <li><strong>Metadata filters (04.4)</strong> — add <code>filters="source_doc = 'baggage_policy'"</code> so a baggage question can't retrieve fare-rules chunks. Match the filter syntax to the endpoint type.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="cert">
+      <div class="entry-head"><span class="num">08 · Cert mapping</span><h2>Which exam domains this exercises</h2></div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Exam domain</th><th>What this capstone exercises</th><th>Modules</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Domain 2 — Data prep for RAG</td><td>Parsing/extraction, chunking strategy + granularity, filtering, converting to Delta, embedding-model choice + context length, building/querying the index, evaluating retrieval</td><td>03, 04 (📗B2 Ch3, Ch9)</td></tr>
+            <tr><td class="k">Domain 3 — Building applications</td><td>LCEL chain components (prompt template, LLM wrapper, output parser, memory), <code>ChatDatabricks</code> / <code>DatabricksVectorSearch</code>, assembling retrieve → prompt → generate</td><td>05 (📗B2 Ch4)</td></tr>
+            <tr><td class="k">Domain 4 — Deploy &amp; integrate <em>(packaging half)</em></td><td>Signatures, dependent resources / auto-auth, Models-from-Code vs flavor logging, UC registration, LoggedModel versioning</td><td>05 (📘B1 Ch4); full serve = 11 + C3</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Track C mapping: <strong>C.3 (Domain 2 → Modules 03, 04)</strong> and <strong>C.4 (Domain 3 → Modules 05, 09)</strong>. C2 (eval/tracing) and C3 (deployment/governance) pick up the rest of Domain 4.</p>
+      <p>Registering the RAG prompt also exercises <strong>Module 02.5 (MLflow Prompt Registry)</strong> — governed, versioned prompts as Unity Catalog assets, the prompt-lifecycle thinking behind Domain 5 and the foundation C2 builds on to version and evaluate the prompt.</p>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">09 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Keep the canonical names: catalog <code>unity_airways</code>, schema <code>rag</code>, and the three artifacts <code>ua_rag_chunks</code> / <code>ua_rag_chunks_index</code> / <code>ua_rag_chain</code>. C2, C3, and C4 all extend these exact artifacts — renaming here breaks continuity down the track.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>The retriever is the seam between "we have a vector index" and "we have an app." When a served chain works in the notebook but 401s in production, the cause is almost always a missing <code>resources=[...]</code> at log time — declare every endpoint and index the chain touches so auto-auth passthrough can provision credentials.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Flavor-logging the chain <em>object</em> hits <code>Failed to save runnable sequence</code> because <code>VectorStoreRetriever</code> isn't natively serializable. Log the <code>.py</code> <em>path</em> with <code>mlflow.models.set_model(chain)</code> (Models-from-Code) — it saves source instead of a pickle and sidesteps serialization entirely. Re-verify the served-model names (<code>databricks-gte-large-en</code>, <code>databricks-claude-sonnet-4-5</code>) at build time; they churn.</div>
+    </section>
+
+    <section class="entry" id="notes">
+      <div class="entry-head"><span class="num">10 · Notes &amp; self-check</span><h2>📝 Notes</h2></div>
+      <p>Space for your own notes as you build — chunk-size decisions, which documents needed OCR, retrieval metrics you measured, any deviations from the canonical names.</p>
+      <details><summary>Reveal 5-question readiness self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Which milestone creates each of the three artifacts, and which module topic backs it?</li>
+          <li>Why must Change Data Feed be on <code>ua_rag_chunks</code> before you build the Delta Sync index?</li>
+          <li>A paraphrased question ("rebook for free") must retrieve a chunk that says "involuntary re-accommodation." Which module concept makes that work, and how would you confirm it in M3?</li>
+          <li>Your chain answers well in the notebook but 401s once served. What did you most likely omit, and where?</li>
+          <li>What does "grounded with citations" require of the prompt <em>and</em> the returned columns, and why does an uncited answer fail the rubric?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">11 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📄 <strong>Module 00</strong> — <em>Platform foundations</em> (<code>modules/00-platform-foundations/module.md</code>): Unity Catalog, Volumes, Delta, the Unity Airways running use case.</li>
+        <li>📄 <strong>Module 02</strong> — <em>Prompt engineering</em> (<code>modules/02-prompt-engineering/prompt-registry.md</code>): the MLflow Prompt Registry (02.5, <strong>Beta</strong>) — <code>register_prompt</code>/<code>load_prompt</code>, UC-identifier prompt names, version/alias URIs, and the <code>mlflow[databricks]&gt;=3.1.0</code> + UC-privilege prereqs.</li>
+        <li>📄 <strong>Module 03</strong> — <em>Data prep &amp; chunking</em> (<code>modules/03-data-prep-chunking/module.md</code>, <code>chunking-strategies.md</code>, <code>ai-parse-extract.md</code>): parsing (03.4/03.8), chunking (03.2/03.3), filtering (03.5), Delta chunk store (03.6), retrieval metrics (03.7), Lakeflow ingestion (03.9).</li>
+        <li>📄 <strong>Module 04</strong> — <em>Embeddings &amp; AI Search</em> (<code>modules/04-embeddings-ai-search/module.md</code>, <code>create-query-index.md</code>, <code>reranking.md</code>): embedding-model choice (04.2), Delta Sync index (04.3), metadata filters (04.4), retrievers (04.5), hybrid search (04.8), reranking (04.9).</li>
+        <li>📄 <strong>Module 05</strong> — <em>Building the RAG chain</em> (<code>modules/05-building-rag-chain/module.md</code>, <code>rag-chain.md</code>, <code>model-as-code.md</code>): LCEL chain (05.1–05.3), packaging &amp; resources (05.5), Models-from-Code (05.6), LoggedModel versioning (05.7).</li>
+        <li>🧭 Naming cross-check — <code>.claude/skills/genai-teacher/references/naming-conventions.md</code> §1 (MLflow 3), §3 (AI Search / <code>databricks-vectorsearch</code>), §4 (served-model names churn), §9 (<code>databricks-langchain</code> import rule).</li>
+        <li>📗 B2 — <em>Databricks Certified Generative AI Engineer Associate Study Guide</em>, Ch 3, 4, 9. 📘 B1 — <em>Practical MLflow for Generative AI on Databricks</em> (O'Reilly Early Release, RAW &amp; UNEDITED), Ch 4.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Capstone C1 · [Project]</span>
+  <span>Integrates Modules 00–05 · creates the Unity Airways RAG artifacts</span>
+</footer>
+
+<script>
+const STEPS=[
+  ["M1 · Ingest + parse the raw documents","Maps to 03.4 / 03.8",
+   "Land the Unity Airways docs in a UC Volume and extract clean text. Prefer the SQL-native path (ai_parse_document) so you don't manage OCR/PDF libraries by hand; fall back to the layered text-first/OCR pattern (03.4) only if you need local control. Use ai_extract for genuinely useful structured fields (booking_reference, refund_amount).",
+   "Parsed text exists for every source doc; scanned refund forms yield readable text (not garbled OCR); rows with a non-null first error_status element are quarantined, not passed downstream. Spot-check three docs for clean prose.",
+   "SELECT path, ai_parse_document(content) AS parsed\nFROM READ_FILES('/Volumes/unity_airways/rag/landing/policies/',\n                format => 'binaryFile');"],
+  ["M2 · Chunk the text → governed Delta table","Maps to 03.2 / 03.6",
+   "Clean the parsed text (strip nav, 'last updated' lines, page numbers — 03.5) and chunk to fit the content: sentence/paragraph for the FAQ, paragraph + sliding-window overlap for dense fare rules. Start ~200 tokens. Write one row per chunk to a UC managed Delta table with metadata, and enable Change Data Feed.",
+   "unity_airways.rag.ua_rag_chunks exists as a UC managed table with chunk_id, content, source_doc, chunk_index, ingested_at; chunk_id unique; CDF on; count(*) > 0; a sampled row is clean and self-contained. No /mnt/... DBFS paths.",
+   "(df.withColumn('source_doc', ...).withColumn('chunk_index', ...)\n   .withColumn('ingested_at', current_timestamp())\n   .write.format('delta').mode('overwrite')\n   .saveAsTable('unity_airways.rag.ua_rag_chunks'))\n# ALTER TABLE ... SET TBLPROPERTIES (delta.enableChangeDataFeed = true);"],
+  ["M3 · Build + query the AI Search index","Maps to 04.3",
+   "Create a Standard Vector Search endpoint, then a Delta Sync index with managed embeddings on ua_rag_chunks: primary key chunk_id, embed content with databricks-gte-large-en, sync the metadata columns you filter/return, TRIGGERED pipeline. Query and confirm meaning-based retrieval.",
+   "The index reaches state ONLINE; a semantic query with zero shared keywords retrieves the right chunk — 'rebook for free if my connection is cancelled?' returns the involuntary re-accommodation chunk in the top results; source_doc comes back on each hit.",
+   "from databricks.vector_search.client import VectorSearchClient\nvsc = VectorSearchClient()\nvsc.create_endpoint_and_wait(name='unity-airways-vs', endpoint_type='STANDARD')\nindex = vsc.create_delta_sync_index_and_wait(\n    endpoint_name='unity-airways-vs',\n    index_name='unity_airways.rag.ua_rag_chunks_index',\n    source_table_name='unity_airways.rag.ua_rag_chunks',\n    primary_key='chunk_id', embedding_source_column='content',\n    embedding_model_endpoint_name='databricks-gte-large-en',\n    pipeline_type='TRIGGERED',\n    columns_to_sync=['chunk_id','content','source_doc','chunk_index'])"],
+  ["M4 · Assemble the LCEL RAG chain","Maps to 05.2 / 05.3 / 02.5",
+   "First register the RAG prompt, then assemble the chain around it. Rather than hardcode the prompt inline, author it once and register it in the MLflow Prompt Registry (Module 02.5, Beta) as unity_airways.rag.ua_rag_prompt v1 — a UC identifier — with {{context}} and {{question}} variables, and have the chain load it by URI (prompts:/unity_airways.rag.ua_rag_prompt/1). Wrap the index as a retriever (as_retriever(k=5)) and build the LCEL chain: parallel branches (extract → retrieve → format_docs for context; pass the raw question through) → the loaded prompt → ChatDatabricks('databricks-claude-sonnet-4-5') → StrOutputParser. Keep config (endpoint, index, k, prompt URI) in YAML via ModelConfig. Input contract is {'messages':[...]}. The registered prompt must answer only from context and name the source.",
+   "The chain answers the re-accommodation question grounded and cites its source document, and differs correctly from an LLM-only baseline. An MLflow trace shows the retriever (VectorStoreRetriever) AND ChatDatabricks as child spans. The chain resolves its prompt from prompts:/unity_airways.rag.ua_rag_prompt/1 (not an inline literal), and unity_airways.rag.ua_rag_prompt exists as a UC entity in unity_airways.rag.",
+   "import mlflow\nfrom langchain_core.prompts import PromptTemplate\n\n# Register the RAG prompt as a governed UC artifact (02.5, Beta)\nmlflow.genai.register_prompt(\n    name='unity_airways.rag.ua_rag_prompt',\n    template='''You are a Unity Airways support assistant.\nAnswer ONLY from the retrieved context; if it is missing, say you do not know. Name the source.\n\nContext:\n{{context}}\n\nQuestion: {{question}}\n\nGrounded answer:''',\n    commit_message='v1: grounded, cite-the-source RAG prompt',\n    tags={'use_case':'support_rag','owner':'unity-airways-rag'})\n# Load by URI — never an inline literal\nloaded = mlflow.genai.load_prompt('prompts:/unity_airways.rag.ua_rag_prompt/1')\nprompt = PromptTemplate.from_template(loaded.to_single_brace_format())\n\nchain = (\n  {'context':  itemgetter('messages') | RunnableLambda(extract_user_query_string)\n               | retriever | RunnableLambda(format_docs),\n   'question': itemgetter('messages') | RunnableLambda(extract_user_query_string)}\n  | prompt | model | StrOutputParser())\nchain.invoke({'messages': [{'role':'user',\n  'content':'Can I rebook for free if my connection is cancelled?'}]})"],
+  ["M5 · Log Model-as-Code + register to UC","Maps to 05.5 / 05.6 / 05.7",
+   "Package the chain to run outside the notebook. Define the signature and dependent resources (DatabricksServingEndpoint + DatabricksVectorSearchIndex) for auto-auth. Log with Models-from-Code (set_model(chain) in rag_chain.py, logged by path), register to UC, and version each iteration with set_active_model.",
+   "unity_airways.rag.ua_rag_chain appears in UC with ≥ 1 version; the MLmodel artifact lists signature, a resources: block naming the endpoint and index, and the saved rag_chain.py source (not a pickle); load_model(...).invoke(input_example) reproduces the notebook answer.",
+   "logged = mlflow.langchain.log_model(\n    lc_model='rag_chain.py',                    # a path (Models-from-Code)\n    code_paths=['helpers/'],\n    model_config='../conf/rag_chain_config.yml',\n    signature=signature,\n    resources=[DatabricksServingEndpoint(endpoint_name='databricks-claude-sonnet-4-5'),\n               DatabricksVectorSearchIndex(index_name='unity_airways.rag.ua_rag_chunks_index')],\n    registered_model_name='unity_airways.rag.ua_rag_chain')"],
+];
+const MERMAID_SRC=`flowchart LR
+  subgraph SRC["Source · UC Volume"]
+    V["Unity Airways docs<br/>policy PDFs · FAQ · scanned forms<br/>/Volumes/unity_airways/rag/landing/"]
+  end
+  subgraph PREP["Ingest + prepare (Module 03)"]
+    P["ai_parse_document(content)<br/>ai_extract for fields · 03.4 / 03.8"]
+    K["chunk clean text<br/>paragraph + overlap ~200 tok · 03.2 / 03.3"]
+    P --> K
+  end
+  subgraph STORE["Governed chunk store (03.6)"]
+    D["unity_airways.rag.ua_rag_chunks<br/>Delta · CDF on<br/>chunk_id · content · source_doc · chunk_index"]
+  end
+  subgraph INDEX["Embed + index (Module 04)"]
+    E["databricks-gte-large-en<br/>1024-dim · 8192-token"]
+    I["Delta Sync Index (managed)<br/>unity_airways.rag.ua_rag_chunks_index<br/>Standard · TRIGGERED · 04.3"]
+    E --> I
+  end
+  subgraph CHAIN["RAG chain (Module 05)"]
+    RET["DatabricksVectorSearch.as_retriever(k=5)<br/>databricks-langchain · 04.5 / 05.2"]
+    LC["LCEL: extract-retrieve-format<br/>registry prompt + ChatDatabricks + StrOutputParser<br/>ChatDatabricks('databricks-claude-sonnet-4-5')"]
+    RET --> LC
+  end
+  PR["Prompt Registry · Beta · 02.5<br/>prompts:/unity_airways.rag.ua_rag_prompt/1<br/>register_prompt() v1 · load_prompt()"]
+  subgraph REG["Log + register (05.5-05.7)"]
+    MC["Models-from-Code<br/>set_model(chain) in rag_chain.py<br/>signature + resources"]
+    UC["Register to Unity Catalog<br/>unity_airways.rag.ua_rag_chain<br/>LoggedModel · set_active_model"]
+    MC --> UC
+  end
+  V --> P
+  K --> D
+  D --> E
+  I --> RET
+  PR --> LC
+  LC --> MC
+  D -. "policy change -> CDF -> re-embed only changed rows" .-> I`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");
+  if(id==="p-arch")initMermaid();}
+
+const fl=document.getElementById("flowline");let idx=0;
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  const s=STEPS[idx];
+  box.innerHTML=`<div class="sn">Milestone ${idx+1} / ${STEPS.length}</div><div class="st">${s[0]}</div>`+
+    `<div class="maps">${s[1]}</div><div>${s[2]}</div>`+
+    `<pre><code>${esc(s[4])}</code></pre>`+
+    `<div class="accept"><b>Acceptance criterion</b>${s[3]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=s[0].split(" · ")[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+// Build tracker checklist
+const CHECK=[
+  ["M1","Ingest + parse the raw documents","03.4 / 03.8"],
+  ["M2","Chunk the text → governed Delta table","03.2 / 03.6"],
+  ["M3","Build + query the AI Search index","04.3"],
+  ["M4","Assemble the LCEL RAG chain","05.2 / 05.3"],
+  ["M5","Log Model-as-Code + register to UC","05.5 / 05.6 / 05.7"],
+];
+const KEY="ua_c1_milestones";
+let done={};try{done=JSON.parse(localStorage.getItem(KEY)||"{}");}catch(e){done={};}
+const cl=document.getElementById("checklist");
+function count(){const c=CHECK.filter(m=>done[m[0]]).length;const el=document.getElementById("checkcount");
+  if(el)el.textContent=`${c} of ${CHECK.length} milestones complete`+(c===CHECK.length?" — capstone build done.":".");}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(done));}catch(e){}}
+if(cl){CHECK.forEach(m=>{const li=document.createElement("li");if(done[m[0]])li.classList.add("done");
+  const b=document.createElement("button");b.type="button";
+  b.innerHTML=`<span class="box">${done[m[0]]?"✓":""}</span><span class="lab"><strong>${m[0]}</strong> · ${m[1]}</span><span class="tag">${m[2]}</span>`;
+  b.onclick=()=>{done[m[0]]=!done[m[0]];li.classList.toggle("done",done[m[0]]);
+    li.querySelector(".box").textContent=done[m[0]]?"✓":"";save();count();};
+  li.appendChild(b);cl.appendChild(li);});count();}
+
+let mermaidStarted=false;
+function initMermaid(){if(mermaidStarted&&window.__mmReady)return;
+  if(!window.mermaid){return;}
+  window.__mmReady=true;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  const el=document.getElementById("mermaidGraph");if(!el||el.dataset.rendered)return;
+  el.innerHTML=MERMAID_SRC;el.removeAttribute("data-processed");
+  try{mermaid.run({nodes:[el]});el.dataset.rendered="1";}
+  catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=function(){mermaidStarted=true;initMermaid();};
+  s.onerror=function(){var el=document.getElementById("mermaidGraph");if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

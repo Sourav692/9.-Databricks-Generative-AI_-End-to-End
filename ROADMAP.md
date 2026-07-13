@@ -25,6 +25,21 @@
 
 ---
 
+## 🏁 Capstone projects
+
+Four integrative projects that turn "topics learned" into "a thing shipped." Each builds on the previous one's **Unity Airways** artifact. Format: **MD brief + interactive HTML (architecture + milestones + grading rubric) + runnable notebook** (the notebook is built when its phase is reached). Specs live in `capstones/`.
+
+| # | Capstone | Build after | Modules | Deliverable |
+|---|---|---|---|---|
+| **C1** | Unity Airways Support RAG Knowledge Base | Level 2 / Module 05 (P1) | 00–05 | Ingestion → AI Search index → **registered RAG chain** answering policy questions with citations |
+| **C2** | Evaluate, Trace & Version the RAG App | Level 3 / Module 08 (P2) | 06–08 (on 03–05) | Trace-instrumented, **evaluated & versioned** RAG chain + quality scorecard + `@champion` in UC |
+| **C3** | Ship a Governed, Monitored Agent | Level 5 / Module 13 (P4) | 09–13 (on 03–08) | Tool-using ResponsesAgent (or Agent Bricks + App) **deployed behind AI Gateway guardrails**, with monitoring + Review App |
+| **C4 (FINAL)** | Unity Airways GenAI Platform — End-to-End Reference Solution | End / Module 17.7 (P6) | all 00–17 (emphasis 14–17) | Full solution: RAG + agent + eval/monitoring **+ Genie analytics**; architecture one-pager, production-readiness checklist, cert-readiness map. **This is ★17.7.** |
+
+> C4 realizes the **★ 17.7 Capstone** referenced in Level 7 below.
+
+---
+
 ## Level 0 — Orientation & Environment
 
 ### Module 00 — Databricks platform foundations for GenAI  ✅
@@ -119,7 +134,7 @@
 - 07.4 Querying traces `[H]` · 📘B1 Ch5
 - 07.5 Trace-first development as a discipline `[T]` · 📘B1 Ch2, Ch5
 
-### Module 08 — Evaluating GenAI applications  ⬜
+### Module 08 — Evaluating GenAI applications  ✅
 - 08.1 The MLflow 3.x evaluation stack & **Evaluation Harness** `[T]` · 📘B1 Ch6
 - 08.2 Building & managing **evaluation datasets** `[T+H]` · 📘B1 Ch6, 📗B2 Ch8
 - 08.3 Scorers — code-based scorers `[H]` · 📘B1 Ch6
@@ -135,7 +150,7 @@
 
 ## Level 4 — Agents
 
-### Module 09 — Agent fundamentals & tools (Mosaic AI Agent Framework)  ⬜
+### Module 09 — Agent fundamentals & tools (Mosaic AI Agent Framework)  ✅
 - 09.1 Agents vs AI Agents vs Agentic AI — definitions `[T]` · 📘B1 Ch7, 📗B2 Ch4
 - 09.2 Agent development lifecycle `[T]` · 🌐Agents
 - 09.3 Creating tools: vector retriever, structured-data lookup, API-calling `[H]` · 📘B1 Ch7, 📗B2 Ch4
@@ -148,8 +163,7 @@
 - 09.10 **Testing agent tools** before packaging/deploy (pairs with 09.3) `[H]` · 📘B1 Ch7
 - 09.11 **Managed MCP servers** on Databricks (Databricks-hosted MCP for Vector Search, UC functions, Genie) `[T+H]` · 🌐Agents, Docs
 
-### Module 10 — Agent Bricks & no/low-code agents  🔄
-<!-- progress: 10.5 ✅ -->
+### Module 10 — Agent Bricks & no/low-code agents  ✅
 
 - 10.1 **AI Playground** — prototyping agents `[H]` · 🌐Agents
 - 10.2 **Knowledge Assistant** (Agent Bricks) `[T+H]` · 🌐Agents
@@ -164,7 +178,7 @@
 
 ## Level 5 — Production: Deploy, Govern, Monitor
 
-### Module 11 — Deployment & serving  ⬜
+### Module 11 — Deployment & serving  ✅
 - 11.1 Model Serving endpoints for GenAI `[T+H]` · 📘B1 Ch8, 📗B2 Ch5
 - 11.2 The **Review App** for stakeholder feedback `[H]` · 📘B1 Ch8
 - 11.3 **AI Gateway** — guardrails, rate limits, fallbacks, usage & payload logging, **supported LLM providers**; **Unity AI Gateway** (budgets/cost caps, MCP-service governance) `[T+H]` · 📘B1 Ch7, Ch8 · 🌐Agents · 🌐Docs
@@ -179,7 +193,7 @@
 - 11.12 **External model credentials & provider setup** — secrets/API keys, external-model serving endpoints (e.g., Claude/OpenAI) `[H]` · 🌐Docs
 - 11.13 Deploying **open-source / Hugging Face models** on Model Serving (custom models, `transformers` flavor) `[H]` · 📗B2 Ch5, 🌐Docs
 
-### Module 12 — Responsible GenAI: guardrails & governance  ⬜
+### Module 12 — Responsible GenAI: guardrails & governance  ✅
 - 12.1 Guardrail techniques: prompt filtering, redaction, input validation `[T+H]` · 📗B2 Ch7, 📘B1 Ch8
 - 12.2 **AI Guardrails** on Databricks (config & examples) `[H]` · 📘B1 Ch8
 - 12.3 Masking & PII handling; mitigating problematic text `[T+H]` · 📗B2 Ch7
@@ -189,7 +203,7 @@
 - 12.7 Risk frameworks, responsible-AI checklists, audit trails `[T]` · 📗B2 Ch7
 - 12.8 **Service principals & model identity** — create SPs, grant UC & endpoint privileges, deploy-as-service-principal `[H]` · 📗B2 Ch6, 🌐Docs
 
-### Module 13 — Production monitoring & continuous improvement  ⬜
+### Module 13 — Production monitoring & continuous improvement  ✅
 - 13.1 Metric types: operational, quality, business impact `[T]` · 📘B1 Ch9, 📗B2 Ch8
 - 13.2 Inference tables & logs `[T+H]` · 📗B2 Ch8
 - 13.3 Online monitoring workflow; real-time trace capture `[H]` · 📘B1 Ch9
@@ -202,7 +216,7 @@
 
 ## Level 6 — Conversational Analytics & the Semantic Layer
 
-### Module 14 — AI/BI Genie  ⬜
+### Module 14 — AI/BI Genie  ✅
 - 14.1 Genie Agents (formerly Genie Spaces) concepts — how Genie works `[T]` · 🌐Genie
 - 14.2 Create & manage a Genie Agent `[H]` · 🌐Genie
 - 14.3 Curate & tune a Genie Agent (instructions, sample queries, quality) `[T+H]` · 🌐Genie
@@ -213,7 +227,7 @@
 - 14.8 **Genie Agents API** `[H]` · 🌐Genie
 - 14.9 **Genie One** (formerly Databricks One) — unified interface, account-level discovery, deep research, budgets `[T+H]` · 🌐GenieOne
 
-### Module 15 — Business Semantics (Unity Catalog metric views)  ⬜
+### Module 15 — Business Semantics (Unity Catalog metric views)  ✅
 - 15.1 What metric views are & why a semantic layer matters `[T]` · 🌐Semantics
 - 15.2 Create & edit metric views `[H]` · 🌐Semantics
 - 15.3 Query metric views; tutorial with joins `[H]` · 🌐Semantics

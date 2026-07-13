@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Capstone C4 (FINAL, ★17.7): Unity Airways GenAI Platform — End-to-End Reference Solution.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+  Project brief / capstone (not a lesson explainer). Tabs: Scenario / Architecture / Milestones / Rubric / Cert.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Capstone C4 — Unity Airways GenAI Platform · Databricks GenAI Tutor ★17.7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:20ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .badge{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-2);
+    border:1px solid var(--line);background:var(--accent-soft);border-radius:2px;padding:5px 9px}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:150px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbox .ac{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:14px 0 6px}
+  .stepbox ul{margin:0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .tablewrap{overflow-x:auto}
+  .lvl{font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ok)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="#top">Databricks GenAI</a>
+    <span class="loc">Capstone C4 · FINAL · ★ 17.7</span>
+  </div>
+</div>
+
+<header class="masthead" id="top">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Capstone_C4 · FINAL · ★ 17.7</span><span>Integrates C1–C3 · adds Modules 14–17 · Tracks C/D</span></div>
+    <div class="filed">Level 7 — Module 17.7 · The final capstone · Build at the end (all Modules 00–17 ✅) · [Capstone]</div>
+    <h1>Unity Airways GenAI Platform</h1>
+    <p class="dek">One governed platform, two front doors. A support agent (RAG + tools) for customers, and a self-serve analytics experience (Genie over governed metrics) for ops and finance — evaluated, deployed, monitored, cost-managed, and defensible to an architecture review board. <em>You assemble C1–C3 and add the analytics and architecture layers.</em></p>
+    <div class="badges">
+      <span class="badge">Prereq · all Modules 00–17 ✅</span>
+      <span class="badge">Prereq · Capstones C1 · C2 · C3</span>
+      <span class="badge">Proves all 8 exam domains</span>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="brief">
+      <div class="entry-head"><span class="num">01 · The brief</span><h2>Three demos that work, and a board that won't sign off</h2></div>
+      <p class="lead">Unity Airways has a support RAG chatbot, a tool-using support agent, and a stack of dashboards ops keeps asking data engineering to re-slice. Each works alone. Nobody trusts the set of them in production, and the architecture review board will not approve three disconnected proofs-of-concept.</p>
+      <ul>
+        <li><strong>What they want is one platform.</strong> A support agent that is evaluated, deployed behind guardrails, monitored, and inside a budget — plus a self-serve analytics door for ops and finance that returns the <em>same</em> number the finance dashboard shows.</li>
+        <li><strong>You assemble, you don't rebuild.</strong> C1 gave you retrieval and the registered <code>ua_rag_chain</code>. C2 gave you tracing, evaluation, and a <code>@champion</code> version. C3 gave you the deployed, guardrailed, monitored <code>ua_support_agent</code>. C4 wires them onto shared planes and adds what's missing.</li>
+        <li><strong>The missing layers are analytics and architecture.</strong> Metric views (Module 15) as the single source of truth for numbers, a Genie Agent (Module 14) over them, a cost pass (Module 16), and a reference architecture (Module 17).</li>
+        <li><strong>The deliverable is something a board can sign off on.</strong> A running platform plus an architecture one-pager, a production-readiness checklist, a cert-domain readiness map, and a 10-minute stakeholder demo script.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Important</span>C4 is the capstone at the <strong>end</strong> of the roadmap (★ 17.7). It presumes C1–C3 are done and their artifacts already exist under the <code>unity_airways</code> catalog. Reuse the exact names (<code>ua_rag_chunks_index</code>, <code>ua_rag_chain</code>, <code>ua_support_agent</code>, <code>@champion</code>) so the platform is one coherent thing, not a fresh copy.</div>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · The platform</span><h2>Scenario, architecture, milestones, rubric, cert</h2></div>
+      <div class="tabs" role="tablist" aria-label="Capstone views">
+        <button role="tab" aria-selected="true" aria-controls="p-scen" id="t-scen" onclick="tab(this,'p-scen')">Scenario</button>
+        <button role="tab" aria-selected="false" aria-controls="p-arch" id="t-arch" onclick="tab(this,'p-arch')">Architecture</button>
+        <button role="tab" aria-selected="false" aria-controls="p-mile" id="t-mile" onclick="tab(this,'p-mile')">Milestones</button>
+        <button role="tab" aria-selected="false" aria-controls="p-rub" id="t-rub" onclick="tab(this,'p-rub')">Rubric</button>
+        <button role="tab" aria-selected="false" aria-controls="p-cert" id="t-cert" onclick="tab(this,'p-cert')">Cert</button>
+      </div>
+
+      <!-- PANE A: Scenario -->
+      <div id="p-scen" class="pane active" role="tabpanel" aria-labelledby="t-scen">
+        <div class="plate" data-fig="Plate I — From three POCs to one governed platform">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a piece</div><h3>What the board wants</h3><p>Click a POC on the left to see what's missing and which layer of C4 closes the gap.</p>
+            </div>
+          </div>
+          <div class="plate-cap">Two application paths, one governance plane (Unity Catalog) and one observability plane (MLflow 3). That sharing is what makes it a platform.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: Architecture — mirrors the MD Mermaid diagram -->
+      <div id="p-arch" class="pane" role="tabpanel" aria-labelledby="t-arch" hidden>
+        <div class="plate" data-fig="Fig. 01 — Target architecture: governance + observability planes wrapping both paths">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">UC-governed data → RAG ingestion → AI Search index → agent behind AI Gateway on Model Serving; metric views → Genie Agent for analytics; MLflow 3 traces, eval, and monitoring across both; surfaced via Databricks Apps and Genie One. The chain loads its prompt from the MLflow Prompt Registry (@champion, Beta) — versioned like a model, never a hardcoded string.</div>
+        </div>
+      </div>
+
+      <!-- PANE C: Milestones — stepper M1..M5 -->
+      <div id="p-mile" class="pane" role="tabpanel" aria-labelledby="t-mile" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE D: Grading rubric -->
+      <div id="p-rub" class="pane" role="tabpanel" aria-labelledby="t-rub" hidden>
+        <div class="tablewrap">
+        <table>
+          <thead><tr><th>Criterion</th><th>Not yet</th><th>Meets</th><th>Exceeds</th></tr></thead>
+          <tbody>
+            <tr><td class="k">End-to-end coherence</td><td>Demos run separately; names don't line up</td><td>One platform on shared <code>unity_airways</code> names; support + analytics both live</td><td>A single supervised entry point routes both paths; hand-off is seamless</td></tr>
+            <tr><td class="k">Governance + observability</td><td>Grants ad hoc; little tracing</td><td>UC grants least-privilege; MLflow 3 traces on every call; monitoring reads inference tables</td><td>Lineage + audit shown end to end; alerts fire and feed the Improve loop</td></tr>
+            <tr><td class="k">Analytics correctness (metric views)</td><td>Genie queries raw tables; numbers drift from dashboards</td><td>Genie answers off <strong>metric views</strong>; numbers reconcile with the semantic layer</td><td>Verified answers + agent metadata tuned; business users self-serve without DE help</td></tr>
+            <tr><td class="k">Cost-awareness</td><td>No sizing or budget</td><td>Endpoint sizing justified; batch vs real-time chosen; a budget with alerts</td><td>Measured p50/p95 + cost-per-1k under target; Unity AI Gateway hard caps in place</td></tr>
+            <tr><td class="k">Architecture clarity</td><td>No diagram, or unreadable</td><td>One-pager shows both planes and both paths; trade-offs written</td><td>Survives a live review-board Q&amp;A on failure modes, cost, and rollback</td></tr>
+            <tr><td class="k">Cert-domain coverage</td><td>Gaps across domains</td><td>All 8 domains mapped to a real component</td><td>Each mapping names the exact API and where it lives in the platform</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="plate-cap" style="text-align:left;margin-top:14px"><span class="lvl">Meets</span> is the passing bar. <span class="lvl">Exceeds</span> is what you show a customer.</p>
+      </div>
+
+      <!-- PANE E: Cert-domain map -->
+      <div id="p-cert" class="pane" role="tabpanel" aria-labelledby="t-cert" hidden>
+        <div class="tablewrap">
+        <table>
+          <thead><tr><th>Exam domain</th><th>Modules</th><th>Where it lives in the platform</th></tr></thead>
+          <tbody>
+            <tr><td class="k">1 · Designing GenAI apps</td><td>01, 02, 09</td><td>Support-agent design: prompt templates, tool selection, <code>ResponsesAgent</code> + supervisor topology (M1, M4)</td></tr>
+            <tr><td class="k">2 · Data prep for RAG</td><td>03, 04</td><td>Ingestion → chunking → embeddings → <code>ua_rag_chunks_index</code> on Databricks AI Search (M1)</td></tr>
+            <tr><td class="k">3 · Building apps (Python/LangChain)</td><td>05, 09</td><td><code>ua_rag_chain</code> (<code>databricks-langchain</code>) and <code>ua_support_agent</code> tools (M1)</td></tr>
+            <tr><td class="k">4 · Deploying + integrating</td><td>11, 04</td><td><code>agents.deploy(...)</code>, AI Gateway, Model Serving, batch <code>ai_query</code>, Genie/App surfaces (M1–M3)</td></tr>
+            <tr><td class="k">5 · Models with MLflow + UC</td><td>06, 07</td><td>UC Model Registry (<code>@champion</code>), MLflow 3 tracing + LoggedModel across the platform (M1, M4)</td></tr>
+            <tr><td class="k">6 · Governance</td><td>12, 02.5</td><td>AI Gateway guardrails + PII handling; UC grants and lineage on models, tools, data, metric views; prompt versions in the MLflow Prompt Registry (<code>@champion</code>, Beta) (M1, M2)</td></tr>
+            <tr><td class="k">7 · Monitoring + evaluation</td><td>08, 13</td><td><code>mlflow.genai.evaluate</code> scorecard, production monitoring, inference tables, alerts, Improve loop (M1, M5)</td></tr>
+            <tr><td class="k">8 · Scaling (Vector Search + Mosaic AI)</td><td>04, 16</td><td>Index + endpoint sizing, provisioned throughput, batch inference, budgets (M3)</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">C4 doesn't add a domain — it demonstrates all 8 at once against a running system. A row with no component behind it is your remaining study gap.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="prereq">
+      <div class="entry-head"><span class="num">03 · Prerequisites</span><h2>What must already exist</h2></div>
+      <p>C4 assembles the earlier capstones. If any artifact below is missing, finish that capstone first — this one reuses the exact names, it does not re-derive them.</p>
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th>You need</th><th>From</th><th>Canonical name</th></tr></thead>
+        <tbody>
+          <tr><td>Chunked policy data + retrieval index</td><td>C1 (Mod 03–04)</td><td class="k">unity_airways.rag.ua_rag_chunks_index</td></tr>
+          <tr><td>Registered RAG chain + live alias</td><td>C1/C2 (Mod 05–06)</td><td class="k">unity_airways.rag.ua_rag_chain @champion</td></tr>
+          <tr><td>Trace instrumentation + eval scorecard</td><td>C2 (Mod 07–08)</td><td class="k">MLflow 3 traces + mlflow.genai.evaluate</td></tr>
+          <tr><td>Deployed, guardrailed, monitored agent</td><td>C3 (Mod 09–13)</td><td class="k">unity_airways.rag.ua_support_agent · agents.deploy</td></tr>
+          <tr><td>Operational data in Unity Catalog</td><td>Module 00</td><td class="k">unity_airways.ops.* (flights, bookings, revenue)</td></tr>
+          <tr><td>All Modules 00–17 marked ✅</td><td>ROADMAP</td><td class="k">—</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+
+    <section class="entry" id="deliverables">
+      <div class="entry-head"><span class="num">04 · Deliverables</span><h2>What you hand over</h2></div>
+      <ul>
+        <li><strong>The running platform</strong> — deployed <code>ua_support_agent</code> behind AI Gateway, plus a Genie Agent over <code>unity_airways.ops.*</code> metric views, both governed and observed, inside a budget.</li>
+        <li><strong>Architecture one-pager</strong> — the whole platform on one page, legible from across a room, board-ready (Track D · <code>databricks-one-pager</code>).</li>
+        <li><strong>Production-readiness checklist</strong> — governance, security, observability, cost, rollback, and on-call, each with an owner.</li>
+        <li><strong>Cert-readiness map</strong> — the 8 exam domains → the component that proves each.</li>
+        <li><strong>Stakeholder demo script</strong> — a 10-minute narrated walk: a cited support answer, a Genie answer that matches the dashboard, a trace, an eval scorecard, and the cost budget.</li>
+      </ul>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · verify before build</span>Modules 11–17 are <strong>not yet authored</strong> in this curriculum. The M2–M4 details (metric-view YAML, Genie Agent APIs, AI Gateway budget config, endpoint-sizing knobs) are held at architecture altitude, grounded in the ROADMAP topic names and <code>naming-conventions.md</code>. Confirm the exact APIs and UI paths against current Databricks docs when those phases are built — don't treat the placeholders here as final syntax.</div>
+    </section>
+
+    <section class="entry" id="fieldnotes">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>The move that turns three demos into one platform is the <strong>two shared planes</strong>: Unity Catalog for governance (one namespace, grants, lineage, model registry) and MLflow 3 for observability (traces, eval, monitoring). Build both application paths onto those planes and the coherence grade takes care of itself.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Make the Genie Agent answer off <strong>metric views</strong>, never off raw <code>unity_airways.ops</code> tables. That's the whole point of the semantic layer: one definition of "on-time" or "revenue" that Genie, the dashboard, and finance all read. Demo the reconciliation live — Genie's number and the dashboard's number matching is the moment the board believes you.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · names</span>Use current product names: <strong>Genie Agents</strong> (formerly Genie Spaces), <strong>Genie One</strong> (formerly "Databricks One"), Databricks <strong>AI Search</strong> (SDK still <code>databricks-vectorsearch</code>), <strong>Multi-Agent Supervisor</strong> (GA), and <code>mlflow.genai.evaluate</code> (not <code>mlflow.evaluate(model_type=...)</code>). Several M2–M4 features are Beta/Preview (Unity AI Gateway budgets, production monitoring, Genie One Domains) — label them as such.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Name the two shared planes that turn three separate demos into one platform, and one component that sits on each.</li>
+          <li>Why must the Genie Agent answer off <strong>metric views</strong> rather than querying <code>unity_airways.ops</code> tables directly? What breaks if it doesn't?</li>
+          <li>For the support endpoint vs a nightly enrichment job, which goes real-time and which goes batch (<code>ai_query</code>), and why (M3)?</li>
+          <li>Which exam domain does the <code>@champion</code> alias + MLflow 3 tracing demonstrate, and where in the platform do you point to prove it?</li>
+          <li>A regression reaches production. Walk the rollback: what do you repoint, what stays untouched, and which plane tells you it happened?</li>
+        </ol>
+      </details>
+      <div class="note imp" style="margin-top:16px"><span class="tag">📝 Notes</span>Space for your own notes: which milestone is furthest along, which cert domain is thinnest, what the board pushed back on.</div>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>🗺️ <strong><code>ROADMAP.md</code></strong> — Capstone table (C1–C4), "C4 realizes the ★ 17.7 Capstone," Module 17.7 ("Designing an end-to-end enterprise GenAI reference architecture (capstone) · all"), and the topic lists for Modules 14 (Genie), 15 (metric views), 16 (cost/scaling), 17 (reference architectures).</li>
+        <li>🎓 <strong>ROADMAP Track C</strong> — the 8 exam domains and their module chains (C.2–C.9), used verbatim for the cert-readiness map.</li>
+        <li>🧰 <strong>ROADMAP Track D</strong> — FDE delivery toolkit (D.4 reusable assets: architecture one-pager, POC scorecard, production-readiness checklist; D.6 reference architectures by use case).</li>
+        <li>🧭 <strong><code>naming-conventions.md</code></strong> — current names used throughout: MLflow 3 <code>mlflow.genai.evaluate</code> + tracing (§1), <code>ResponsesAgent</code> + <code>agents.deploy</code> + Multi-Agent Supervisor GA (§2), Databricks AI Search / SDK <code>databricks-vectorsearch</code> (§3), Model Serving pay-per-token vs provisioned throughput (§4), <code>ai_query</code> batch (§5), AI Gateway + Unity AI Gateway budgets Beta (§6), Genie Agents + Genie One (§7).</li>
+        <li>📘 <strong>B1 — <em>Practical MLflow for Generative AI on Databricks</em></strong> — Ch 2 (5-phase GenAI lifecycle) and Ch 10 (MLflow Traces as the shared integration artifact; MCP as the bridge) ground the Module 17 milestone. <em>(O'Reilly Early Release — RAW &amp; UNEDITED; verify against current docs.)</em></li>
+        <li>📗 <strong>B2 — <em>Databricks Certified Generative AI Engineer Associate Study Guide</em></strong> — Ch 9 (Mosaic AI architecture, scaling, cost) grounds Module 16; Ch 10 (exam blueprint) grounds the cert map.</li>
+        <li>📄 <strong>Module 02.5 — MLflow Prompt Registry</strong> (<code>prompt-registry.md</code>): prompt versioning, <code>@champion</code> alias, <code>mlflow.genai.register_prompt</code> / <code>load_prompt</code> / <code>set_prompt_alias</code>; <strong>Beta on Databricks</strong>. Grounds the prompt-governance element of the change-management story (C1 registers <code>unity_airways.rag.ua_rag_prompt</code> v1; C2 promotes <code>@champion</code>; C4 governs it at platform level).</li>
+        <li>🏗️ <strong>Prior capstones (this project):</strong> C1 <code>capstone-1-rag-knowledge-base</code>, C2 <code>capstone-2-eval-trace-version</code>, C3 <code>capstone-3-governed-agent</code> — the source of <code>ua_rag_chunks_index</code>, <code>ua_rag_chain</code>, <code>@champion</code>, and <code>ua_support_agent</code>.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Capstone C4 — FINAL ★ 17.7</span>
+  <span>Grounded in ROADMAP (Tracks C/D) · naming-conventions.md · 📘B1 Ch2/10 · 📗B2 Ch9/10</span>
+</footer>
+
+<script>
+// ---- Scenario explorer: the three POCs and what C4 adds ----
+const ITEMS=[
+ {name:"The three POCs Unity Airways has today",spine:false,comps:[
+   ["Support RAG chatbot","answers policy questions","Retrieves from ua_rag_chunks_index and answers fare/baggage/refund questions with citations. Works, but was never evaluated, governed, or monitored on its own.","C1 gave you this · C4 puts it on the shared planes"],
+   ["Tool-using support agent","looks things up","A ResponsesAgent that also calls UC-function tools to look up a booking and check flight status. Deployed in C3, but as a standalone endpoint.","C3 gave you this · C4 fronts it with AI Gateway + monitoring"],
+   ["Hand-sliced dashboards","ops + finance reporting","Ops and finance keep asking data engineering to re-cut the same numbers. No self-serve, and numbers drift between reports.","C4 replaces this with metric views + a Genie Agent (M2)"],
+ ]},
+ {name:"What C4 adds to make it a platform",spine:true,comps:[
+   ["Shared governance plane","Unity Catalog","One catalog (unity_airways), least-privilege grants, lineage, and the model registry govern data, the index, tools, models, and metric views together.","M1–M2 · the coherence backbone"],
+   ["Shared observability plane","MLflow 3","Tracing on every call, an mlflow.genai.evaluate scorecard that gates promotion, and production monitoring reading inference tables — across both paths.","M1, M5 · Domains 5 and 7"],
+   ["Genie analytics layer","metric views + Genie Agent","Metric views are the single source of truth for numbers; a Genie Agent answers ops/finance questions against them and reconciles with the dashboards.","M2 · Modules 14 + 15"],
+   ["Cost + architecture","sizing, budget, one-pager","Right-sized endpoints, batch vs real-time, a spend budget, and a reference architecture + one-pager that survives a review board.","M3–M4 · Modules 16 + 17"],
+ ]},
+];
+// ---- Milestone stepper M1..M5 (title, summary, acceptance bullets) ----
+const STEPS=[
+  ["M1 · Assemble from C1–C3","Stand up the support path end to end from artifacts you already have: ingestion → ua_rag_chunks_index → ua_rag_chain → ua_support_agent → agents.deploy behind AI Gateway, with MLflow 3 tracing, an eval scorecard, and monitoring live. The chain and agent load their prompt from the MLflow Prompt Registry (prompts:/unity_airways.rag.ua_rag_prompt@champion, Beta) — not a hardcoded string — so prompt changes are versioned and promoted just like models.",
+   ["Deployed ua_support_agent answers policy questions with citations and calls a UC-function tool","Agent version promoted via the @champion alias in Unity Catalog (no run URIs in prod)","Prompts governed via the Prompt Registry (@champion alias), versioned alongside models — chain loads prompts:/unity_airways.rag.ua_rag_prompt@champion, not a hardcoded string","mlflow.genai.evaluate scorecard (Correctness, RetrievalGroundedness, Safety) clears the threshold","Tracing on; AI Gateway guardrails + rate limits + payload logging to inference tables; monitoring reads them"]],
+  ["M2 · Add the Genie analytics layer","Give ops and finance a self-serve door: metric views over Unity Airways operational data (Module 15) plus a Genie Agent (Module 14) that answers business questions against them. Optionally route both paths through a Multi-Agent Supervisor.",
+   ["≥2 metric views under unity_airways.ops.* with measures, dimensions, and agent metadata (synonyms, display names)","Genie Agent answers ops/finance questions grounded in the metric views; numbers reconcile with the semantic layer","Verified answers configured for top questions; access governed by UC grants","(Optional) Multi-Agent Supervisor routes a mixed support + analytics question"]],
+  ["M3 · Cost, performance, scaling","Make it affordable and predictable before the board asks: right-size endpoints, choose batch vs real-time per workload, set scaling, and put a budget on it (Module 16).",
+   ["Documented endpoint sizing per workload: pay-per-token vs provisioned throughput, and why","Batch vs real-time decided per workload (interactive support real-time; backfills via ai_query)","Measured p50/p95 latency + cost-per-1k under target; autoscaling holds under a load test","A budget with alerts; note Unity AI Gateway hard caps as the go-forward control (Beta — verify)"]],
+  ["M4 · Reference architecture + one-pager","Turn the running system into something a review board can read and challenge (Module 17): the end-to-end reference architecture plus a single-page diagram.",
+   ["Reference architecture shows the 5-phase lifecycle (Develop→Evaluate→Deploy→Monitor→Improve) with MLflow Traces as the shared artifact","One-pager shows both planes, the data→index→agent→serving→monitor flow, and the parallel Genie path","Trade-offs written: real-time vs batch, alias vs pinned version, provisioned vs pay-per-token, KA vs custom agent","Survives a mock architecture-review Q&A on governance, failure modes, cost, rollback"]],
+  ["M5 · Cert-readiness + FDE delivery","Prove exam-readiness and package for hand-over (Tracks C and D): the cert-domain map plus the delivery kit.",
+   ["Cert-domain map: all 8 exam domains → a concrete platform component (none unbacked)","FDE assets exist and are usable: architecture one-pager, POC scorecard, production-readiness checklist","Stakeholder demo script: a 10-minute walk (cited answer, Genie=dashboard, trace, scorecard, budget)","Production-readiness checklist all-green, or every red item has a named owner and date"]],
+];
+const MERMAID_SRC=`flowchart TB
+  subgraph GOV["Governance plane · Unity Catalog (grants, lineage, model registry, prompt registry)"]
+    direction TB
+    subgraph DATA["Data + retrieval · Modules 03-04 (C1)"]
+      src["Policy PDFs + ops tables<br/>unity_airways.raw"] --> ingest["RAG ingestion (Lakeflow SDP)<br/>parse, chunk, embed"]
+      ingest --> idx["Databricks AI Search<br/>ua_rag_chunks_index"]
+      opsraw["Operational data<br/>flights, bookings, revenue"] --> mv["Metric views (semantic layer)<br/>unity_airways.ops.* · Module 15"]
+    end
+    subgraph SUPPORT["Support path · Modules 05-13 (C1-C3)"]
+      idx --> chain["ua_rag_chain<br/>retriever + databricks-claude-sonnet-4-5"]
+      prompt["Prompt Registry · Beta (02.5)<br/>prompts:/unity_airways.rag.ua_rag_prompt@champion"] --> chain
+      chain --> agent["ua_support_agent<br/>ResponsesAgent + UC tools"]
+      agent --> gw["AI Gateway<br/>guardrails, rate limits, fallbacks, payload logging"]
+      gw --> serve["Model Serving<br/>agents.deploy(...) + Review App"]
+    end
+    subgraph ANALYTICS["Analytics path · Modules 14-15 (new)"]
+      mv --> genie["Genie Agent<br/>conversational analytics over metric views"]
+      genie --> mas["Multi-Agent Supervisor (optional, GA)<br/>routes support + analytics + tools"]
+    end
+    subgraph SURFACE["Surfaces · Databricks Apps + Genie One"]
+      serve --> app["Databricks App (chat UI)"]
+      genie --> one["Genie One (business users)"]
+      mas --> app
+    end
+  end
+  subgraph OBS["Observability plane · MLflow 3 (Modules 07-08-13)"]
+    direction TB
+    trace["Tracing (spans on every call)"]
+    eval["mlflow.genai.evaluate scorecard (gates promotion)"]
+    mon["Production monitoring + inference tables + alerts"]
+  end
+  agent -.emits.-> trace
+  serve -.logs.-> mon
+  chain -.scored by.-> eval
+  cost["Cost + scaling · Module 16<br/>sizing, batch vs real-time, Unity AI Gateway budgets"] -.governs.-> serve`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+// Scenario explorer (clickable chips)
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");
+  if(id==="p-arch"){renderMermaid();}}
+
+// Milestone stepper
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  const ac=STEPS[idx][2].map(x=>`<li>${x}</li>`).join("");
+  box.innerHTML=`<div class="sn">Milestone ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div><div class="ac">Acceptance criteria</div><ul>${ac}</ul>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=s[0].split(" · ")[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+// Mermaid — render lazily, and only once the Architecture pane is visible (avoids zero-width SVG)
+let mermaidReady=false, mermaidDone=false;
+function renderMermaid(){
+  if(mermaidDone || !mermaidReady || !window.mermaid) return;
+  const el=document.getElementById("mermaidGraph"); if(!el) return;
+  const pane=document.getElementById("p-arch"); if(pane && pane.hidden) return; // wait until the tab is open
+  mermaidDone=true;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  el.innerHTML=MERMAID_SRC;el.removeAttribute("data-processed");
+  try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=function(){mermaidReady=true;renderMermaid();};
+  s.onerror=function(){var el=document.getElementById("mermaidGraph");if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';};
+  document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

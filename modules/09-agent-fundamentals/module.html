@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 09 Agent fundamentals and tools (module hub).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Agent Fundamentals and Tools · Databricks GenAI Tutor 09</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  /* ============ DESIGN SYSTEM — tokens (do not rename) ============ */
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line);
+    --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .toggle{display:none}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:16ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .ghost{display:none}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  .index-rail{display:none}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tag-pill{display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--line);border-radius:20px;color:var(--muted);margin-left:8px;vertical-align:middle}
+  .tag-pill.h{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.t{color:var(--accent-2);border-color:var(--accent-soft)}
+  .tag-pill.star{color:var(--danger);border-color:var(--danger-soft)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.3rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  h3.tk{font-family:var(--mono);font-size:.9rem;letter-spacing:.06em;margin:24px 0 6px}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.md">Databricks GenAI</a>
+    <span class="loc">Module 09 · Topics 09.1–09.11</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_09 · GenAI lesson · v1.0</span><span>Verified against 📘B1 Ch7 + naming cheat-sheet §2</span></div>
+    <div class="filed">Module 09 — Agent Fundamentals and Tools (Mosaic AI Agent Framework) · Topics 09.1–09.11 · Theory + Hands-on</div>
+    <h1>AI Agents and Tools</h1>
+    <p class="dek">The <em>Unity Airways</em> assistant grows up. The Module 05 RAG chain becomes one <strong>tool</strong> among several, and an LLM decides when to retrieve policy, look up a booking, or call an API. You wrap it with <code>ResponsesAgent</code>, register it to <code>unity_airways.rag.ua_support_agent</code>, and ship it with one <code>agents.deploy(...)</code> call.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>From a fixed chain to a system that decides</h2></div>
+      <p class="lead">Module 05 <em>built</em> <code>unity_airways.rag.ua_rag_chain</code> — it always retrieves, then answers. An <strong>agent</strong> hands the wheel to an LLM: on each turn it decides <em>whether</em> to retrieve, look up a booking, or call an API, and loops until it can reply. Same MLflow lifecycle, tools in the middle.</p>
+      <ul>
+        <li><strong>Three levels of autonomy</strong> (09.1) — a <strong>traditional agent</strong> follows if-else rules; an <strong>AI agent</strong> lets an LLM pick tools; an <strong>agentic AI</strong> system routes between specialist agents. More flexible means less predictable.</li>
+        <li><strong>Tools</strong> are how it acts (09.3 ★): a <code>VectorSearchRetrieverTool</code> (retrieval), a UC <code>CREATE FUNCTION</code> via <code>UCFunctionToolkit</code> (structured lookup), and a <code>StructuredTool</code> (API calls) — all from <code>databricks-langchain</code>.</li>
+        <li><strong>Package once, govern everywhere</strong> (09.6 ★): wrap in <code>ResponsesAgent</code>, <code>mlflow.models.set_model()</code>, register to Unity Catalog, then <code>agents.deploy(...)</code> → Serving endpoint + Review App.</li>
+        <li><strong>MCP</strong> standardizes tools across agents (09.8); <strong>managed MCP servers</strong> (Public Preview) expose Vector Search, UC functions, and Genie behind one UC-governed URL (09.11).</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 The rule that shapes this module</span>Author with <strong><code>ResponsesAgent</code></strong>, the <strong>recommended</strong> MLflow interface (OpenAI Responses schema; auto-tracing, streaming, multi-agent history). <code>ChatAgent</code> is being <strong>superseded</strong>; <code>ChatModel</code> is <strong>legacy</strong>. Migration path: <code>ChatModel</code> → <code>ChatAgent</code> → <code>ResponsesAgent</code>. <code>SplitChatMessagesRequest</code>/<code>StringResponse</code> are <strong>deprecated</strong>. Log from code with <code>mlflow.models.set_model()</code>; tools via <code>UCFunctionToolkit</code>; deploy with <code>agents.deploy</code> → endpoint + Review App + feedback model.</div>
+    </section>
+
+    <section class="entry" id="problem">
+      <div class="entry-head"><span class="num">02 · The problem</span><h2>Why the RAG chain and more if-else branches both fail</h2></div>
+      <p>A passenger asks <em>"My flight UA217 to Tokyo is delayed — can I make my connection, and is my booking refundable?"</em> That needs policy (retrieval), the live booking record (a lookup), and maybe a status API — chosen on the fly. Naive fixes break:</p>
+      <ul>
+        <li><strong>The Module 05 chain</strong> → always retrieves, has no path to the booking table; "wouldn't be able to answer… as it is not connected to flight data" (📘B1 Ch7).</li>
+        <li><strong>More if-else branches</strong> → the traditional-agent era; brittle rules that snap when a user rephrases, and a maintenance nightmare as intents grow.</li>
+        <li><strong>Answer from LLM memory</strong> → no grounding; it invents a refund policy or a flight time. Tools exist so the agent acts on real data.</li>
+        <li><strong>Vague/overlapping tool descriptions</strong> → the LLM picks the wrong tool; "having similar tools can confuse the supervisor agent about which one to pick."</li>
+        <li><strong>Pickle the LangGraph object</strong> → the plain LangChain flavor "would need a lot of input/output custom functions" for deployment. <code>ResponsesAgent</code> handles the contract.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">03 · Explore</span><h2>The agent loop, the 11 topics, the worked thread, and the toolbox</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Agent loop</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The 11 topics</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Worked thread</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">The toolbox</button>
+      </div>
+
+      <!-- PANE A: agent-loop map — mirrors module.md's first Mermaid -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — The agent loop">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">The LLM plans, calls the right tool, reads the result, and repeats until it can answer — zero, one, or several tool calls per turn.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the 11 topics -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — Topic index">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a topic</div><h3>The 11 topics</h3><p>Click a topic to see what it covers and its Theory/Hands-on label. ★ marks a cornerstone with its own deep-dive page.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: worked-thread stepper + package/deploy mermaid -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="plate" data-fig="Fig. 02 — package → register → deploy" style="margin-bottom:18px">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">One ResponsesAgent, one UC model, one agents.deploy call → Serving endpoint + Review App.</div>
+        </div>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <div class="plate-cap" style="margin-top:14px">Building the Unity Airways support agent from the Module 05 chain to a deployed, governed endpoint.</div>
+      </div>
+
+      <!-- PANE D: the toolbox table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Tool type</th><th>How you build it</th><th>Governed by</th></tr></thead><tbody id="rows"></tbody></table>
+        <div class="note imp" style="margin-top:16px"><span class="tag">📌 Tools vs prompt instructions</span>A <strong>tool</strong> is executable and governed; a <strong>prompt instruction</strong> is advisory text. Put <strong>capabilities and hard constraints in tools</strong> (retrieval, lookups, row filters, auth); put <strong>style and soft policy in the prompt</strong> (tone, citations). Anything that must <em>always</em> hold belongs behind a tool or guardrail, not in prose.</div>
+      </div>
+    </section>
+
+    <section class="entry" id="definitions">
+      <div class="entry-head"><span class="num">04 · Definitions</span><h2>09.1 + 09.2 — agents vs AI agents vs agentic AI, and the lifecycle</h2></div>
+      <h3 class="tk">09.1 Agents vs AI Agents vs Agentic AI <span class="tag-pill t">Theory</span></h3>
+      <p>Three terms, one axis — <strong>how much the system decides for itself</strong> (📘B1 Ch7, Fig 7-1).</p>
+      <table>
+        <thead><tr><th>Level</th><th>Who decides the flow</th><th>Unity Airways example</th></tr></thead>
+        <tbody>
+          <tr><td><b>Traditional agent</b></td><td>Hardcoded if-else rules and menus</td><td>"Press 1 for schedule, 2 for reservation" → fixed query</td></tr>
+          <tr><td><b>AI agent</b></td><td>An LLM reads free text and picks a tool</td><td>"Flight schedule for Singapore to Japan today?" → LLM calls schedule tool</td></tr>
+          <tr><td><b>Agentic AI</b></td><td>A supervisor routes between specialist agents</td><td>"<b>Best</b> flight for Singapore to Japan?" → delegates to Flight Recommender</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Agents vs chains</strong> (Table 7-1): agents have dynamic control flow, higher autonomy and adaptability, but lower consistency and higher latency (10 seconds to minutes, since the supervisor can loop). Chains are deterministic, consistent, fast — better for predictable tasks.</p>
+      <h3 class="tk">09.2 Agent development lifecycle <span class="tag-pill t">Theory</span></h3>
+      <p>Same MLflow lifecycle as any GenAI app. Pick an orchestration framework (MLflow 3.x integrates <strong>LangChain, LangGraph, DSPy, LlamaIndex</strong>; the book uses <strong>LangGraph</strong> + <code>databricks-langchain</code>), iterate with <strong>tracing</strong> and the <strong>Prompt Registry</strong>, <strong>evaluate every layer</strong> with <code>mlflow.genai.evaluate()</code>, and swap models via the <strong>AI Gateway</strong>. Start small: "start with a small, well-defined toolset… later iterate."</p>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>More autonomy means less predictability — agents "can become less controlled or predictable, potentially allowing overly permissive behaviors. It is crucial to design appropriate guardrails." Pick the simplest pattern that solves the task; a chain if a chain will do.</div>
+    </section>
+
+    <section class="entry" id="tools">
+      <div class="entry-head"><span class="num">05 · Cornerstone</span><h2>09.3 ★ — creating tools: retriever, structured lookup, API</h2></div>
+      <p>Full deep-dive — all three tool types end to end, <code>resources</code> for auth passthrough, and how descriptions drive selection — in the <a href="create-tools.html">Creating Tools deep-dive</a> (<code>create-tools.md</code> / <code>create-tools.html</code>).</p>
+      <h3 class="tk">09.3 Creating tools <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span></h3>
+      <p>Tools let the agent "do more than just respond… using knowledge that [the] LLM was trained on." The Unity Airways support agent needs three, all from <code>databricks_langchain</code>.</p>
+      <pre><code>from databricks_langchain import VectorSearchRetrieverTool, UCFunctionToolkit
+from unitycatalog.ai.core.databricks import DatabricksFunctionClient
+
+# 1) vector retriever — wrap the Module 05 AI Search RAG chunks index
+vector_retriever_tool = VectorSearchRetrieverTool(
+    index_name="unity_airways.rag.ua_rag_chunks_index", num_results=5,
+    tool_description="Search Unity Airways FAQ: cancellation, policies, baggage.")
+
+# 2) structured-data lookup — a UC CREATE FUNCTION, wrapped as a tool
+client = DatabricksFunctionClient()
+toolkit = UCFunctionToolkit(
+    function_names=["unity_airways.rag.get_flight_status"], client=client)
+
+# 3) API tool — a StructuredTool with a Pydantic input schema (09.4)
+tools = list(toolkit.tools) + [vector_retriever_tool, weather_tool]</code></pre>
+      <div class="note tip"><span class="tag">💡 Tip</span>The <code>tool_description</code> (and SQL <code>COMMENT</code>) is the agent's instruction manual — write it like a brief for a new rep: what it does, when to call it, key keywords. Vague or overlapping descriptions are the #1 cause of wrong-tool bugs.</div>
+    </section>
+
+    <section class="entry" id="governance">
+      <div class="entry-head"><span class="num">06 · Safety</span><h2>09.4 + 09.5 — tool governance, and multi-stage reasoning</h2></div>
+      <h3 class="tk">09.4 Tool design for safety and governance <span class="tag-pill t">Theory</span></h3>
+      <p>A tool is <strong>executable and governed</strong>; a prompt instruction is advisory. A UC function runs under Unity Catalog permissions and a <code>WHERE</code> clause the LLM cannot cross — a boundary, not a suggestion. <strong>Constrain inputs</strong> with a structured schema ("secure the input type… especially when using LLM as they could hallucinate"), <strong>handle failure inside the tool</strong>, and <strong>keep the toolset small and non-overlapping</strong>.</p>
+      <h3 class="tk">09.5 Multi-stage reasoning and tool ordering; planning agent chains <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span></h3>
+      <p>Break a task into focused stages — <strong>extract → reason → respond</strong> (📗B2 Ch2). Two implementations: <strong>tool ordering</strong> (fixed sequence — <code>SimpleSequentialChain</code>/<code>SequentialChain</code>/<code>RouterChain</code>) for known steps, and <strong>agent planning</strong> (dynamic — ReAct, plan-and-execute) when "you can't predict how many steps are needed or which tools to use." Fig 2-3 contrasts the two; the LangGraph loop (<code>should_continue</code> routes back to tools or ends) is the planning case.</p>
+      <div class="note imp"><span class="tag">📌 Important</span>Agentic systems are less controlled than chains, so safety is designed, not assumed. Restrict the tool surface, validate inputs, scope UC grants to the agent's service principal, and add AI Gateway guardrails at serving time (Module 11/12). A tool the agent cannot misuse beats a prompt asking it not to. Default to tool ordering; reach for a planning agent only when the path truly varies — and cap the loop.</div>
+    </section>
+
+    <section class="entry" id="package">
+      <div class="entry-head"><span class="num">07 · Cornerstone</span><h2>09.6 ★ — packaging with ResponsesAgent, register in UC</h2></div>
+      <p>Full deep-dive — the <code>ResponsesAgent</code> class, <code>predict</code>/<code>predict_stream</code>, <code>resources</code> for auth passthrough, pre-deploy checks, and UC registration — in the <a href="responsesagent.html">ResponsesAgent deep-dive</a> (<code>responsesagent.md</code> / <code>responsesagent.html</code>).</p>
+      <h3 class="tk">09.6 Packaging with ResponsesAgent <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span></h3>
+      <p><code>ResponsesAgent</code> is "a specialized interface for serving generative AI models that handle structured responses with tool calling" — framework-agnostic via the OpenAI Responses schema. Wrap the LangGraph agent, set it as the model from code, log with <code>resources</code> for auth passthrough, then register to UC.</p>
+      <pre><code>from mlflow.types.responses import ResponsesAgentRequest, ResponsesAgentResponse
+from mlflow.pyfunc import ResponsesAgent
+import mlflow
+
+class LangGraphResponsesAgent(ResponsesAgent):
+    def __init__(self, agent): self.agent = agent
+    def predict(self, request: ResponsesAgentRequest) -> ResponsesAgentResponse:
+        outputs = [e.item for e in self.predict_stream(request)
+                   if e.type == "response.output_item.done"]
+        return ResponsesAgentResponse(output=outputs, custom_outputs=request.custom_inputs)
+
+mlflow.langchain.autolog()
+mlflow.models.set_model(LangGraphResponsesAgent(agent))   # Models-from-Code
+
+mlflow.set_registry_uri("databricks-uc")                  # register to UC, not workspace
+mlflow.register_model(model_uri=logged.model_uri,
+                      name="unity_airways.rag.ua_support_agent")</code></pre>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Log with <code>mlflow.pyfunc.log_model</code> + <code>ResponsesAgent</code> and a <code>resources</code> list (auth passthrough), <strong>not</strong> the plain <code>mlflow.langchain</code> flavor. Set <code>mlflow.set_registry_uri("databricks-uc")</code> so the three-level <code>catalog.schema.model</code> name lands in Unity Catalog. Don't fall back to <code>ChatAgent</code>/<code>ChatModel</code>.</div>
+    </section>
+
+    <section class="entry" id="context">
+      <div class="entry-head"><span class="num">08 · Context</span><h2>09.7 — context engineering</h2></div>
+      <h3 class="tk">09.7 Context engineering <span class="tag-pill t">Theory</span></h3>
+      <p>An LLM has a <strong>fixed context window</strong>, and agent conversations fill it fast. Deciding what to put in front of the model each turn — system prompt, trimmed history, retrieved knowledge, user metadata — is context engineering. Pass the whole history every turn and you hit "token limit errors or very long latencies."</p>
+      <ul>
+        <li><strong>Truncate to recent turns</strong> — invoke on <code>state[-5:]</code> instead of the full state.</li>
+        <li><strong>Pass just the last query to a tool</strong> — works for retrieval and text-to-SQL tools.</li>
+        <li><strong>Summarize periodically</strong> — replace old turns with a running summary + latest message.</li>
+        <li><strong>LLM query rewriting</strong> — turn a vague follow-up into a standalone query.</li>
+        <li>Keep endpoints <strong>stateless</strong> — the app backend fetches the right history and passes it in.</li>
+      </ul>
+      <div class="note tip"><span class="tag">💡 Tip</span>Different tools want different context. Give a retrieval tool just the reformulated query; give the composing LLM the trimmed history plus retrieved chunks. Tailoring context per tool beats one global truncation rule.</div>
+    </section>
+
+    <section class="entry" id="mcp">
+      <div class="entry-head"><span class="num">09 · MCP</span><h2>09.8 + 09.11 — MCP servers as tools, and managed MCP</h2></div>
+      <h3 class="tk">09.8 MCP servers as tools <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span></h3>
+      <p><strong>Model Context Protocol (MCP)</strong> is "an open standard… introduced by Anthropic in 2024" for exposing tools/resources to any agent in a discoverable way. Use an MCP server "when you want a standardized and reusable interface… that many agents and platforms can consume"; use a LangChain tool for one app or prototype (Table 7-2). <strong>Managed</strong> servers are platform-hosted with secure defaults; <strong>external</strong> ones are self-hosted for flexibility.</p>
+      <h3 class="tk">09.11 Managed MCP servers on Databricks <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span></h3>
+      <p>Databricks hosts <strong>managed MCP servers</strong> for <strong>Vector Search (AI Search)</strong>, <strong>UC functions</strong>, <strong>Genie</strong>, and <strong>Databricks SQL</strong> — UC-governed, authenticated, auto-scaled. The URL points at a UC namespace:</p>
+      <pre><code>from databricks.sdk import WorkspaceClient
+from databricks_mcp import DatabricksMCPClient
+
+ws = WorkspaceClient()
+MCP_URL = f"{ws.config.host}/api/2.0/mcp/vector-search/unity_airways/rag"
+mcp_tools = DatabricksMCPClient(server_url=MCP_URL, workspace_client=ws).list_tools()</code></pre>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · verify live</span>Managed MCP is <strong>Public Preview</strong> (some surfaces GA) — label it as such, verify the exact server URLs and enrollment on current docs, and confirm the catalog/schema in the URL points where your index/function actually lives. <em>(Live re-check pending.)</em></div>
+    </section>
+
+    <section class="entry" id="multiagent">
+      <div class="entry-head"><span class="num">10 · Multi-agent</span><h2>09.9 + 09.10 — agents-as-tools, and testing tools</h2></div>
+      <h3 class="tk">09.9 Multi-agent orchestration and agents-as-tools <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span></h3>
+      <p>A deployed agent can be a <strong>tool</strong> for another agent. A <strong>supervisor</strong> delegates sub-tasks to <strong>specialists</strong> (each an endpoint) exposed as tools. Because the specialist is a Serving endpoint, you call it with <code>ChatDatabricks(endpoint=...)</code> and wrap it in a <code>Tool</code> — the DIY version of Agent Bricks' Multi-Agent Supervisor (Module 10.3, referenced only).</p>
+      <pre><code>from databricks_langchain import ChatDatabricks
+from langchain.tools import Tool
+
+recommender_tool = Tool(
+    name="flight_recommendation_agent",
+    func=get_flight_recommendation,   # calls ChatDatabricks(endpoint="...")
+    description="Get real-time flight recommendations based on the user input.")</code></pre>
+      <h3 class="tk">09.10 Testing agent tools before packaging and deploy <span class="tag-pill h">Hands-on</span></h3>
+      <p>Test tools <em>before</em> packaging (pairs with 09.3). <strong>Unit tests</strong> for wrappers, API handlers, and transforms; then <strong>LLM-judge evaluation</strong> with a validation set that records expected docs, expected inputs, and the expected <em>set of tools</em> per query. A <code>right_tool_usage_scorer</code> (using <code>meets_guidelines</code> from <code>mlflow.genai.judges</code>) checks tool choice — run it through <code>mlflow.genai.evaluate()</code> so tool tests live in the same harness as answer-quality tests.</p>
+      <div class="note imp"><span class="tag">📌 Important</span>Test the <strong>tool layer</strong> and the <strong>orchestration layer</strong> separately. A tool can be perfect while the agent still calls it at the wrong time — right-tool-usage scoring catches that, and it must pass before you package with <code>ResponsesAgent</code>.</div>
+    </section>
+
+    <section class="entry" id="worked">
+      <div class="entry-head"><span class="num">11 · Worked thread</span><h2>Unity Airways — from RAG chain to deployed support agent</h2></div>
+      <ol>
+        <li><strong>Frame the leap (09.1):</strong> the FAQ chain can't answer "is my delayed booking refundable?" — it isn't connected to booking data.</li>
+        <li><strong>Design a small toolset (09.3 ★):</strong> <code>VectorSearchRetrieverTool</code> over the RAG chunks index, a UC <code>get_flight_status</code> via <code>UCFunctionToolkit</code>, a weather <code>StructuredTool</code>.</li>
+        <li><strong>Govern the tools (09.4):</strong> a <code>WHERE</code> clause scopes rows; Pydantic schemas type inputs; each tool handles its own errors.</li>
+        <li><strong>Build the loop (09.2, 09.5):</strong> a LangGraph tool-calling agent — <code>agent</code> node calls the LLM, <code>should_continue</code> routes to <code>tools</code> or ends (planning-agent reasoning).</li>
+        <li><strong>Engineer context (09.7):</strong> pass only the reformulated last query to the retriever; trim history for the composing LLM; keep the endpoint stateless.</li>
+        <li><strong>Test before packaging (09.10):</strong> unit-test each tool, then <code>mlflow.genai.evaluate()</code> with a validation set; the <code>right_tool_usage_scorer</code> must pass.</li>
+        <li><strong>Package with ResponsesAgent (09.6 ★):</strong> wrap the agent, <code>mlflow.models.set_model(...)</code>, log with <code>resources</code>, run the <code>mlflow.models.predict()</code> pre-check.</li>
+        <li><strong>Register to UC (09.6 ★):</strong> <code>mlflow.set_registry_uri("databricks-uc")</code> → <code>register_model(name="unity_airways.rag.ua_support_agent")</code>.</li>
+        <li><strong>Deploy (Module 11):</strong> <code>agents.deploy("unity_airways.rag.ua_support_agent", version)</code> → Serving endpoint + Review App + feedback model, tracing + inference tables + monitoring on.</li>
+        <li><strong>Extend (09.8, 09.9, 09.11):</strong> swap hand-wrapped tools for <strong>managed MCP</strong>, and delegate "best flight" queries to a deployed Flight Recommender agent — AI agent → agentic AI.</li>
+      </ol>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">12 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Author with <code>ResponsesAgent</code> (recommended); path is <code>ChatModel</code> → <code>ChatAgent</code> → <code>ResponsesAgent</code>. Tools = <code>VectorSearchRetrieverTool</code> (retrieval) + UC <code>CREATE FUNCTION</code> via <code>UCFunctionToolkit</code> (lookup) + <code>StructuredTool</code> (API), all from <code>databricks-langchain</code>. Log from code with <code>mlflow.models.set_model()</code>; register via <code>set_registry_uri("databricks-uc")</code>; deploy with <code>agents.deploy</code> → endpoint + Review App.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Keep the toolset small and non-overlapping; clear descriptions drive tool choice. Put hard constraints in tools, tone in the prompt. Default to tool ordering; use planning agents only when the path varies (and cap the loop). Tailor context per tool. Prefer managed MCP over hand-maintained servers when a capability is reused.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Don't ship <code>ChatModel</code>/<code>ChatAgent</code> on new agents or the deprecated <code>SplitChatMessagesRequest</code>/<code>StringResponse</code>. Don't log with the plain LangChain flavor. Don't forget <code>set_registry_uri("databricks-uc")</code>. Don't pass full history every turn. Don't treat managed MCP as GA — it's Public Preview.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">13 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Describe the difference between a traditional agent, an AI agent, and an agentic AI system, with a Unity Airways example of each. What does an agent trade for its autonomy (Table 7-1)?</li>
+          <li>Name the three tool types for the support agent and the exact class/mechanism for each. Which package do <code>VectorSearchRetrieverTool</code> and <code>UCFunctionToolkit</code> come from?</li>
+          <li>What is the recommended authoring interface and the full migration path? Why log with <code>mlflow.pyfunc.log_model</code> + <code>ResponsesAgent</code> rather than the LangChain flavor?</li>
+          <li>When would you use tool ordering vs a planning agent (09.5)? Give the LangChain construct for the fixed-sequence case.</li>
+          <li>What does <code>agents.deploy(...)</code> create beyond the endpoint? Name two context-engineering techniques that keep an agent inside the context window.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">14 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📘 B1 — <em>Practical MLflow for GenAI on Databricks</em> (Early Release), <strong>Ch 7 "Developing Agents with MLflow"</strong> (primary): agents vs AI agents vs agentic AI (Fig 7-1), agents vs chains (Table 7-1); MLflow agent lifecycle + orchestration flavors; <strong>creating tools</strong> — <code>VectorSearchRetrieverTool</code>, UC <code>CREATE FUNCTION</code> + <code>UCFunctionToolkit</code> via <code>DatabricksFunctionClient</code>, <code>StructuredTool</code> + Pydantic <code>args_schema</code>, <code>system.ai.python_exec</code>; LangGraph tool-calling agent; testing tools (unit tests + <code>right_tool_usage_scorer</code> with <code>meets_guidelines</code>); <strong><code>ResponsesAgent</code></strong> (<code>ResponsesAgentRequest</code>/<code>Response</code>/<code>StreamEvent</code>, <code>predict</code>/<code>predict_stream</code>, <code>mlflow.models.set_model</code>), logging with <code>mlflow.pyfunc.log_model</code> + <code>resources</code>, pre-deploy <code>mlflow.models.predict()</code>, register via <code>set_registry_uri("databricks-uc")</code> + <code>register_model</code>; context engineering (window management, truncation, summarization, query rewrite, stateless endpoints); MCP servers as tools (Table 7-2; managed vs external; <code>DatabricksMCPClient</code>, managed MCP URL <code>{host}/api/2.0/mcp/vector-search/{catalog}/{schema}</code>); multi-agent orchestration / agents-as-tools (<code>ChatDatabricks</code> + <code>Tool</code>). <strong>Ch 8</strong>: <code>agents.deploy(...)</code> → Serving endpoint + Review App; Mosaic AI Agent Framework.</li>
+        <li>📗 B2 — <em>Databricks Certified GenAI Engineer Associate Study Guide</em>, <strong>Ch 2 (Multi-stage reasoning)</strong>: <code>extract → reason → respond</code>; tool ordering (<code>SimpleSequentialChain</code>/<code>SequentialChain</code>/<code>RouterChain</code>) vs planning agent chains (ReAct, plan-and-execute; Fig 2-3); <strong>Ch 4</strong>: using the Agent Framework, agent prompt templates exposing available functions.</li>
+        <li>🌐 Databricks Docs — Agent Framework author-agent (<code>ResponsesAgent</code>; <code>ChatAgent</code> superseded, <code>ChatModel</code> legacy): <code>docs.databricks.com/aws/en/generative-ai/agent-framework/author-agent</code>; deploy-agent (<code>agents.deploy</code>): <code>.../deploy-agent</code>; create-custom-tool (<code>UCFunctionToolkit</code>, UC functions): <code>.../create-custom-tool</code>; managed MCP: <code>docs.databricks.com/aws/en/generative-ai/mcp/managed-mcp</code>. <em>(Live curl re-check of the retriever-tool and managed-MCP pages returned empty at authoring — live re-check pending; retriever-tool class verified against 📘B1 Ch7 p266: <code>from databricks_langchain import VectorSearchRetrieverTool</code>.)</em></li>
+        <li>📎 Project cheat-sheet — <code>.claude/skills/genai-teacher/references/naming-conventions.md</code> §2 (AI Agents): <code>ResponsesAgent</code> recommended (<code>ChatModel</code>→<code>ChatAgent</code>→<code>ResponsesAgent</code>; <code>SplitChatMessagesRequest</code>/<code>StringResponse</code> deprecated); <code>UCFunctionToolkit</code> from <code>databricks_langchain</code>; register to UC then <code>agents.deploy</code> → endpoint + Review App; managed MCP servers <strong>Public Preview</strong> (some GA); Databricks Apps deployment increasingly recommended for new use cases (Module 10.5).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 09</span>
+  <span>Grounded in 📘B1 Ch7 (primary) · Ch8 · 📗B2 Ch2/Ch4 · Agent Framework docs · naming §2</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Definitions & lifecycle (09.1-09.2)",spine:false,comps:[
+   ["09.1 Agents vs AI Agents vs Agentic AI","Theory","Three levels of autonomy: traditional (if-else rules), AI agent (LLM picks tools), agentic AI (supervisor routes between specialist agents). Agents vs chains (Table 7-1): dynamic flow + autonomy + adaptability, but lower consistency and higher latency (10s to minutes).","module.md 09.1"],
+   ["09.2 Agent development lifecycle","Theory","Same MLflow lifecycle. Orchestration flavors (LangChain, LangGraph, DSPy, LlamaIndex); databricks-langchain for Databricks LLMs; tracing + Prompt Registry to iterate; mlflow.genai.evaluate() per layer; AI Gateway to swap models. Start small.","module.md 09.2"],
+ ]},
+ {name:"Creating tools — the cornerstone (09.3)",spine:true,comps:[
+   ["09.3 Creating tools ★","Hands-on","Three tool types from databricks_langchain: VectorSearchRetrieverTool (retrieval; index_name/num_results/tool_description), UC CREATE FUNCTION + UCFunctionToolkit (structured lookup), StructuredTool + Pydantic (API). Built-in system.ai.python_exec for code. Clear descriptions drive tool choice.","create-tools.html"],
+ ]},
+ {name:"Governance & reasoning (09.4-09.5)",spine:false,comps:[
+   ["09.4 Tool design for safety & governance","Theory","Tools are executable + governed (UC permissions, WHERE-clause row filters); prompt instructions are advisory. Constrain inputs with structured schemas; handle failure in the tool; keep the toolset small and non-overlapping. Hard constraints in tools, tone in the prompt.","module.md 09.4"],
+   ["09.5 Multi-stage reasoning & tool ordering","Theory + Hands-on","extract -> reason -> respond. Tool ordering = fixed sequence (SimpleSequentialChain/SequentialChain/RouterChain) for known steps; agent planning = dynamic (ReAct, plan-and-execute) when the path varies. Fig 2-3 contrasts them; cap the loop.","module.md 09.5"],
+ ]},
+ {name:"Packaging — the cornerstone (09.6)",spine:true,comps:[
+   ["09.6 Packaging with ResponsesAgent ★","Hands-on","Wrap the agent in ResponsesAgent (OpenAI Responses schema; ResponsesAgentRequest/Response/StreamEvent, predict/predict_stream). mlflow.models.set_model() logs from code; log with resources for auth passthrough; register via set_registry_uri('databricks-uc') + register_model to unity_airways.rag.ua_support_agent.","responsesagent.html"],
+ ]},
+ {name:"Context & MCP (09.7-09.8)",spine:false,comps:[
+   ["09.7 Context engineering","Theory","Fixed context window; decide what goes in each turn. Truncate to recent turns (state[-5:]); pass just the last query to a tool; summarize periodically; LLM query rewrite. Endpoints stateless; the app backend supplies history. Tailor context per tool.","module.md 09.7"],
+   ["09.8 MCP servers as tools","Theory + Hands-on","Model Context Protocol (Anthropic, 2024): standardized, discoverable tool interface. MCP server when many agents/platforms reuse a capability; LangChain tool for one app (Table 7-2). Managed (platform-hosted, secure defaults) vs external (self-hosted, flexible).","module.md 09.8"],
+ ]},
+ {name:"Multi-agent, testing, managed MCP (09.9-09.11)",spine:false,comps:[
+   ["09.9 Multi-agent orchestration & agents-as-tools","Theory + Hands-on","Wrap a deployed agent as a tool: supervisor delegates to specialists (each an endpoint) via ChatDatabricks(endpoint=) + Tool(). The DIY version of Agent Bricks' Multi-Agent Supervisor (Module 10.3, referenced only).","module.md 09.9"],
+   ["09.10 Testing agent tools","Hands-on","Test before packaging (pairs with 09.3). Unit tests for wrappers/handlers/transforms; LLM-judge validation set records expected docs, inputs, and tool set; right_tool_usage_scorer (meets_guidelines) via mlflow.genai.evaluate(). Test tool layer and orchestration separately.","module.md 09.10"],
+   ["09.11 Managed MCP servers on Databricks","Theory + Hands-on","Databricks-hosted, UC-governed MCP for Vector Search (AI Search), UC functions, Genie, Databricks SQL. URL {host}/api/2.0/mcp/vector-search/{catalog}/{schema}; DatabricksMCPClient.list_tools(). Public Preview (some GA) — verify live.","module.md 09.11"],
+ ]},
+];
+const STEPS=[
+  ["1 · Frame the leap","The Module 05 FAQ chain can't answer 'is my delayed booking refundable?' — it isn't connected to booking data (09.1)."],
+  ["2 · Design a small toolset","VectorSearchRetrieverTool over the RAG chunks index + a UC get_flight_status via UCFunctionToolkit + a weather StructuredTool (09.3 ★)."],
+  ["3 · Govern the tools","A WHERE clause scopes rows; Pydantic schemas type inputs; each tool handles its own errors (09.4)."],
+  ["4 · Build the loop","A LangGraph tool-calling agent: agent node calls the LLM, should_continue routes to tools or ends — planning-agent reasoning (09.2, 09.5)."],
+  ["5 · Engineer context","Pass only the reformulated last query to the retriever; trim history for the composing LLM; keep the endpoint stateless (09.7)."],
+  ["6 · Test before packaging","Unit-test each tool, then mlflow.genai.evaluate() with a validation set; the right_tool_usage_scorer must pass (09.10)."],
+  ["7 · Package with ResponsesAgent","Wrap the agent, mlflow.models.set_model(...), log with resources, run the mlflow.models.predict() pre-check (09.6 ★)."],
+  ["8 · Register to UC","set_registry_uri('databricks-uc') -> register_model(name='unity_airways.rag.ua_support_agent') (09.6 ★)."],
+  ["9 · Deploy","agents.deploy('unity_airways.rag.ua_support_agent', version) -> Serving endpoint + Review App + feedback model; tracing + inference tables + monitoring (Module 11)."],
+  ["10 · Extend","Swap hand-wrapped tools for managed MCP, and delegate 'best flight' to a deployed Flight Recommender agent — AI agent to agentic AI (09.8, 09.9, 09.11)."],
+];
+const ROWS=[
+  ["Vector retriever","VectorSearchRetrieverTool (databricks_langchain): index_name, num_results, tool_description","AI Search index (Unity Catalog)"],
+  ["Structured-data lookup","UC CREATE FUNCTION ... RETURNS TABLE, wrapped by UCFunctionToolkit","Unity Catalog function + grants"],
+  ["API calling","LangChain StructuredTool + Pydantic args_schema (BaseModel)","Your code + input schema"],
+  ["Code execution","Built-in system.ai.python_exec","Unity Catalog (built-in function)"],
+  ["MCP tool","DatabricksMCPClient wrapped as a LangChain BaseTool","Managed MCP server (UC-governed)"],
+  ["Agent-as-tool","Deployed agent via ChatDatabricks(endpoint=) + Tool()","Serving endpoint + UC model"],
+];
+const MERMAID_SRC=`flowchart TD
+  U["User<br/>'UA217 delayed — refund?'"]
+  RA["Unity Airways support agent<br/>(ResponsesAgent · databricks-claude-sonnet-4-5)"]
+  PLAN{"LLM plans:<br/>need a tool?"}
+  RET["AI Search retriever tool<br/>VectorSearchRetrieverTool"]
+  UCF["UC function tool<br/>UCFunctionToolkit"]
+  MCP["MCP tool<br/>managed MCP server"]
+  OBS["Tool result<br/>added to context"]
+  RESP["Grounded response<br/>+ citations"]
+  U --> RA --> PLAN
+  PLAN -->|"policy question"| RET
+  PLAN -->|"needs the record"| UCF
+  PLAN -->|"governed capability"| MCP
+  RET --> OBS
+  UCF --> OBS
+  MCP --> OBS
+  OBS -->|"loop: enough to answer?"| PLAN
+  PLAN -->|"yes"| RESP --> U`;
+const MERMAID_SRC2=`flowchart LR
+  AG["LangGraph tool-calling agent"]
+  WRAP["Wrap in ResponsesAgent<br/>mlflow.models.set_model(agent)"]
+  LOG["mlflow.pyfunc.log_model<br/>python_model + resources"]
+  REG["mlflow.register_model<br/>unity_airways.rag.ua_support_agent"]
+  DEP["agents.deploy(uc_model_name, version)"]
+  EP["Model Serving endpoint<br/>(Agent / Responses)"]
+  RV["Review App + feedback model<br/>tracing · inference tables"]
+  AG --> WRAP --> LOG --> REG --> DEP
+  DEP --> EP
+  DEP --> RV`;
+
+/* ---------- light tutor front ---------- */
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0].split(" · ")[1];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline) ---------- */
+function drawMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

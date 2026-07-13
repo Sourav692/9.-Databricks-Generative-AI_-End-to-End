@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Querying metric views — a joins tutorial · Databricks GenAI Tutor 15.3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.65;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  h3.tk{font-family:var(--mono);font-size:.9rem;letter-spacing:.06em;margin:24px 0 6px}
+  .tag-pill{display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--line);border-radius:20px;color:var(--muted);margin-left:8px;vertical-align:middle}
+  .tag-pill.h{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.t{color:var(--accent-2);border-color:var(--accent-soft)}
+  .tag-pill.star{color:var(--danger);border-color:var(--danger-soft)}
+  .tabs{display:flex;flex-wrap:wrap;border-bottom:2px solid var(--ink);margin:6px 0 22px}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 16px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:110px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.15rem;font-weight:600;margin:4px 0 8px}
+  .stepbox pre{margin:8px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--rule);vertical-align:top;font-size:.96rem}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Module 15 · Business Semantics</a>
+    <span class="loc">Topic 15.3 ★ · Cornerstone</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_15.3 · Cornerstone deep-dive · v1.0</span><span>Grounded in databricks-metric-views skill</span></div>
+    <div class="filed">Module 15 — Entry 15.3 · Query metric views + joins tutorial · Hands-on</div>
+    <h1>Querying Metric Views</h1>
+    <p class="dek">Two rules — name the <em>dimensions</em>, wrap the <em>measures</em> in <code>MEASURE()</code>. Then pull any slice, including dimensions from <em>joined</em> tables you never touch, with no JOIN in your SELECT.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>One grammar, any slice</h2></div>
+      <p class="lead">You built one governed metric view. Now every team wants a different cut — revenue by fare class, cancellation rate by route, attach rate by tier, a monthly trend. The skill is <strong>querying</strong>: a small, consistent grammar that pulls any slice from the one definition, including dimensions that live in joined tables.</p>
+      <ul>
+        <li><strong>Two rules:</strong> name the <strong>dimensions</strong>; wrap every <strong>measure</strong> in <code>MEASURE()</code>. <code>SELECT *</code> is unsupported.</li>
+        <li><strong><code>GROUP BY ALL</code></strong> groups by the dimensions you selected; <strong>order</strong> by a measure through its alias.</li>
+        <li><strong>Joins are invisible</strong> — ask for <code>Region</code> or <code>Loyalty Tier</code>; the YAML resolves the star/snowflake path.</li>
+        <li><strong>Filter dimensions in <code>WHERE</code></strong>; to filter <em>on a measure</em>, wrap the aggregate query and filter the alias.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Important</span><code>SELECT *</code> and bare measure names fail because a measure has no value until you pick a grain. This is the rule that surprises everyone once.</div>
+    </section>
+
+    <section class="entry" id="problem">
+      <div class="entry-head"><span class="num">02 · Why naive fails</span><h2>The traps</h2></div>
+      <ul>
+        <li><strong>Query like a table with <code>SELECT *</code></strong> → rejected; measures need a grain.</li>
+        <li><strong>JOIN the dim tables in your SELECT to get <code>Region</code></strong> → redundant and wrong; the join is already in the YAML.</li>
+        <li><strong>Average per-route cancellation rates to get a region rate</strong> → the classic ratio bug; averaging ratios is not the ratio of totals.</li>
+        <li><strong>Filter a measure in <code>WHERE</code></strong> → <code>WHERE MEASURE(...) &gt; x</code> is not allowed; filter measures in an outer query on the alias.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">03 · Explore</span><h2>The engine, the grammar, the walkthroughs, the consumers</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Engine flow</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Query grammar</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Walkthroughs</button>
+        <button role="tab" aria-selected="false" aria-controls="p-cons" id="t-cons" onclick="tab(this,'p-cons')">Consumers</button>
+      </div>
+
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — What the engine does">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">You write a flat SELECT; the engine expands the joins, applies the filter, and aggregates at your grain — recomputing ratios there.</div>
+        </div>
+      </div>
+
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Want to…</th><th>Do this</th><th>Not this</th></tr></thead><tbody id="rows"></tbody></table>
+      </div>
+
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <div id="p-cons" class="pane" role="tabpanel" aria-labelledby="t-cons" hidden>
+        <div class="plate" data-fig="Fig. 02 — Where the same view goes">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">Every consumer speaks the same MEASURE() grammar (or has it generated), so SQL, BI, alerts, and Genie agree.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="entry" id="w1">
+      <div class="entry-head"><span class="num">04 · Walkthrough 1</span><h2>The simplest query</h2></div>
+      <h3 class="tk">Revenue + volume by fare class <span class="tag-pill h">Hands-on</span></h3>
+      <pre><code>SELECT
+  `Fare Class`,
+  MEASURE(`Total Revenue`) AS total_revenue,
+  MEASURE(`Booking Count`)  AS bookings
+FROM unity_airways.analytics.bookings_metrics
+GROUP BY ALL
+ORDER BY total_revenue DESC</code></pre>
+      <p><code>GROUP BY ALL</code> groups by <code>Fare Class</code> (the sole non-measure column). <strong>Verify:</strong> four rows; the summed <code>total_revenue</code> equals the grand total from the same query with no dimension — proof re-aggregation works.</p>
+    </section>
+
+    <section class="entry" id="w2">
+      <div class="entry-head"><span class="num">05 · Walkthrough 2</span><h2>Time dimensions</h2></div>
+      <h3 class="tk">Monthly trend + "last quarter by fare class" <span class="tag-pill h">Hands-on</span></h3>
+      <pre><code>SELECT
+  `Booking Month`,
+  MEASURE(`Total Revenue`) AS revenue,
+  MEASURE(`Booking Count`) AS bookings
+FROM unity_airways.analytics.bookings_metrics
+WHERE `Booking Month` >= DATE'2025-01-01'
+GROUP BY ALL
+ORDER BY `Booking Month`
+
+-- "Total revenue last quarter by fare class" (a Module 14 Genie question)
+SELECT `Fare Class`, MEASURE(`Total Revenue`) AS revenue
+FROM unity_airways.analytics.bookings_metrics
+WHERE `Booking Quarter` = DATE'2025-04-01'
+GROUP BY ALL
+ORDER BY revenue DESC</code></pre>
+      <div class="note tip"><span class="tag">💡 Tip</span>Expose common grains (<code>Booking Month</code>, <code>Booking Quarter</code>) as dimensions in the YAML so consumers never hand-roll <code>DATE_TRUNC</code> — and everyone buckets time the same way.</div>
+    </section>
+
+    <section class="entry" id="w3">
+      <div class="entry-head"><span class="num">06 · Walkthrough 3 · the cornerstone</span><h2>The joins tutorial</h2></div>
+      <h3 class="tk">Dimensions from joined tables — no JOIN written <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span></h3>
+      <p><code>Loyalty Tier</code> comes from <code>dim_customers</code>; <code>Region</code> comes from <code>dim_airports</code> reached <em>through</em> <code>dim_flights</code> (a snowflake join). Both are just dimension names to the query:</p>
+      <pre><code>SELECT
+  `Region`,
+  `Loyalty Tier`,
+  MEASURE(`Total Revenue`)      AS revenue,
+  MEASURE(`Cancellation Rate`)  AS cancel_rate
+FROM unity_airways.analytics.bookings_metrics
+GROUP BY ALL
+ORDER BY revenue DESC</code></pre>
+      <p><strong>"Which routes have the highest cancellation rate"</strong> — group by origin + destination, and filter on a measure via an <strong>outer</strong> query:</p>
+      <pre><code>SELECT * FROM (
+  SELECT `Origin Airport`, `Dest Airport`,
+         MEASURE(`Cancellation Rate`) AS cancel_rate,
+         MEASURE(`Booking Count`)     AS bookings
+  FROM unity_airways.analytics.bookings_metrics
+  GROUP BY ALL
+)
+WHERE bookings >= 5
+ORDER BY cancel_rate DESC
+LIMIT 10</code></pre>
+      <div class="note imp"><span class="tag">📌 Important</span><strong>Verify the join resolved:</strong> every row has a non-null <code>Region</code> / <code>Loyalty Tier</code>, and <code>cancel_rate</code> is between 0 and 1. Null <code>Region</code> ⇒ the airport snowflake key is off; an error on <code>Region</code> ⇒ you're likely below DBR 17.1 (nested joins) / 17.2 (v1.1).</div>
+    </section>
+
+    <section class="entry" id="w4">
+      <div class="entry-head"><span class="num">07 · Walkthrough 4</span><h2>Consuming results — BI, alerts, Genie</h2></div>
+      <h3 class="tk">One definition, every surface <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span></h3>
+      <ul>
+        <li><strong>SQL Editor / notebooks:</strong> run the queries directly; <code>spark.sql("...")</code> returns a DataFrame to <code>display()</code>.</li>
+        <li><strong>AI/BI dashboards:</strong> add the metric view as a <strong>dataset</strong>; the builder emits <code>MEASURE()</code> SQL. Dimensions become filters/axes, measures the plotted values.</li>
+        <li><strong>Alerts:</strong> a threshold on a measure (e.g. weekly <code>Cancellation Rate</code> for a region &gt; 5%) — the same SQL on a schedule.</li>
+        <li><strong>Genie Agent (Module 14):</strong> add the metric view as a source; "total revenue last quarter by fare class" becomes <code>MEASURE(`Total Revenue`) ... GROUP BY `Fare Class`</code> — governed, matching the dashboard.</li>
+      </ul>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>On day one, prove BI, SQL, and Genie agree: run Walkthrough 1 in SQL, chart the same breakdown, and ask Genie "revenue by fare class". Identical numbers is the demo that sells the semantic layer. A mismatch means something bypassed the metric view.</div>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">08 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Two rules always: name the dimensions, <code>MEASURE()</code> the measures — <code>SELECT *</code> never works. Joins are the view's job, not the query's. Ratios are correct at any grain <em>because</em> they are measures.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Alias every measure and order/filter by the alias — sidesteps the "can't filter a measure in WHERE" trap. Expose the time grains you use as dimensions.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Needs a Pro/Serverless SQL warehouse (or DBR 17.2+); nested joins need 17.1+. <code>WHERE MEASURE(...)</code> is not allowed — filter in an outer query. If a joined dimension is null everywhere, the <code>on:</code> join key in the YAML is wrong — fix the definition, not the query.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">09 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>What are the two mandatory rules for a metric-view query, and why is <code>SELECT *</code> rejected?</li>
+          <li><code>Region</code> lives in <code>dim_airports</code>, which <code>fct_bookings</code> can't reach directly. How do you query revenue by <code>Region</code>, and what makes that possible without a JOIN?</li>
+          <li>You want top routes by cancellation rate, only for routes with ≥ 5 bookings. Why can't you use <code>WHERE</code>, and what do you do instead?</li>
+          <li>Why is a region-level cancellation rate from the view correct, while <code>AVG</code> of per-route rates is wrong?</li>
+          <li>Name three consumers of <code>bookings_metrics</code> and explain why their numbers agree.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">10 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>🧩 <strong>Skill — <code>databricks-metric-views</code></strong> (primary): the <code>MEASURE()</code> query rule, <code>GROUP BY ALL</code>, <code>SELECT *</code> limitation, star/snowflake join semantics (<code>source</code> + join <code>name</code>), filtered/ratio measures, and BI/Genie/alerts integrations. Query patterns adapted from <code>patterns.md</code> (Patterns 1, 4, 5, 6) and the <code>MEASURE()</code> reference.</li>
+        <li>📎 <strong>P5 shared build brief</strong> — <code>scratchpad/p5-build-brief.md</code>: the <code>bookings_metrics</code> dimensions/measures and the three Genie questions this tutorial answers.</li>
+        <li>🌐 <strong>Databricks Docs</strong> (verify live — JS-rendered, empty body to a plain fetch at authoring; <strong>live re-check pending</strong>): <code>MEASURE()</code> <code>docs.databricks.com/aws/en/sql/language-manual/functions/measure</code>; Joins <code>.../metric-views/data-modeling/joins</code>; Metric Views <code>docs.databricks.com/aws/en/metric-views/</code>.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Entry 15.3 ★</span>
+  <span>Grounded in databricks-metric-views skill + P5 build brief · metric-views docs (live re-check pending)</span>
+</footer>
+
+<script>
+const ROWS=[
+ ["Slice by a joined attribute (Region, Tier)","Name the dimension; the YAML join resolves it","Add a JOIN in your SELECT"],
+ ["Scope a time range","WHERE `Booking Month` >= DATE'...'","DATE_TRUNC in every query"],
+ ["Filter on a measure (min volume)","Wrap the aggregate query, filter the alias","WHERE MEASURE(...) > x"],
+ ["Get a correct region-level ratio","Ask for the ratio measure by Region","Average per-route rates"],
+ ["Return all columns quickly","List dimensions + MEASURE() explicitly","SELECT * (unsupported)"],
+ ["Top-N routes","ORDER BY <alias> DESC LIMIT n","sort in the app after a full scan"],
+];
+const STEPS=[
+ ["Walkthrough 1 — simplest","<pre><code>SELECT `Fare Class`,\n  MEASURE(`Total Revenue`) AS revenue\nFROM ...bookings_metrics\nGROUP BY ALL\nORDER BY revenue DESC</code></pre>One row per fare class. Verify the total matches the no-dimension grand total."],
+ ["Walkthrough 2 — time","<pre><code>WHERE `Booking Month` >= DATE'2025-01-01'\nGROUP BY ALL ORDER BY `Booking Month`</code></pre>Filter on the time dimension; expose Month/Quarter grains in the YAML."],
+ ["Walkthrough 3 — joins","<pre><code>SELECT `Region`, `Loyalty Tier`,\n  MEASURE(`Total Revenue`) AS revenue,\n  MEASURE(`Cancellation Rate`) AS cr\nFROM ...bookings_metrics GROUP BY ALL</code></pre>Region + Loyalty Tier come from joined tables — no JOIN in the query."],
+ ["Walkthrough 3b — filter a measure","<pre><code>SELECT * FROM (\n  SELECT `Origin Airport`, `Dest Airport`,\n    MEASURE(`Cancellation Rate`) AS cr,\n    MEASURE(`Booking Count`) AS n\n  FROM ...bookings_metrics GROUP BY ALL)\nWHERE n >= 5 ORDER BY cr DESC</code></pre>Filter the measure alias in an outer query."],
+ ["Walkthrough 4 — consume","Same MEASURE() grammar powers SQL Editor, AI/BI dashboards (metric view as dataset), alerts, and the Module 14 Genie Agent. Prove all three agree on day one."],
+];
+const MERMAID_SRC=`flowchart TD
+  Q["Query: SELECT Region, Loyalty Tier, MEASURE(Total Revenue) ... GROUP BY ALL"]
+  J["1. Resolve YAML joins: fct_bookings to dim_flights to dim_airports (Region); fct_bookings to dim_customers (Loyalty Tier)"]
+  FIL["2. Apply global filter (if any)"]
+  AGG["3. Compute each MEASURE() at the requested grain (ratios recompute num + denom here)"]
+  R["Result rows: revenue + cancel rate per Region x Loyalty Tier"]
+  Q --> J --> FIL --> AGG --> R`;
+const MERMAID_SRC2=`flowchart LR
+  MV["bookings_metrics (one YAML definition)"]
+  SQL["SQL Editor / notebooks"]
+  DASH["AI/BI dashboards (metric view as dataset)"]
+  ALERT["Alerts on a measure"]
+  GENIE["Genie Agent (Module 14): NL question to MEASURE() SQL"]
+  MV --> SQL
+  MV --> DASH
+  MV --> ALERT
+  MV --> GENIE`;
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0].split(" — ")[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- theme-aware mermaid (graceful offline) ---------- */
+function drawMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

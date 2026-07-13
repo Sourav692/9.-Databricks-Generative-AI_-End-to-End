@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Topic 11.3 (cornerstone): AI Gateway.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Gateway · Databricks GenAI Tutor 11.3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbox pre{margin:8px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .badge{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;padding:2px 7px;border-radius:3px;border:1px solid var(--rule);white-space:nowrap}
+  .badge.beta{color:var(--danger);border-color:var(--danger)}
+  .badge.prev{color:var(--accent-2);border-color:var(--accent)}
+  .badge.ga{color:var(--ok);border-color:var(--ok)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI</a>
+    <span class="loc">Module 11 · Topic 11.3 ★</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_11.3 · Cornerstone · v1.0</span><span>Verified against databricks-sdk put_ai_gateway · books B1 Ch7/8 · docs</span></div>
+    <div class="filed">Module 11 — Deployment and Serving · Topic 11.3 · Theory + Hands-on ★</div>
+    <h1>AI Gateway</h1>
+    <p class="dek">A serving endpoint with no controls in front of it is a liability. AI Gateway is the governance layer you attach <em>to</em> the Unity Airways endpoint: rate limits, safety and PII guardrails, usage tracking, payload logging, and provider fallbacks. <em>One config, every caller, no app changes.</em></p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>Governance is a property of the endpoint, not new code</h2></div>
+      <p class="lead">Your Module 11.1 agent (<code>unity_airways.rag.ua_support_agent</code>) is live behind a Model Serving endpoint. AI Gateway is the layer that makes it safe for real traffic — configured once on the endpoint, enforced for every caller, whether that is the chat app from Module 10 or a batch <code>ai_query</code> job.</p>
+      <ul>
+        <li><strong>AI Gateway sits in front of a serving endpoint.</strong> Requests flow through it; it enforces policy, logs, and can fail over before the response comes back.</li>
+        <li><strong>Five levers:</strong> <strong>rate limiting</strong>, <strong>AI guardrails</strong> (safety + PII, keywords, topics), <strong>usage tracking</strong>, <strong>payload logging</strong> to a UC inference table, and provider <strong>fallbacks</strong>.</li>
+        <li><strong>One SDK call.</strong> <code>w.serving_endpoints.put_ai_gateway(name, ...)</code> — signature verified against the current <code>databricks-sdk</code>. Or use the endpoint's <strong>AI Gateway</strong> tab in the UI.</li>
+        <li><strong>Works for hosted and external models.</strong> Foundation Models and External Models (OpenAI, Anthropic, Bedrock, Vertex AI, Cohere) are governed the same way; the gateway holds the provider key.</li>
+        <li><strong>PII redaction is Preview.</strong> Everything else here is the established feature set. <strong>Unity AI Gateway</strong> is the newer Beta umbrella (MCP governance, budgets).</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>The flow, the five levers, and the two flavors</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Architecture</button>
+        <button role="tab" aria-selected="false" aria-controls="p-life" id="t-life" onclick="tab(this,'p-life')">Request lifecycle</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The five levers</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Walkthrough</button>
+        <button role="tab" aria-selected="false" aria-controls="p-compare" id="t-compare" onclick="tab(this,'p-compare')">Two flavors</button>
+      </div>
+
+      <!-- PANE A: architecture mermaid — mirrors ai-gateway.md Diagram 1 -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — callers → AI Gateway (5 levers) → hosted + external models">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Callers hit the gateway, not the model directly. The same five levers govern the app and any batch caller, and route to hosted or external models.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: request lifecycle sequence — mirrors ai-gateway.md Diagram 2 -->
+      <div id="p-life" class="pane" role="tabpanel" aria-labelledby="t-life" hidden>
+        <div class="plate" data-fig="Fig. 02 — one request through the gateway (with fallback)">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">Rate-limit → input guardrails → forward → (fallback on error) → output guardrails + usage + payload log → response.</div>
+        </div>
+      </div>
+
+      <!-- PANE C: clickable explorer of the five levers -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — the five levers and what each config field does">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a lever</div><h3>Rate limits, guardrails, tracking, logging, fallbacks</h3><p>Click one to see the SDK field and where it bites.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE D: stepper walkthrough of the config -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE E: two flavors -->
+      <div id="p-compare" class="pane" role="tabpanel" aria-labelledby="t-compare" hidden>
+        <table>
+          <thead><tr><th>Dimension</th><th>AI Gateway for serving endpoints</th><th>Unity AI Gateway <span class="badge beta">Beta</span></th></tr></thead>
+          <tbody>
+            <tr><td class="k">What it is</td><td>Feature set attached to one Model Serving endpoint</td><td>Newer umbrella governing many agent surfaces</td></tr>
+            <tr><td class="k">Scope</td><td>Per endpoint</td><td>Apps, LLM endpoints, MCP servers, coding tools, serving endpoints</td></tr>
+            <tr><td class="k">Configure with</td><td>UI tab or <code>put_ai_gateway()</code></td><td>Richer UI + observability</td></tr>
+            <tr><td class="k">Adds</td><td>Rate limits, guardrails, usage, payload logs, fallbacks</td><td>MCP-service governance + budget management (spend caps)</td></tr>
+            <tr><td class="k">Use for</td><td>Production today</td><td>The direction of travel (confirm Beta availability)</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Keep production plans on the established per-endpoint features; frame Unity AI Gateway as where things are heading. Guardrails design deep-dive is 12.2.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="how">
+      <div class="entry-head"><span class="num">03 · How it works</span><h2>Five levers, applied once, on the way in and out</h2></div>
+      <p>Each lever is a field on the gateway config. They run in order on every request: check the rate limit, filter the input, forward (or fail over), filter the output, then track and log.</p>
+      <table>
+        <thead><tr><th>Lever</th><th>What it does</th><th>Maturity</th></tr></thead>
+        <tbody>
+          <tr><td class="k">rate_limits</td><td>Cap calls and/or tokens per USER / USER_GROUP / SERVICE_PRINCIPAL / ENDPOINT (renewal: MINUTE)</td><td><span class="badge ga">GA</span></td></tr>
+          <tr><td class="k">guardrails</td><td>safety filter, invalid_keywords, valid_topics on input/output</td><td><span class="badge ga">GA</span></td></tr>
+          <tr><td class="k">guardrails.pii</td><td>Detect PII, then BLOCK / MASK / NONE</td><td><span class="badge prev">Preview</span></td></tr>
+          <tr><td class="k">usage_tracking_config</td><td>Write consumption to system tables for spend attribution</td><td><span class="badge ga">GA</span></td></tr>
+          <tr><td class="k">inference_table_config</td><td>Log raw request/response to a Delta table in UC</td><td><span class="badge ga">GA</span></td></tr>
+          <tr><td class="k">fallback_config</td><td>Retry the next served model if the primary errors</td><td><span class="badge ga">GA</span></td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li><strong>Rate limiting</strong> protects budget and fairness; a blocked call returns a rate-limit error, so start permissive and tighten with Module 13 data.</li>
+        <li><strong>Guardrails</strong> are coarse safety + filtering; domain rules ("cite the policy before quoting a refund") still live in the agent. Full pattern is <strong>12.2</strong>.</li>
+        <li><strong>Usage + payload logging</strong> feed monitoring (<strong>Module 13</strong>) and eval-set building (<strong>Module 08</strong>). Pair payload logs with the PII guardrail and UC grants.</li>
+        <li><strong>Fallbacks</strong> turn provider outages into non-events; keep the fallback list short and put a comparable model second.</li>
+        <li><strong>External Models</strong> let you swap providers by config, not code — the gateway stores the key and exposes one OpenAI-compatible surface.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="dothis">
+      <div class="entry-head"><span class="num">04 · Run this</span><h2>Configure the gateway with one SDK call</h2></div>
+      <p><strong>Prereqs:</strong> the endpoint from 11.1 (<code>ua-support-agent</code>), rights to edit it, a UC catalog/schema for the inference table (<code>unity_airways.rag</code>), and <code>databricks-sdk</code> installed.</p>
+      <p><strong>UI path (fastest demo):</strong> Serving → select <code>ua-support-agent</code> → <strong>AI Gateway</strong> tab → toggle Rate limits, Guardrails (safety on; keywords; PII Block/Mask — Preview), Usage tracking, and Inference tables → Save. The endpoint updates in place; the URL and callers never change.</p>
+      <p><strong>SDK path (reproducible)</strong> — signature verified against current <code>databricks-sdk</code>:</p>
+      <pre><code>from databricks.sdk import WorkspaceClient
+from databricks.sdk.service.serving import (
+    AiGatewayGuardrails, AiGatewayGuardrailParameters,
+    AiGatewayGuardrailPiiBehavior, AiGatewayGuardrailPiiBehaviorBehavior,
+    AiGatewayRateLimit, AiGatewayRateLimitKey, AiGatewayRateLimitRenewalPeriod,
+    AiGatewayUsageTrackingConfig, AiGatewayInferenceTableConfig, FallbackConfig,
+)
+
+w = WorkspaceClient()
+
+w.serving_endpoints.put_ai_gateway(
+    name="ua-support-agent",  # the endpoint deployed in 11.1
+
+    # 1) Rate limiting: 100 calls/min per USER
+    rate_limits=[
+        AiGatewayRateLimit(
+            calls=100,
+            renewal_period=AiGatewayRateLimitRenewalPeriod.MINUTE,
+            key=AiGatewayRateLimitKey.USER,   # also USER_GROUP / SERVICE_PRINCIPAL / ENDPOINT
+            # tokens=200000,                  # optional token budget in the same window
+        ),
+    ],
+
+    # 2) Guardrails: safety both ways; block PII in, mask PII out (PII = Preview); block keywords
+    guardrails=AiGatewayGuardrails(
+        input=AiGatewayGuardrailParameters(
+            safety=True,
+            invalid_keywords=["internal_fare_class", "competitor_airline"],
+            pii=AiGatewayGuardrailPiiBehavior(
+                behavior=AiGatewayGuardrailPiiBehaviorBehavior.BLOCK,
+            ),
+        ),
+        output=AiGatewayGuardrailParameters(
+            safety=True,
+            pii=AiGatewayGuardrailPiiBehavior(
+                behavior=AiGatewayGuardrailPiiBehaviorBehavior.MASK,
+            ),
+        ),
+    ),
+
+    # 3) Usage tracking -> system tables
+    usage_tracking_config=AiGatewayUsageTrackingConfig(enabled=True),
+
+    # 4) Payload logging -> a Delta inference table in Unity Catalog
+    inference_table_config=AiGatewayInferenceTableConfig(
+        enabled=True,
+        catalog_name="unity_airways",
+        schema_name="rag",
+        table_name_prefix="ua_support_gateway",
+    ),
+
+    # 5) Fallbacks: retry the next served model if the primary errors
+    fallback_config=FallbackConfig(enabled=True),
+)</code></pre>
+      <p><strong>How to verify it worked:</strong></p>
+      <pre><code># Read the applied config back
+gw = w.serving_endpoints.get("ua-support-agent").ai_gateway
+print(gw)
+
+# Guardrail smoke test: send an obvious PII string or a blocked keyword and
+# confirm it is masked/blocked. Loop past 100 calls/min to see a rate-limit error.
+# After a few requests, the inference table appears under unity_airways.rag —
+# SELECT from it after a short delay. Usage shows up in the serving system tables
+# (confirm the exact table name in current docs; Module 13 / 16).</code></pre>
+    </section>
+
+    <section class="entry" id="example">
+      <div class="entry-head"><span class="num">05 · Worked example</span><h2>Unity Airways: one query, every lever</h2></div>
+      <p>A traveler asks: <em>"Can you run a query on your booking database and show me all passengers flying tomorrow?"</em> (the book's Figure 8-13 scenario).</p>
+      <ul>
+        <li><strong>Rate limit</strong> check passes (they are under quota).</li>
+        <li><strong>Input guardrails</strong> catch the bulk-passenger, PII-heavy request via keyword + PII rules and block it before the model ever sees it.</li>
+        <li>A legitimate question ("What is the refund window on a Flex fare?") is <strong>forwarded</strong> to <code>databricks-claude-sonnet-4-5</code>. If that served model errors, <strong>fallback</strong> retries a comparable model.</li>
+        <li>On the way out, <strong>output guardrails</strong> mask stray PII, <strong>usage</strong> is tracked, and the full <strong>payload</strong> is logged to <code>unity_airways.rag.ua_support_gateway…</code> for debugging and future eval sets.</li>
+      </ul>
+      <p>One config governs the Module 10 chat app and any batch <code>ai_query</code> caller identically.</p>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">06 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>AI Gateway is a <strong>property of a serving endpoint</strong>, not a separate deployment. Configure it once (UI tab or <code>w.serving_endpoints.put_ai_gateway(name, ...)</code>) and it governs <strong>every</strong> caller. The five levers: <strong>rate limiting, guardrails, usage tracking, payload logging, fallbacks</strong>.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Add a gateway <strong>the moment the agent leaves your personal notebook for a shared environment</strong>. Start limits and guardrails permissive, turn on <strong>payload logging day one</strong> so you have data, then tighten using Module 13. Reuse one centrally governed gateway across agents for a single control point on cost and safety.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>The book (B1 Ch7/8) says "MLflow AI Gateway / Databricks AI Gateway" and shows a standalone gateway URL. The current term is <strong>AI Gateway</strong> configured on a serving endpoint, with <strong>Unity AI Gateway (Beta)</strong> as the newer umbrella (MCP governance, budgets). <strong>PII detection/redaction is Preview.</strong> Exact <strong>system table</strong> and <strong>inference table</strong> names are doc details — read them back from the endpoint config rather than quoting from memory; treat live UI strings as <strong>re-check pending</strong>. <strong>Endpoint-type support:</strong> the <code>databricks-sdk</code> <code>put_ai_gateway</code> docstring notes AI Gateway is fully supported on <strong>Foundation Model, external-model, provisioned-throughput and pay-per-token</strong> endpoints, while <strong>agent endpoints</strong> (a <code>ResponsesAgent</code> deployed via <code>agents.deploy</code>) <strong>currently support only inference tables</strong> via AI Gateway — so to guardrail/rate-limit an agent, configure the <strong>Foundation Model endpoint it calls</strong>. Evolving; verify for your workspace.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">07 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Name the five things AI Gateway can enforce on a serving endpoint. Which single SDK call configures them?</li>
+          <li>What are the four rate-limit keys, and what renewal period is currently supported?</li>
+          <li>What are the three PII behaviors, and what maturity label must you attach to PII redaction?</li>
+          <li>Where does payload logging write, and why pair it with a PII guardrail and UC grants?</li>
+          <li>What is the difference between "AI Gateway for serving endpoints" and "Unity AI Gateway," and which is Beta?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">08 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📘 <strong>B1 — <em>Practical MLflow for GenAI on Databricks</em> (O'Reilly Early Release), Ch 7</strong> (pp. 260–262): "MLflow AI Gateway transitioning to Databricks AI Gateway" — centralized secure interface, provider abstraction, swap by config, UC integration, usage rate limits on user groups, guardrails, usage/payload tracking to tables. Figure 7-2.</li>
+        <li>📘 <strong>B1 — Ch 8</strong> (pp. 312–324): "MLflow AI Gateway," "Using MLflow AI Gateway," "Capabilities," "Fallbacks," "Custom Guardrails," "AI Guardrails" — gateway as governed proxy, unified endpoint + OpenAI-compatible client, fallback chains, guardrails on input/output. Figures 8-9 through 8-13 (Unity Airways flow).</li>
+        <li>🧰 <strong>databricks-sdk (live introspection, July 2026):</strong> <code>ServingEndpointsAPI.put_ai_gateway(name, *, fallback_config, guardrails, inference_table_config, rate_limits, usage_tracking_config)</code>; dataclasses <code>AiGatewayGuardrails/GuardrailParameters/GuardrailPiiBehavior</code>, <code>AiGatewayRateLimit</code> (keys USER/USER_GROUP/SERVICE_PRINCIPAL/ENDPOINT, renewal MINUTE, calls/tokens), <code>AiGatewayUsageTrackingConfig</code>, <code>AiGatewayInferenceTableConfig</code>, <code>FallbackConfig</code>. Verified signature for the code above.</li>
+        <li>🧭 <strong>Naming cheat-sheet §6</strong> (<code>references/naming-conventions.md</code>): AI Gateway feature set on Model Serving (rate limiting, guardrails incl. <strong>PII Preview</strong>, usage tracking, payload logging → inference tables, fallbacks, external providers) and <strong>Unity AI Gateway = Beta</strong> (MCP-service governance, budget management).</li>
+        <li>🌐 <strong>Docs — AI Gateway</strong> (<code>docs.databricks.com/ai-gateway/</code>): confirmed live via <code>llms.txt</code> (July 2026): "AI Gateway governs and monitors agents deployed to Apps, LLM endpoints, MCP servers, coding tools, and model serving endpoints." Endpoint-config and External Models pages are JS-rendered; precise UI strings and table names are <strong>live re-check pending</strong>.</li>
+        <li>🔗 Cross-refs: guardrails deep-dive <strong>12.2</strong>; monitoring / inference tables <strong>Module 13</strong>; cost control / budgets <strong>Module 16</strong>; the endpoint itself <strong>11.1</strong>.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Topic 11.3 ★</span>
+  <span>Grounded in B1 Ch7/8 · databricks-sdk put_ai_gateway · docs + naming cheat-sheet</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"Protect and filter",spine:false,comps:[
+   ["rate_limits","cap each caller","A list of AiGatewayRateLimit. Each sets calls (and/or tokens) over a renewal_period (MINUTE) keyed by USER, USER_GROUP, SERVICE_PRINCIPAL, or ENDPOINT. Stops one caller from draining budget or throughput.","key = USER / USER_GROUP / SERVICE_PRINCIPAL / ENDPOINT"],
+   ["guardrails","safety on both sides","AiGatewayGuardrails holds input and output AiGatewayGuardrailParameters: safety (bool), invalid_keywords, valid_topics, and pii. Same policy for every caller, in and out. Domain rules still live in the agent (12.2).","safety + keywords + topics = GA"],
+   ["guardrails.pii","detect and redact PII","AiGatewayGuardrailPiiBehavior.behavior = BLOCK, MASK, or NONE. Block a passport number on input; mask it on output. Preview — verify before promising it.","BLOCK / MASK / NONE · Preview"],
+ ]},
+ {name:"Observe and survive",spine:true,comps:[
+   ["usage_tracking_config","attribute spend","enabled=True writes per-request consumption (tokens, counts) to system tables. Finance-grade attribution per endpoint, no app instrumentation. Deep dive: Module 13 / 16.","system tables · enable at account level"],
+   ["inference_table_config","keep the payloads","catalog_name + schema_name + table_name_prefix land each request/response as Delta rows in UC. Your debug trail and eval-set seed (Module 08). Pair with PII guardrail + UC grants.","Delta table in Unity Catalog"],
+   ["fallback_config","survive outages","enabled=True retries the next served model on the endpoint when the primary errors. Travelers always get a response. Keep the list short; second model should be comparable.","retry next model on error"],
+ ]},
+];
+const STEPS=[
+  ["Pick the endpoint","Target the 11.1 endpoint: name='ua-support-agent'. AI Gateway is a property of it, not a new deploy. UI: Serving → endpoint → AI Gateway tab."],
+  ["Set rate limits","rate_limits=[AiGatewayRateLimit(calls=100, renewal_period=MINUTE, key=USER)]. Add tokens=... for a token budget; use USER_GROUP for per-team quotas."],
+  ["Add guardrails","guardrails=AiGatewayGuardrails(input=..., output=...). safety=True both ways; invalid_keywords to block; pii=BLOCK on input, MASK on output (PII = Preview)."],
+  ["Turn on usage tracking","usage_tracking_config=AiGatewayUsageTrackingConfig(enabled=True). Consumption flows to system tables for spend attribution."],
+  ["Turn on payload logging","inference_table_config=AiGatewayInferenceTableConfig(enabled=True, catalog_name='unity_airways', schema_name='rag', table_name_prefix='ua_support_gateway')."],
+  ["Enable fallbacks","fallback_config=FallbackConfig(enabled=True). Add a second served model to the endpoint so there is something to fail over to."],
+  ["Apply and verify","Call put_ai_gateway(...). Read back w.serving_endpoints.get(name).ai_gateway. Smoke-test a blocked keyword / PII string and check the inference table appears in UC."],
+];
+const MERMAID_SRC=`flowchart TB
+  subgraph CALLERS["Callers"]
+    app["Unity Airways app / agent"]
+    batch["Batch ai_query jobs"]
+  end
+  app --> GW
+  batch --> GW
+  subgraph GW["AI Gateway ON the serving endpoint"]
+    rl["Rate limiting<br/>per user / group / endpoint"]
+    gr["AI guardrails<br/>safety plus PII (Preview) plus keywords"]
+    ut["Usage tracking<br/>system tables"]
+    pl["Payload logging<br/>UC inference table"]
+    fb["Fallbacks<br/>retry next model on error"]
+  end
+  GW --> FM["Databricks-hosted<br/>Foundation Models"]
+  GW --> EXT["External Models<br/>OpenAI, Anthropic, Bedrock, Vertex AI, Cohere"]`;
+const MERMAID_SRC2=`sequenceDiagram
+  participant U as Traveler
+  participant GW as AI Gateway
+  participant M as Model (primary)
+  participant F as Model (fallback)
+  U->>GW: request
+  GW->>GW: rate-limit check (per caller)
+  GW->>GW: input guardrails (safety, PII, keywords)
+  GW->>M: forward if allowed
+  alt primary healthy
+    M-->>GW: completion
+  else primary errors
+    GW->>F: retry via fallback
+    F-->>GW: completion
+  end
+  GW->>GW: output guardrails plus usage plus payload log
+  GW-->>U: safe response`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

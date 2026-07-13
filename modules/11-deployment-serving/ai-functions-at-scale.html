@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 11 · Topic 11.10
+  AI Functions for GenAI at scale. Shared tutor front: warm paper, mono chrome,
+  serif reading face, code-rich interactive labs. Self-contained; opens by double-click.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Functions for GenAI at scale · Databricks GenAI Tutor 11.10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  /* ============ DESIGN SYSTEM — tokens (do not rename) ============ */
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  .index-rail{display:none}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.8rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  pre::before{content:attr(data-lang);position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--mono);font-size:13px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.35rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .detail pre{font-size:.72rem;margin:12px 0 0}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top;font-size:.96rem}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  .seclabel{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint)}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.html">Databricks GenAI</a>
+    <span class="loc">Module 11 · Topic 11.10</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_11.10 · GenAI lesson · v1.0</span><span>Verified against books + docs</span></div>
+    <div class="filed">Module 11 — Deployment and serving · Entry 11.10 · ★ Cornerstone · Theory + Hands-on</div>
+    <h1>AI Functions at scale</h1>
+    <p class="dek">Run a Foundation Model over a whole Delta table in SQL. <em>Delta in, AI Function in the SELECT, Delta out, scheduled by a job.</em></p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <!-- 01 -->
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>AI as a column</h2></div>
+      <p class="lead">AI Functions are built-in SQL functions that call Foundation Models straight from a query — no endpoint to create, no API key, no client code.</p>
+      <ul>
+        <li><b>ai_query</b> is the general workhorse: point it at any served model (a Foundation Model or your own agent endpoint) and run a prompt over every row. Ask for structured JSON with <code>responseFormat</code> or <code>returnType</code>.</li>
+        <li><b>Task-specific functions</b> (<code>ai_classify</code>, <code>ai_analyze_sentiment</code>, <code>ai_extract</code>, <code>ai_mask</code>, <code>ai_summarize</code>, <code>ai_translate</code>, <code>ai_fix_grammar</code>, <code>ai_gen</code>) are pre-tuned one-liners. Prefer them when the task fits.</li>
+        <li><b>vector_search</b> queries a Databricks AI Search index from SQL, so retrieval joins your data.</li>
+        <li>This is <b>batch inference, not a chatbot</b>. Use it when nobody is waiting on the answer.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 The one pattern</span>Delta table in → AI Function in the <code>SELECT</code> → Delta table out → Lakeflow Job on a schedule. Every example below is a variation of this.</div>
+    </section>
+
+    <!-- 02 -->
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>The function family and the flow</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">Function map</button>
+        <button role="tab" aria-selected="false" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Batch flow</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Which function?</button>
+      </div>
+
+      <!-- PANE A: clickable explorer -->
+      <div id="p-explore" class="pane active" role="tabpanel" aria-labelledby="t-explore">
+        <p>Click a function to see what it does and a one-line example.</p>
+        <div class="plate" data-fig="Plate I — AI Functions">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a function</div><h3>Pick one</h3><p>Task-specific first; drop to <code>ai_query</code> only when needed.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE B: stepper + mermaid (mirrors the markdown's primary diagram) -->
+      <div id="p-flow" class="pane" role="tabpanel" aria-labelledby="t-flow" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <div class="plate" data-fig="Fig. 01 — Batch enrichment pattern" style="margin-top:18px">
+          <div class="mermaid" id="mermaidFlow"></div>
+          <div class="plate-cap">Delta → AI Function → Delta, driven by a scheduled Lakeflow Job. Source: B2 Ch5 batch pattern.</div>
+        </div>
+      </div>
+
+      <!-- PANE C: reference table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <p>Prefer a task-specific function whenever it fits. Reach for <code>ai_query</code> only for custom endpoints, nested JSON, multimodal, or sampling control.</p>
+        <table><thead><tr><th>Task</th><th>Use this</th><th>ai_query when...</th></tr></thead><tbody id="rows"></tbody></table>
+      </div>
+    </section>
+
+    <!-- 03 -->
+    <section class="entry" id="labs">
+      <div class="entry-head"><span class="num">03 · Hands-on</span><h2>Runnable SQL</h2></div>
+      <p class="seclabel">Running example · Unity Airways</p>
+      <p>One Delta table of raw feedback. Every query below enriches it and writes structured columns back.</p>
+      <pre data-lang="sql"><code>CREATE TABLE IF NOT EXISTS unity_airways.rag.ua_support_tickets (
+  ticket_id   BIGINT,
+  received_at TIMESTAMP,
+  channel     STRING,   -- 'email' | 'chat' | 'app_review' | 'call_transcript'
+  language    STRING,   -- ISO code, e.g. 'en','es','fr'
+  raw_text    STRING    -- customer message / review body (may contain PII)
+);</code></pre>
+
+      <details open><summary>Lab A — enrich the whole table with task functions</summary>
+<pre data-lang="sql"><code>CREATE OR REPLACE TABLE unity_airways.rag.ua_tickets_enriched AS
+SELECT
+  ticket_id, received_at, channel,
+  ai_classify(raw_text,
+    '{"baggage":"lost, delayed, or damaged luggage",
+      "delay":"flight delays, cancellations, missed connections",
+      "billing":"refunds, charges, fare disputes",
+      "other":"anything else"}')                       AS intent,
+  ai_analyze_sentiment(raw_text)                        AS sentiment,
+  ai_summarize(raw_text, 20)                            AS one_liner,
+  ai_mask(raw_text, ARRAY('person','email','phone','address')) AS safe_text
+FROM unity_airways.rag.ua_support_tickets
+WHERE raw_text IS NOT NULL;   -- NULL in = NULL out; filter to save calls</code></pre>
+        <div class="note tip"><span class="tag">💡 Verify</span><code>SELECT intent, sentiment, count(*) FROM ...ua_tickets_enriched GROUP BY 1,2 ORDER BY 3 DESC;</code> — sensible buckets, and no raw names or emails left in <code>safe_text</code>.</div>
+      </details>
+
+      <details><summary>Lab B — ai_query with structured JSON output</summary>
+<pre data-lang="sql"><code>CREATE OR REPLACE TABLE unity_airways.rag.ua_tickets_structured AS
+SELECT
+  ticket_id,
+  ai_query(
+    'databricks-claude-sonnet-4-5',
+    CONCAT('Extract as JSON with keys intent, urgency (1-5), ',
+           'refund_requested (bool), affected_flight. Ticket: ', raw_text),
+    responseFormat  => '{"type":"json_object"}',
+    failOnError     => false,                  -- batch safety
+    modelParameters => named_struct('temperature', CAST(0.0 AS DOUBLE), 'max_tokens', 300)
+  ) AS ai_response
+FROM unity_airways.rag.ua_support_tickets
+WHERE raw_text IS NOT NULL;
+
+-- parse JSON into columns; split failures off with ai_response.errorMessage
+SELECT ticket_id,
+  from_json(ai_response.response,
+    'STRUCT&lt;intent:STRING, urgency:INT, refund_requested:BOOLEAN, affected_flight:STRING&gt;') AS fields,
+  ai_response.errorMessage AS error
+FROM unity_airways.rag.ua_tickets_structured;</code></pre>
+      </details>
+
+      <details><summary>Lab C — call your own agent endpoint + vector_search</summary>
+<pre data-lang="sql"><code>-- ai_query against a CUSTOM endpoint (Module 09 ResponsesAgent)
+SELECT ticket_id,
+       ai_query('ua-support-agent',
+                CONCAT('Draft a reply to: ', raw_text),
+                failOnError => false).response AS draft_reply
+FROM unity_airways.rag.ua_support_tickets
+WHERE raw_text IS NOT NULL;
+
+-- retrieve top policy chunks from an AI Search index, inside SQL
+SELECT t.ticket_id,
+       vector_search(
+         index       => 'unity_airways.rag.ua_rag_chunks_index',
+         query_text  => t.raw_text,
+         num_results => 3
+       ) AS top_policy_chunks
+FROM unity_airways.rag.ua_support_tickets t
+WHERE t.raw_text IS NOT NULL;</code></pre>
+      </details>
+
+      <details><summary>Lab D — translate, fix grammar, generate; and the PySpark form</summary>
+<pre data-lang="sql"><code>SELECT
+  ai_translate(raw_text, 'en')   AS text_en,     -- supported: en,de,fr,it,pt,hi,es,th
+  ai_fix_grammar(raw_text)       AS text_clean,
+  ai_gen(CONCAT('Write a one-line apology for: ', raw_text)) AS apology_line
+FROM unity_airways.rag.ua_support_tickets
+WHERE raw_text IS NOT NULL AND channel = 'app_review';</code></pre>
+<pre data-lang="python"><code>from pyspark.sql.functions import expr
+
+(spark.table("unity_airways.rag.ua_support_tickets")
+      .filter("raw_text IS NOT NULL")
+      .withColumn("sentiment", expr("ai_analyze_sentiment(raw_text)"))
+      .withColumn("intent",    expr("ai_classify(raw_text, array('baggage','delay','billing','other'))"))
+      .write.mode("overwrite").saveAsTable("unity_airways.rag.ua_tickets_enriched"))</code></pre>
+        <div class="note tip"><span class="tag">💡 Schedule it (11.11)</span>Save the enrichment SQL as a query and attach it to a <b>Lakeflow Job</b> with a nightly trigger. Same <code>SELECT</code>, now production.</div>
+      </details>
+    </section>
+
+    <!-- 04 -->
+    <section class="entry" id="decision">
+      <div class="entry-head"><span class="num">04 · Decision</span><h2>Batch AI Function vs real-time endpoint</h2></div>
+      <p>The first question is always: <b>is a human waiting on this answer?</b> If yes, it belongs on a real-time Model Serving endpoint (11.1). If it is scheduled or bulk, it belongs in an AI Function.</p>
+      <div class="plate" data-fig="Fig. 02 — Routing decision">
+        <div class="mermaid" id="mermaidDecision"></div>
+        <div class="plate-cap">ai_query has no conversational state, tool-calling, or multi-step logic. Source: B2 Ch9, Table 9-12.</div>
+      </div>
+      <table style="margin-top:20px">
+        <thead><tr><th></th><th>Suitable for ai_query</th><th>Use Model Serving (11.1)</th></tr></thead>
+        <tbody>
+          <tr><td><b>Timing</b></td><td>Scheduled / recurring / batch</td><td>User-driven, real-time</td></tr>
+          <tr><td><b>Data size</b></td><td>Large tables, bulk</td><td>Small, individual requests</td></tr>
+          <tr><td><b>Latency</b></td><td>Seconds to minutes OK</td><td>Milliseconds</td></tr>
+          <tr><td><b>Examples</b></td><td>Enrichment, embeddings, eval</td><td>Chatbots, live RAG, agents</td></tr>
+          <tr><td><b>Runs on</b></td><td>SQL warehouse / DBSQL job</td><td>Model Serving endpoint</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 05 -->
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>Important, tips, gotchas</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span><b>ai_query is batch inference on tables, not a chat API.</b> No conversational state, tool-calling, or multi-step logic. Match the workload to the engine: bulk/scheduled → AI Functions; a human waiting → Model Serving (11.1).</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Develop on a sample (<code>... WHERE raw_text IS NOT NULL LIMIT 200</code>), confirm output shape and cost, then remove the <code>LIMIT</code>. Wrap a common <code>ai_query</code> prompt in a <b>SQL UDF</b> so analysts call <code>classify_ticket(text)</code> and you swap the model in one place.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · model drift</span>Older docs show <code>databricks-claude-sonnet-4</code>; a current valid snapshot is <code>databricks-claude-sonnet-4-5</code> (newer Claude Sonnet/Opus revisions may also be listed). Endpoint names churn — verify on the supported-models page and never guess. Always set <code>failOnError =&gt; false</code> in a batch job so one bad row does not fail the whole run.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · runtime gates</span><code>responseFormat</code> needs DBR 15.4+, <code>returnType</code> 15.2+, <code>failOnError</code>/<code>modelParameters</code> 15.3+, <code>ai_parse_document</code> 17.3+. AI Functions want a <b>Pro or Serverless</b> SQL warehouse (not Classic).</div>
+    </section>
+
+    <!-- 06 -->
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Self-check</span><h2>Notes and quiz</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>A support chatbot must answer in under a second. Is <code>ai_query</code> the right tool? Why or why not?</li>
+          <li>You need <code>intent</code>, <code>urgency</code>, and <code>refund_requested</code> as queryable columns. Which <code>ai_query</code> argument makes the output JSON, and how do you turn it into columns?</li>
+          <li>Why should every batch <code>ai_query</code> set <code>failOnError =&gt; false</code>, and where do the failures go?</li>
+          <li>Name three tasks where you would pick a task-specific function over <code>ai_query</code>, and one where you must use <code>ai_query</code>.</li>
+          <li>What three workload traits make a job a good fit for <code>ai_query</code> (per the study guide)?</li>
+        </ol>
+      </details>
+    </section>
+
+    <!-- 07 -->
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📗 <b>B2</b> — Certified GenAI Engineer Associate Study Guide: Ch5 "Batch Inference Workloads with ai_query" (Example 5-12); Ch9 "ai_query()" (Example 9-7; Table 9-12 workload suitability).</li>
+        <li>🌐 Enrich data using AI Functions — docs.databricks.com/aws/en/large-language-models/ai-functions <em>(live-confirmed function list)</em></li>
+        <li>🌐 ai_query reference — .../sql/language-manual/functions/ai_query <em>(live-confirmed args: returnType, responseFormat, failOnError, modelParameters, files)</em></li>
+        <li>🌐 vector_search reference — .../sql/language-manual/functions/vector_search <em>(live-confirmed: index, query_text, num_results, query_vector)</em></li>
+        <li>🌐 Foundation Model APIs — supported models <em>(verify endpoint names before shipping)</em></li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Entry 11.10</span>
+  <span>Grounded in B2 Ch5/Ch9 + live docs (Jul 2026)</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"General workhorse",spine:true,comps:[
+   ["ai_query","any served model","Run a prompt over every row; structured JSON via responseFormat/returnType; custom endpoints; multimodal.","ai_query('databricks-claude-sonnet-4-5', concat('Summarize: ', raw_text))"],
+ ]},
+ {name:"Task-specific (prefer these)",spine:false,comps:[
+   ["ai_classify","fixed-label routing","2–500 labels; add descriptions for accuracy; multilabel option.","ai_classify(raw_text, array('baggage','delay','billing'))"],
+   ["ai_analyze_sentiment","sentiment","Returns positive | negative | neutral | mixed | NULL.","ai_analyze_sentiment(raw_text)"],
+   ["ai_extract","field extraction","Pull named fields/entities into a struct.","ai_extract(raw_text, array('flight','date','amount'))"],
+   ["ai_summarize","summarize","Optional max_words; use 0 for uncapped.","ai_summarize(raw_text, 20)"],
+   ["ai_mask","PII redaction","Replace named entity types with [MASKED].","ai_mask(raw_text, array('person','email','phone'))"],
+   ["ai_translate","translate","Supported: en,de,fr,it,pt,hi,es,th.","ai_translate(raw_text, 'en')"],
+   ["ai_fix_grammar","clean text","Grammar/spelling fix (English-optimized).","ai_fix_grammar(raw_text)"],
+   ["ai_gen","free-form gen","Open-ended text; use ai_query for JSON.","ai_gen(concat('Apology for: ', raw_text))"],
+   ["ai_similarity","fuzzy match","Score 0.0–1.0 between two strings.","ai_similarity(a.name, b.name)"],
+ ]},
+ {name:"Retrieval and time-series",spine:false,comps:[
+   ["vector_search","AI Search from SQL","Top-k chunks from a Databricks AI Search index.","vector_search(index => 'ua_rag_chunks_index', query_text => raw_text, num_results => 3)"],
+   ["ai_forecast","time-series (table-valued)","Forecast a metric forward; needs Pro/Serverless warehouse.","ai_forecast(observed => TABLE(...), horizon => '2026-12-31', ...)"],
+ ]},
+];
+const STEPS=[
+ ["Prepare Delta table","Raw feedback lands in unity_airways.rag.ua_support_tickets via Auto Loader / Lakeflow Connect. Delta gives schema enforcement and reliable storage."],
+ ["Filter nulls","Every function returns NULL on NULL input. WHERE raw_text IS NOT NULL avoids wasted model calls and cost."],
+ ["Call the AI Function","Each row becomes one model request. The SQL engine handles parallelism, distribution, and retries. Use failOnError => false in batch."],
+ ["Structure the output","responseFormat => '{\"type\":\"json_object\"}' (15.4+) or returnType => DDL forces queryable JSON; parse with from_json into columns."],
+ ["Write back to Delta","Results land in ua_tickets_enriched; failures split to a sidecar on ai_response.errorMessage IS NOT NULL."],
+ ["Schedule as a Lakeflow Job","Nightly trigger re-runs the same SELECT over new rows. Dashboards, ML, and audit read structured columns — never a model directly."],
+];
+const ROWS=[
+ ["Sentiment","ai_analyze_sentiment","never"],
+ ["Fixed-label routing","ai_classify","never"],
+ ["Field extraction","ai_extract","deeply nested arrays"],
+ ["Summarization","ai_summarize","never"],
+ ["PII redaction","ai_mask","never"],
+ ["Translation","ai_translate","language not supported"],
+ ["Grammar fix","ai_fix_grammar","never"],
+ ["Free-form generation","ai_gen","need structured JSON"],
+ ["Custom / fine-tuned endpoint","—","this is ai_query's job"],
+];
+const MERMAID_FLOW=`flowchart LR
+  A(["Delta table<br/>ua_support_tickets"]) --> B["AI Function in SELECT<br/>ai_query / ai_classify / ai_mask"]
+  B <--> C["Foundation Model API<br/>serverless, auto-batched"]
+  B --> D(["Delta table<br/>ua_tickets_enriched"])
+  D --> E["Dashboards, ML, audit"]
+  F["Lakeflow Job<br/>scheduled nightly"] -.drives.-> B`;
+const MERMAID_DECISION=`flowchart TD
+  Q{"Is a human waiting<br/>on this answer?"}
+  Q -->|"Yes, interactive"| RT["Real-time Model Serving<br/>endpoint (11.1)"]
+  Q -->|"No, scheduled or bulk"| T{"Is the task<br/>well-defined?"}
+  T -->|"Yes, common task"| TASK["Task-specific function<br/>ai_classify, ai_mask, ai_summarize"]
+  T -->|"Custom endpoint or nested JSON"| AIQ["ai_query"]`;
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><pre data-lang="sql"><code>${c[3]}</code></pre><div class="layerof">${l.name}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td>${r[0]}</td><td><b>${r[1]}</b></td><td>${r[2]}</td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline), multiple graphs ---------- */
+function drawMermaid(){if(!window.mermaid)return;
+  const graphs=[["mermaidFlow",MERMAID_FLOW],["mermaidDecision",MERMAID_DECISION]];
+  try{mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  }catch(e){}
+  graphs.forEach(([id,src])=>{const el=document.getElementById(id);if(!el)return;
+    el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidFlow")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){["mermaidFlow","mermaidDecision"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

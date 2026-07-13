@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 13 Production Monitoring (module hub).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Production Monitoring · Databricks GenAI Tutor 13</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  /* ============ DESIGN SYSTEM — tokens (do not rename) ============ */
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line);
+    --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .toggle{display:none}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:16ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .ghost{display:none}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  .index-rail{display:none}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tag-pill{display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--line);border-radius:20px;color:var(--muted);margin-left:8px;vertical-align:middle}
+  .tag-pill.h{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.t{color:var(--accent-2);border-color:var(--accent-soft)}
+  .tag-pill.star{color:var(--danger);border-color:var(--danger-soft)}
+  .tag-pill.ga{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.beta{color:var(--danger);border-color:var(--danger-soft)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.3rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  h3.tk{font-family:var(--mono);font-size:.9rem;letter-spacing:.06em;margin:24px 0 6px}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.md">Databricks GenAI</a>
+    <span class="loc">Module 13 · Topics 13.1–13.7</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_13 · GenAI lesson · v1.0</span><span>Verified against naming cheat-sheet §1 (Jul 2026) + B1 Ch9 / B2 Ch8 + eval-monitor docs (Beta)</span></div>
+    <div class="filed">Module 13 — Production monitoring and continuous improvement · Topics 13.1–13.7 · Theory + Hands-on</div>
+    <h1>Production Monitoring</h1>
+    <p class="dek">Taking the <em>Unity Airways support agent</em> from <strong>safe and shipped</strong> to <strong>watched and always improving</strong> — see quality drift, get paged before travelers notice, and grow tomorrow's eval set from today's real traffic. The one idea: <strong>the monitor → improve loop</strong>.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>Deployment is the start, not the finish</h2></div>
+      <p class="lead">Modules 11–12 got the agent served, guardrailed, and governed. <strong>Module 13 keeps it good.</strong> A GenAI app in production is a moving target — prompts change, users ask new things, retrieval drifts — so you close a loop and run it forever.</p>
+      <ul>
+        <li><strong>Capture</strong> — every request becomes an MLflow Trace, an inference-table row, and (when a user reacts) a feedback entry (13.2, 13.3).</li>
+        <li><strong>Assess</strong> — score those traces with the <strong>same MLflow 3 scorers</strong> you used offline in Module 08, plus SQL/NLP analysis for deeper questions (13.4, 13.5 ★).</li>
+        <li><strong>Watch</strong> — read the numbers on an AI/BI dashboard and get paged by alerts when something drifts (13.5 ★, 13.6).</li>
+        <li><strong>Improve</strong> — curate the failing traces into your eval dataset, re-evaluate v2, redeploy, and watch again (13.7).</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 The rule that shapes this module</span><strong>Capture the trace → assess with reused scorers → watch on a dashboard + alerts → improve by curating failures back into the eval set.</strong> Name maturity as you go: GA — MLflow Tracing, inference tables, <code>ai_mask</code>, AI/BI dashboards, SQL alerts; <strong>Beta</strong> — production monitoring (online scorers on prod traces); <strong>Preview</strong> — trace-to-Unity-Catalog sync.</div>
+    </section>
+
+    <section class="entry" id="problem">
+      <div class="entry-head"><span class="num">02 · The problem</span><h2>"The endpoint is up" is not "the agent is good"</h2></div>
+      <p>A week after launch, the steady-state operating questions arrive — none of which a launch checklist answers:</p>
+      <ul>
+        <li>Is answer <strong>quality</strong> the same today as at launch, or has it quietly slipped?</li>
+        <li>A traveler thumbs-downs an answer — where does that signal go, and can we find that trace later?</li>
+        <li><strong>Latency</strong> crept from 2 s to 8 s over a week — what changed, and would we notice before customers churn?</li>
+        <li>Users keep asking about a topic the agent was never built for — how would we even know?</li>
+        <li>We want to ship v2 in six weeks — what do we test it against to be confident it's actually better?</li>
+      </ul>
+      <p>These are the questions you can only answer if the loop was built in from day one.</p>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">03 · Explore</span><h2>The loop, the 7 topics, the two debug views, and the metric families</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Monitor → improve loop</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The 7 topics</button>
+        <button role="tab" aria-selected="false" aria-controls="p-views" id="t-views" onclick="tab(this,'p-views')">Two debug views</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Metric families</button>
+      </div>
+
+      <!-- PANE A: monitor->improve loop — mirrors module.md Diagram 1 -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — Monitor → improve loop">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">The same trace you captured in Module 07 becomes the monitoring signal, the scoring input, the dashboard row, the alert trigger, and — when it fails — the newest test case for v2.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the 7 topics -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — Topic index">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a topic</div><h3>The 7 topics</h3><p>Click a topic to see what it covers, its Theory/Hands-on label, and GA/Beta/Preview status. ★ marks the cornerstone with its own deep-dive page.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: two debug views — mirrors module.md Diagram 2 -->
+      <div id="p-views" class="pane" role="tabpanel" aria-labelledby="t-views" hidden>
+        <div class="plate" data-fig="Fig. 02 — Inference tables vs agent monitoring (B2 Table 8-4)">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">Agent monitoring tells you which step misbehaved; inference tables tell you what happened inside that call. Neither is enough alone.</div>
+        </div>
+      </div>
+
+      <!-- PANE D: the metric-families table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Metric family / signal</th><th>What it tracks</th><th>Status</th></tr></thead><tbody id="rows"></tbody></table>
+        <div class="note imp" style="margin-top:16px"><span class="tag">📌 Name the maturity</span>GA on the main path: <strong>MLflow Tracing</strong>, <strong>inference tables</strong>, <strong>AI/BI dashboards</strong>, <strong>SQL alerts</strong>, <code>ai_query</code>. <strong>Beta:</strong> <strong>production monitoring</strong> — online scorers/judges scheduled on prod traces (<code>make_judge</code> needs MLflow ≥ 3.4). <strong>Preview:</strong> trace-to-Unity-Catalog sync. Verify enrollment/version before a customer commitment.</div>
+      </div>
+    </section>
+
+    <section class="entry" id="t1">
+      <div class="entry-head"><span class="num">04 · Capture</span><h2>13.1 — Metric types: operational, quality, business impact</h2></div>
+      <h3 class="tk">13.1 Metric types <span class="tag-pill t">Theory</span></h3>
+      <ul>
+        <li><strong>Operational</strong> — system health: performance (end-to-end + per-component latency, e.g. FAQ AI Search retrieval), reliability (# requests / # failures over 7 days), resource use (LLM in/out tokens, endpoint CPU/memory). Easy to collect; MLflow Tracing adds the per-stage breakdown (B1 Table 9-1).</li>
+        <li><strong>Quality</strong> — how good the answers are: response quality (accuracy, right FAQ, on-brand tone), safety and compliance (bias, harmful content, PII), user experience (ratings, CSAT). Unstructured text ⇒ needs NLP / LLM-as-judge (B1 Table 9-2).</li>
+        <li><strong>Business impact</strong> — engagement (recurring users, unanswerable topics) and improvement (tickets deflected, time saved, task-completion lift). Some needs an internal study on top of traces (B1 Table 9-3).</li>
+      </ul>
+      <div class="note tip"><span class="tag">💡 Exam angle</span>No single metric decides model choice — weigh groundedness, task completion, latency, token usage, and stability <strong>together</strong> (B2 Table 8-2). Don't default to the biggest model.</div>
+    </section>
+
+    <section class="entry" id="t2">
+      <div class="entry-head"><span class="num">05 · Capture</span><h2>13.2 — Inference tables and logs</h2></div>
+      <h3 class="tk">13.2 Inference tables and logs <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill ga">GA</span></h3>
+      <ul>
+        <li><strong>Each row is one model invocation</strong> — request id, timestamp, prompt/response, <code>prompt_tokens</code>/<code>completion_tokens</code>/<code>total_tokens</code>, <code>latency_ms</code>, <code>model_name</code>. The <strong>primary audit trail</strong> (B2 Fig 8-3).</li>
+        <li><strong>Source:</strong> AI Gateway <strong>payload logging</strong> (Module 11.3) and, for agents, <code>agents.deploy()</code>. Flow: user request → LLM endpoint → inference log → inference table → dashboard.</li>
+        <li><strong>RAG diagnosis (B2 Table 8-3):</strong> logs separate <strong>retrieval failure</strong> (missing context) from <strong>hallucination</strong> (good context, wrong answer). Rising tokens with no quality gain ⇒ trim retrieved chunks.</li>
+      </ul>
+      <pre><code>-- last 50 calls (adapt for aggregates)
+SELECT request_id, timestamp, prompt_tokens, completion_tokens,
+       total_tokens, latency_ms, model_name
+FROM   unity_airways.rag.&lt;inference_table&gt;
+ORDER BY timestamp DESC
+LIMIT 50;</code></pre>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Inference tables store <strong>raw user content</strong> — apply retention policies and redaction, or they become an ungoverned copy of regulated data.</div>
+    </section>
+
+    <section class="entry" id="t3">
+      <div class="entry-head"><span class="num">06 · Capture</span><h2>13.3 — Online monitoring workflow; real-time trace capture</h2></div>
+      <h3 class="tk">13.3 Online monitoring workflow <span class="tag-pill h">Hands-on</span> <span class="tag-pill ga">GA</span></h3>
+      <ul>
+        <li><strong>No new instrumentation.</strong> The Databricks Agent SDK auto-captures MLflow <strong>Traces</strong> the moment a request hits the endpoint — your Module 07 traces are reused <strong>as-is</strong> in production.</li>
+        <li><strong>Get the <code>trace_id</code> back</strong> so feedback attaches to the right request: query with <code>"databricks_options": {"return_trace": true}</code>.</li>
+        <li><strong>Off-Databricks?</strong> Same idea via <code>MLFLOW_TRACKING_URI=databricks</code> + <code>MLFLOW_EXPERIMENT_NAME</code> + host/token.</li>
+      </ul>
+      <pre><code># link a traveler's thumbs-up/down to a specific trace
+import mlflow
+from mlflow.entities.assessment import AssessmentSource, AssessmentSourceType
+
+mlflow.log_feedback(
+    trace_id=trace_id,                 # returned with the chat response
+    name="user_feedback",
+    value=satisfied,                   # True = thumbs-up, False = thumbs-down
+    rationale=rationale,               # optional short comment
+    source=AssessmentSource(
+        source_type=AssessmentSourceType.HUMAN,
+        source_id=user_id),
+)</code></pre>
+      <div class="note tip"><span class="tag">💡 Verify it worked</span>Open the trace in the MLflow UI — the feedback appears under <strong>Assessments</strong>; the Traces tab lists real-time requests with tokens, execution time, and state.</div>
+    </section>
+
+    <section class="entry" id="t4">
+      <div class="entry-head"><span class="num">07 · Assess</span><h2>13.4 — Agent monitoring tools (reuse the Module 08 scorers)</h2></div>
+      <h3 class="tk">13.4 Agent monitoring tools <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill beta">Beta</span></h3>
+      <ul>
+        <li><strong>Two complementary views (B2 Table 8-4):</strong> inference tables (per-call depth) and agent monitoring (per-workflow context — which step is slow, where an error propagates). A multi-step agent needs both.</li>
+        <li><strong>Production monitoring reuses the Module 08 scorers</strong> so dev and prod measure quality identically. Register once, then schedule on a sample of live traces.</li>
+        <li><strong><code>.start()</code> auto-provisions a Lakeflow Job</strong> ("Trace Metrics Computation Job") that runs the judges on the sampled traces, and MLflow creates a <strong>default dashboard</strong> in the experiment.</li>
+      </ul>
+      <pre><code>from mlflow.genai.scorers import (
+    RelevanceToQuery, Safety, RetrievalGroundedness,
+    list_scorers, get_scorer, ScorerSamplingConfig)
+
+# register (skip if already on the experiment)
+for s in [RelevanceToQuery(), Safety(), RetrievalGroundedness()]:
+    if s.name not in [x.name for x in list_scorers()]:
+        s.register(name=s.name)
+
+# prerequisite: set_databricks_monitoring_sql_warehouse_id(sql_warehouse_id="&lt;ID&gt;", experiment_id=EXPERIMENT_ID)  # see aibi-dashboard.html
+# schedule on live traces — sample_rate=1.0 scores every trace
+for name in ["relevance_to_query", "safety", "retrieval_groundedness"]:
+    get_scorer(name=name).start(
+        sampling_config=ScorerSamplingConfig(sample_rate=1.0))</code></pre>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span><strong>Production monitoring is Beta</strong>; custom judges via <code>@scorer</code> / <code>make_judge()</code> need <strong>MLflow ≥ 3.4</strong>. Tune <code>sample_rate</code> down for expensive/less-critical scorers; keep it 1.0 for safety.</div>
+    </section>
+
+    <section class="entry" id="cornerstone">
+      <div class="entry-head"><span class="num">08 · Assess + Watch · Cornerstone</span><h2>13.5 ★ — NLP analysis on traces; custom AI/BI dashboard</h2></div>
+      <p>Full build — syncing traces to Unity Catalog, the <code>ai_query</code> NLP pass, and assembling the AI/BI (Lakeview) dashboard end to end — in the <a href="aibi-dashboard.html">AI/BI monitoring dashboard deep-dive</a> (<code>aibi-dashboard.md</code> / <code>aibi-dashboard.html</code>).</p>
+      <h3 class="tk">13.5 NLP on traces + AI/BI dashboard <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span> <span class="tag-pill ga">ai_query GA</span> <span class="tag-pill beta">Trace-sync Preview</span></h3>
+      <ul>
+        <li><strong>Why go past the defaults:</strong> the auto dashboard covers standard metrics, but questions like "what are the most common question categories, and what can't we answer?" need custom analysis.</li>
+        <li><strong>Sync traces to UC:</strong> from the MLflow Traces UI enable <strong>Sync traces to Unity Catalog</strong> → a Delta table like <code>unity_airways.rag.ua_trace_text</code> (creates a "Trace Archive Job"). <strong>Preview.</strong></li>
+        <li><strong>NLP with <code>ai_classify</code> (preferred):</strong> pull the question text with <code>get_json_object(request, '$.request.input[0].content')</code>, classify intent via <code>ai_classify(text, ARRAY(...))</code> for fixed labels (book fallback: <code>ai_query(...)</code> + a <code>responseFormat</code> JSON schema), then aggregate.</li>
+        <li><strong>AI/BI dashboard:</strong> create a <strong>dataset</strong> from that SQL and add widgets (intent-mix pie, latency percentiles, pass-rate trends). Lakeview / AI-BI — a UI + SQL surface, <strong>no invented dashboard API</strong>.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Consistency</span>The hub and the cornerstone share the same table <code>unity_airways.rag.ua_trace_text</code>, the same endpoint <code>ua-support-agent</code>, and the same scorer/tracing APIs. Ad-hoc alternative: <strong>Genie Code</strong> on the experiment or the <strong>MLflow MCP server</strong> for natural-language trace questions.</div>
+    </section>
+
+    <section class="entry" id="t6">
+      <div class="entry-head"><span class="num">09 · Watch</span><h2>13.6 — Metric alerts and anomaly detection</h2></div>
+      <h3 class="tk">13.6 Metric alerts and anomaly detection <span class="tag-pill h">Hands-on</span> <span class="tag-pill ga">GA</span></h3>
+      <ul>
+        <li><strong>Dashboards are passive; alerts page you.</strong> Set a <strong>Databricks SQL alert</strong> on a query over the traces/inference table — e.g. count of the <strong>"Others"</strong> intent bucket (a topic-drift signal) crossing a threshold → email/notification (B1 Fig 9-14).</li>
+        <li><strong>Alert shape:</strong> a SQL query + a condition (<code>Count(intent_count) &gt; 5</code>), a schedule, and a destination. Combine <strong>static thresholds</strong> (catch spikes) with <strong>statistical / baseline-deviation</strong> alerts (catch slow drift) — B2 Fig 8-4.</li>
+        <li><strong>Anomaly pipeline:</strong> inference table + metric baselines → anomaly detection → alert trigger. Baselines often come from your controlled MLflow eval results.</li>
+      </ul>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Make every alert <strong>actionable</strong> — name the responsible team, response time, and first investigation step. Keep separate categories for performance, cost, and reliability, or alerts become noise.</div>
+    </section>
+
+    <section class="entry" id="t7">
+      <div class="entry-head"><span class="num">10 · Improve</span><h2>13.7 — The "Improve" loop: expanding eval sets from production</h2></div>
+      <h3 class="tk">13.7 The "Improve" loop <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span></h3>
+      <ul>
+        <li><strong>The point of monitoring is the next version.</strong> Real production traces are the best ground truth — fold failing/interesting ones into the <strong>Module 08 eval dataset</strong> so v2 is tested against reality (B1 Ch9).</li>
+        <li><strong>The whole loop (B1 Fig 9-17):</strong> domain experts + production feed the eval dataset → evaluate in dev with the shared scorers → deploy → monitor in prod → curate failures back → repeat.</li>
+        <li><strong>Redeploy discipline:</strong> promote v2 by <strong>moving an alias</strong> (Module 11.8 / 12.7) so the endpoint URL stays stable and the audit trail holds.</li>
+      </ul>
+      <pre><code>import mlflow
+
+ds = mlflow.genai.datasets.get_dataset(
+    f"{catalog}.{schema}.{eval_dataset_table_name}")
+
+traces = mlflow.search_traces(          # ⚠️ experiment_ids, NOT experiment_names
+    experiment_ids=[experiment_id],
+    filter_string="attributes.status = 'OK'",   # in practice: negative feedback / failed scorers
+    order_by=["attributes.timestamp_ms DESC"],
+    max_results=10)
+
+ds = ds.merge_records(traces)           # closed feedback loop</code></pre>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span><code>mlflow.search_traces</code> takes <strong><code>experiment_ids=</code></strong> (a list), not <code>experiment_names=</code> — there is no <code>experiment_names</code> argument (passing it raises <code>TypeError</code>). And filter on negative feedback / failed scorers, not just <code>status='OK'</code> — you want the regressions.</div>
+    </section>
+
+    <section class="entry" id="worked">
+      <div class="entry-head"><span class="num">11 · Worked thread</span><h2>Unity Airways — one CSAT dip, around the loop</h2></div>
+      <p>A week after launch, CSAT dips and support pings you. Step through what each phase of the loop does.</p>
+      <div class="flowline" id="flowline"></div>
+      <div class="stepbox" id="stepbox"></div>
+      <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      <div class="plate-cap" style="margin-top:14px">Capture → assess → analyze → alert → improve — the same trace flows through every phase.</div>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">12 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>The monitor → improve loop is the whole module: capture (traces / inference tables / feedback) → assess (reused Module 08 scorers + NLP) → watch (AI/BI dashboard + alerts) → improve (curate failing traces into the eval set) → redeploy. <strong>The trace is the atom</strong> — it is the signal, the scorer input, the dashboard row, the alert trigger, and the next eval-set record.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Plan what you want to see in prod <strong>while instrumenting in dev</strong> (Module 07) — traces carry over unchanged. Pair every Module 12 guardrail/rate limit with a monitor here. Filter the improve-loop query on negative feedback / failed scorers, not <code>status='OK'</code>. Use <strong>Genie Code</strong> or the <strong>MLflow MCP server</strong> for one-off questions instead of a new dashboard.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span><strong>Production monitoring is Beta</strong>; some APIs need <strong>MLflow ≥ 3.4</strong> and <strong>trace-to-UC sync is Preview</strong> — label maturity. <code>mlflow.search_traces</code> uses <code>experiment_ids=</code>. The books use their own naming (B1 uses <code>workspace.unity_airways.production_traces</code>, judge model <code>databricks-gpt-oss-120b</code>); this hub standardizes on <code>unity_airways.rag.*</code> + chat model <code>databricks-claude-sonnet-4-5</code> — APIs are identical.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">13 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <p style="color:var(--muted)">📝 <strong>Notes:</strong> jot your own — which metric family your customer is missing, and whether their alerts actually page a human.</p>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Name the three metric families and give one Unity Airways example of each. Why can't operational metrics alone tell you the agent is "good"?</li>
+          <li>Where do inference tables come from, what does one row represent, and how do they differ from agent monitoring (name two axes from B2 Table 8-4)?</li>
+          <li>Which two MLflow calls register and then schedule a scorer on live production traces, and what does enabling it auto-provision? What is the maturity label?</li>
+          <li>How do you attach a traveler's thumbs-down to the exact request, and what must the query return for that to work?</li>
+          <li>Write (in words) the improve-loop query: which function, which argument (and the known-bug trap), and what you do with the results.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">14 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📘 <strong>B1 — <em>Practical MLflow for GenAI on Databricks</em></strong> (Early Release), <strong>Ch 9 — Production Monitoring</strong> (primary): Types of Metrics (Tables 9-1/9-2/9-3); Online Monitoring Workflow + real-time trace capture (Fig 9-1); Collecting End-User Feedback (<code>mlflow.log_feedback</code>, <code>AssessmentSourceType.HUMAN</code>, <code>return_trace</code>; Figs 9-2/9-3); Register and Start Scorers (<code>mlflow.genai.scorers</code>, <code>list_scorers</code>, <code>scorer.register</code>, <code>get_scorer</code>, <code>ScorerSamplingConfig(sample_rate=)</code>, <code>scorer.start</code>; Lakeflow "Trace Metrics Computation Job"; default dashboard; Figs 9-4→9-7); Advanced Monitoring (sync to UC — Preview; <code>ai_query</code>; AI/BI dashboard; Genie Code; MLflow MCP; Figs 9-8→9-16); Metrics Alerts (Fig 9-14); Expanding the Evaluation Dataset (<code>mlflow.genai.datasets</code>, <code>mlflow.search_traces</code>, <code>merge_records</code>; Fig 9-17).</li>
+        <li>📗 <strong>B2 — <em>Databricks Certified GenAI Engineer Associate Study Guide</em></strong> (<strong>Ch 8</strong>): metrics → model selection (Table 8-2); Inference Tables and Logs (Fig 8-3, Example 8-2); Using Agent Monitoring Tools; Anomaly Detection and Alerts (Fig 8-4, static + statistical); Monitoring Dashboard Best Practices; Case Study (latency spike); Inference Logging for RAG (Table 8-3, Example 8-3, Fig 8-5); inference tables vs agent monitoring (Table 8-4).</li>
+        <li>📎 <strong>Project cheat-sheet</strong> — <code>.claude/skills/genai-teacher/references/naming-conventions.md</code> <strong>§1</strong>: production monitoring <strong>reuses MLflow 3 scorers/judges — Beta</strong>; MLflow-2 "Lakehouse Monitoring for generative AI" is <strong>legacy</strong>; <code>make_judge</code> needs <strong>MLflow ≥ 3.4</strong>; <code>mlflow.genai.datasets</code>. Verified July 2026 — re-verify Beta/Preview live.</li>
+        <li>🌐 <strong>Databricks / MLflow docs</strong> (bounded curl, Jul 2026): <code>docs.databricks.com/aws/en/mlflow3/genai/eval-monitor/</code> confirms <strong>"Beta"</strong> + "run scorers and LLM judges on your production" traces; <code>mlflow.org/docs/latest/genai/eval-monitor/</code> confirms "Production Monitoring". Exact scorer-scheduling API pages are JS-rendered — API names taken from B1 Ch9 code (primary).</li>
+        <li>🧩 <strong>Cornerstone (this module)</strong> — <code>aibi-dashboard.md</code> / <code>aibi-dashboard.html</code>: the 13.5 NLP-on-traces + custom AI/BI dashboard deep-dive (same product names, endpoint <code>ua-support-agent</code>, table <code>unity_airways.rag.ua_trace_text</code>).</li>
+      </ul>
+      <div class="note imp" style="margin-top:18px"><span class="tag">Next → Level 6 · Module 14: AI/BI Genie</span>Module 13 completes <strong>Level 5 (Production)</strong>: the Unity Airways agent is now <strong>watched and always improving</strong> — captured, scored with the same judges from dev, dashboarded, alerted, and feeding its own failures back into the next release. <strong>Level 6</strong> turns to conversational analytics: <strong>Module 14 — AI/BI Genie</strong> (Genie Agents, formerly Genie Spaces) for natural-language questions over governed data, with Module 15 adding the metric-view semantic layer beneath it.</div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 13</span>
+  <span>Grounded in naming cheat-sheet §1 (Jul 2026) · B1 Ch9 · B2 Ch8 · eval-monitor docs (Beta) · aibi-dashboard cornerstone</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Assess — the cornerstone (13.5 ★)",spine:true,comps:[
+   ["13.5 NLP + AI/BI dashboard ★","Hands-on · ai_classify GA · trace-sync Preview","Sync traces to a UC table (unity_airways.rag.ua_trace_text), classify intent with ai_classify (fixed labels; ai_query + responseFormat as the book's fallback), and build a custom AI/BI (Lakeview) dashboard — a UI + SQL surface, no invented dashboard API. Ad-hoc: Genie Code / MLflow MCP server. Full build in aibi-dashboard.html.","aibi-dashboard.html"],
+ ]},
+ {name:"Capture — the raw signal (13.1, 13.2, 13.3)",spine:false,comps:[
+   ["13.1 Metric types","Theory","Three families: operational (latency, failures, tokens/CPU/memory — Table 9-1), quality (accuracy, safety/compliance, CSAT — Table 9-2), business impact (engagement, deflected tickets, task completion — Table 9-3). Operational health is not answer quality.","module.md 13.1"],
+   ["13.2 Inference tables and logs","Theory + Hands-on · GA","Each row = one model invocation (request_id, tokens, latency_ms, model_name). Comes from AI Gateway payload logging (11.3) + agents.deploy(). Primary audit trail; separates retrieval failure from hallucination (Table 8-3). Stores raw user content — treat as sensitive.","module.md 13.2"],
+   ["13.3 Online monitoring workflow","Hands-on · GA","Databricks Agent SDK auto-captures MLflow Traces at the endpoint — Module 07 traces reused as-is. return_trace gives the trace_id back; mlflow.log_feedback attaches a thumbs-up/down (AssessmentSourceType.HUMAN) to that exact trace.","module.md 13.3"],
+ ]},
+ {name:"Assess — score the traces (13.4)",spine:false,comps:[
+   ["13.4 Agent monitoring tools","Theory + Hands-on · Beta","Two views (Table 8-4): inference tables (per-call) + agent monitoring (per-workflow). Production monitoring reuses the Module 08 scorers: scorer.register(name=) then get_scorer(name=).start(sampling_config=ScorerSamplingConfig(sample_rate=)). Auto-provisions a Lakeflow Job + a default dashboard. make_judge needs MLflow >= 3.4.","module.md 13.4"],
+ ]},
+ {name:"Watch — dashboards + alerts (13.6)",spine:false,comps:[
+   ["13.6 Metric alerts + anomaly detection","Hands-on · GA","Databricks SQL alerts on a query over the traces/inference table (e.g. count('Others') > threshold = topic drift). Combine static thresholds (spikes) with statistical/baseline alerts (slow drift) — Fig 8-4. Make alerts actionable: owner, response time, first step.","module.md 13.6"],
+ ]},
+ {name:"Improve — close the loop (13.7)",spine:false,comps:[
+   ["13.7 The 'Improve' loop","Theory + Hands-on","Curate failing production traces into the Module 08 eval dataset: mlflow.genai.datasets.get_dataset + mlflow.search_traces(experiment_ids=[...]) + merge_records. Evaluate in dev -> monitor in prod -> repeat (Fig 9-17). Promote v2 by moving an alias.","module.md 13.7"],
+ ]},
+];
+const STEPS=[
+  ["1 · Capture (13.2, 13.3)","Every request is already an MLflow Trace + an inference-table row. A traveler thumbs-downs 'What happens if my baggage exceeds the weight limit?' — the app calls mlflow.log_feedback(trace_id, value=False, rationale='answer did not state the fee'), attaching it to that exact trace."],
+  ["2 · Assess (13.4)","The online scorers (RetrievalGroundedness, Safety, RelevanceToQuery) run on a sample via the auto-provisioned Lakeflow Job. Groundedness sits at 74% — a chunk of answers are not backed by retrieved context."],
+  ["3 · Analyze (13.5 ★)","You sync traces to unity_airways.rag.ua_trace_text and ai_classify intent. Baggage questions are 38% of traffic and score worst; a rising 'Others' bucket shows travelers asking about a new route the FAQ never covered."],
+  ["4 · Alert (13.6)","A SQL alert on count('Others') > threshold already emailed the team when drift started; a latency alert caught prompt-token inflation during peak hours (the B2 case-study pattern)."],
+  ["5 · Improve (13.7)","You search_traces(experiment_ids=[...]) for negative-feedback + low-groundedness traces, merge_records them into the eval dataset, add the missing FAQ docs, re-run mlflow.genai.evaluate() (Module 08), and promote v2 by moving the alias."],
+];
+const ROWS=[
+  ["Operational · latency / throughput","End-to-end + per-component time, # requests, # failures","GA (MLflow Tracing)"],
+  ["Operational · resource use","LLM in/out tokens, endpoint CPU / memory","GA"],
+  ["Quality · response + safety","Accuracy, on-brand tone, bias / harmful / PII (LLM judges)","GA metrics · Beta online scoring"],
+  ["Quality · user experience","Ratings, CSAT via mlflow.log_feedback","GA"],
+  ["Business · engagement","Recurring users, common + unanswerable topics","GA (ai_query on traces)"],
+  ["Business · improvement","Tickets deflected, time saved, task-completion lift","Often needs org study"],
+  ["Signal · inference tables","Per-call prompt/response/tokens/latency; audit trail","GA"],
+  ["Signal · online scorers","Same Module 08 judges scheduled on prod traces","Beta"],
+  ["Signal · trace-to-UC sync","Delta table for SQL / ai_query / AI-BI analysis","Preview"],
+];
+const MERMAID_SRC=`flowchart LR
+  A["Deployed agent<br/>endpoint ua-support-agent"]
+  subgraph CAP["Capture - 13.2, 13.3"]
+    direction TB
+    TR["MLflow Traces<br/>auto-captured (Module 07)"]
+    IT["Inference tables<br/>AI Gateway payload log (11.3)"]
+    FB["End-user feedback<br/>mlflow.log_feedback"]
+  end
+  subgraph ASSESS["Assess - 13.4, 13.5"]
+    direction TB
+    SC["Scorers + LLM judges<br/>mlflow.genai.scorers - Beta"]
+    NLP["NLP analysis on traces<br/>ai_classify intent (ai_query fallback)"]
+  end
+  subgraph WATCH["Watch - 13.5, 13.6"]
+    direction TB
+    DASH["AI/BI dashboard<br/>+ MLflow default dashboard"]
+    AL["SQL alerts + anomaly detection"]
+  end
+  IMP["Improve loop - 13.7<br/>curate failing traces into eval set<br/>mlflow.genai.datasets"]
+  A --> TR
+  A --> IT
+  A --> FB
+  TR --> SC
+  IT --> NLP
+  FB --> SC
+  SC --> DASH
+  NLP --> DASH
+  SC --> AL
+  DASH --> IMP
+  AL --> IMP
+  IMP -->|"re-evaluate then redeploy"| A`;
+const MERMAID_SRC2=`flowchart TB
+  Q["Slow or wrong answer?"]
+  Q --> AM["Agent monitoring<br/>per-workflow, orchestration view<br/>which step is slow / where error starts"]
+  Q --> ITBL["Inference tables<br/>per-call depth<br/>tokens, latency, prompt/response for one call"]
+  AM --> DIAG["Root cause<br/>e.g. retrieval added redundant context,<br/>doubling tokens on a peak-hour step"]
+  ITBL --> DIAG`;
+
+/* ---------- light tutor front ---------- */
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0].split(" · ")[1];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline) ---------- */
+function drawMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

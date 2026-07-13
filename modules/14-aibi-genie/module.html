@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 14 AI/BI Genie (module hub).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI/BI Genie · Databricks GenAI Tutor 14</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:16ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tag-pill{display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--line);border-radius:20px;color:var(--muted);margin-left:8px;vertical-align:middle}
+  .tag-pill.h{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.t{color:var(--accent-2);border-color:var(--accent-soft)}
+  .tag-pill.star{color:var(--danger);border-color:var(--danger-soft)}
+  .tag-pill.ga{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.beta{color:var(--danger);border-color:var(--danger-soft)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.3rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  h3.tk{font-family:var(--mono);font-size:.9rem;letter-spacing:.06em;margin:24px 0 6px}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.md">Databricks GenAI</a>
+    <span class="loc">Module 14 · Topics 14.1–14.9</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_14 · GenAI lesson · v1.0</span><span>Verified against naming cheat-sheet §7 (Jul 2026) + databricks-genie skill + SDK 0.73.0</span></div>
+    <div class="filed">Module 14 — AI/BI Genie · Topics 14.1–14.9 · Theory + Hands-on</div>
+    <h1>AI/BI Genie</h1>
+    <p class="dek">Ask your governed data a question in <em>plain English</em>. A <strong>Genie Agent</strong> turns it into SQL, runs it on a serverless warehouse, and answers with a table, a chart, and the SQL it used — over the <strong>Unity Airways Revenue Analytics</strong> schema. Its accuracy comes from <strong>curation</strong>, not the model.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>A curated, governed natural-language interface to structured data</h2></div>
+      <p class="lead">A <strong>Genie Agent</strong> (formerly "Genie Space") is a natural-language front end to Unity Catalog tables and metric views. You ask a business question; it generates SQL, runs it on a <strong>serverless SQL warehouse</strong>, and shows the answer <em>and</em> the SQL. The intelligence isn't the model — it's the <strong>briefing</strong> you give it.</p>
+      <ul>
+        <li><strong>Create &amp; manage</strong> (14.1–14.2) — build the <code>Unity Airways Revenue Analytics</code> Agent over <code>unity_airways.analytics</code>: the star schema <em>and</em> the <code>bookings_metrics</code> metric view.</li>
+        <li><strong>Curate &amp; tune</strong> (14.3 ★) — instructions, trusted assets (example SQL), synonyms, a metric view, and a benchmark loop. This is where accuracy lives.</li>
+        <li><strong>Trust &amp; test</strong> (14.4–14.5) — benchmark + monitor; certify <strong>verified answers</strong>; governance is inherited from UC.</li>
+        <li><strong>Go further</strong> — <strong>Agent mode</strong> multi-query research (14.6); <strong>embed</strong> + the <strong>Genie Agents API</strong> (14.7–14.8); <strong>Genie One</strong> for business users (14.9).</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 The rule that shapes this module</span>Genie is only as good as the <strong>semantic layer</strong> you point it at. Accuracy comes from <strong>curation</strong> — table/column comments, a <strong>metric view</strong> (Module 15's <code>bookings_metrics</code>), general instructions, verified example queries, and synonyms — not the model. Attaching the metric view is the single highest-leverage setup choice. <strong>Names:</strong> Genie Agents (not "Genie Spaces"; the REST path still says <code>spaces</code>), Agent mode (not "deep research"), Genie One (not "Databricks One").</div>
+    </section>
+
+    <section class="entry" id="problem">
+      <div class="entry-head"><span class="num">02 · The problem</span><h2>Self-service the business trusts, without giving up governance</h2></div>
+      <p>Unity Airways has a clean analytics schema, but revenue managers and route planners don't write SQL. Every "quick number" becomes a ticket, and when analysts self-serve, everyone computes "revenue" differently — the same question returns three numbers in three meetings. Naive fixes break:</p>
+      <ul>
+        <li><strong>Give everyone SQL + a wiki</strong> → non-analysts won't write SQL; the wiki drifts; the bottleneck stays.</li>
+        <li><strong>Point a generic text-to-SQL LLM at raw tables</strong> → no comments, no join hints, no metric definitions → confidently wrong SQL.</li>
+        <li><strong>Let each team define its own metrics</strong> → that's exactly how you get three "revenue" numbers. Definitions must live once, governed.</li>
+        <li><strong>Bolt on a chatbot, skip curation</strong> → the generic-LLM failure mode with a nicer logo. The product shines only when the semantic layer underneath is real.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">03 · Explore</span><h2>How Genie answers, the 9 topics, the API round-trip, and the surfaces</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">How Genie answers</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The 9 topics</button>
+        <button role="tab" aria-selected="false" aria-controls="p-seq" id="t-seq" onclick="tab(this,'p-seq')">API round-trip</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Surfaces</button>
+      </div>
+
+      <!-- PANE A: how Genie answers — mirrors module.md's first Mermaid -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — English to a governed SQL result">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Genie is a front end. The accuracy lives in the curation box and, above all, in the metric view — the model just assembles SQL from a good briefing and runs it under governance.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the 9 topics -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — Topic index">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a topic</div><h3>The 9 topics</h3><p>Click a topic to see what it covers, its Theory/Hands-on label, and GA/Preview status. ★ marks the cornerstone with its own deep-dive page.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: API sequence — mirrors module.md's second Mermaid -->
+      <div id="p-seq" class="pane" role="tabpanel" aria-labelledby="t-seq" hidden>
+        <div class="plate" data-fig="Fig. 02 — Genie Agents API round-trip">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">Start → poll the message to a terminal status → fetch the query-result. Follow-ups reuse the conversation_id. The _and_wait SDK helpers collapse the polling loop.</div>
+        </div>
+      </div>
+
+      <!-- PANE D: surfaces table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Surface / feature</th><th>What it does</th><th>Status</th></tr></thead><tbody id="rows"></tbody></table>
+        <div class="note imp" style="margin-top:16px"><span class="tag">📌 Name the maturity</span>Core <strong>Genie Agents</strong>, the <strong>Genie Agents API</strong>, and <strong>Agent mode</strong> are <strong>GA</strong>. <strong>Genie One</strong> core is GA; its <strong>Domains</strong> are <strong>Preview</strong>. Verify per-feature availability live in the customer's workspace — Genie moves fast.</div>
+      </div>
+    </section>
+
+    <section class="entry" id="concepts">
+      <div class="entry-head"><span class="num">04 · Concepts</span><h2>14.1 — How Genie works</h2></div>
+      <h3 class="tk">14.1 Genie Agents concepts <span class="tag-pill t">Theory</span> <span class="tag-pill ga">GA</span></h3>
+      <p>A <strong>Genie Agent</strong> is a curated, governed natural-language interface to <strong>structured</strong> data. On a question it uses table/column metadata + your curation to <strong>generate SQL</strong>, runs it on a serverless warehouse, and returns the result <em>plus the SQL it wrote</em> — so answers are auditable, not black-box.</p>
+      <ul>
+        <li><strong>The SQL is always shown</strong> — for trust, and so a data owner can turn a good query into a <strong>verified answer</strong>.</li>
+        <li><strong>Governance is inherited</strong> — UC row/column permissions, lineage, and audit apply automatically; a user only sees data they're allowed to.</li>
+        <li><strong>Structured vs unstructured</strong> — Genie fronts tables/metric views; a <strong>Knowledge Assistant</strong> (Module 10) fronts documents. A Supervisor can route across both.</li>
+      </ul>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · the rename</span>These were <strong>"Genie Spaces"</strong> (earlier "AI/BI Genie") until 2026; docs, older blogs, and the SDK/REST path still use <code>spaces</code> (e.g. <code>/api/2.0/genie/spaces/...</code>). The product name is now <strong>Genie Agents</strong> — teach the current name, but expect the API to keep the <code>spaces</code> noun.</div>
+    </section>
+
+    <section class="entry" id="create">
+      <div class="entry-head"><span class="num">05 · Create</span><h2>14.2 — Create &amp; manage a Genie Agent</h2></div>
+      <h3 class="tk">14.2 Create &amp; manage <span class="tag-pill h">Hands-on</span> <span class="tag-pill ga">GA</span></h3>
+      <p>Creating the <code>Unity Airways Revenue Analytics</code> Agent is a short <strong>console</strong> flow — Genie is UI-first, there's no create-agent SDK call. The work is choosing good data sources.</p>
+      <ul>
+        <li><strong>Warehouse</strong> — a running <strong>serverless (or Pro) SQL warehouse</strong> to execute queries.</li>
+        <li><strong>Data sources (the important step)</strong> — attach the <code>unity_airways.analytics</code> star-schema tables <em>and</em> the <code>bookings_metrics</code> <strong>metric view</strong>. Prefer gold, well-commented tables + the metric view.</li>
+        <li><strong>Sample questions</strong> — "total revenue last quarter by fare class?", "which routes have the highest cancellation rate?", "compare ancillary attach rate across loyalty tiers".</li>
+        <li><strong>Permissions</strong> — CAN VIEW (ask) / CAN EDIT (curate + export/import for backup and dev→prod).</li>
+      </ul>
+      <div class="note tip"><span class="tag">💡 Tip</span>The single highest-leverage setup choice is attaching the <strong>metric view</strong>. It hands Genie the official <code>total_revenue</code>, <code>cancellation_rate</code>, and <code>ancillary_attach_rate</code> definitions, so it never reverse-engineers them from raw columns. Copy the Agent's <code>space_id</code> from its URL for the API round-trip (14.8).</div>
+    </section>
+
+    <section class="entry" id="curate">
+      <div class="entry-head"><span class="num">06 · Cornerstone</span><h2>14.3 ★ — Curate &amp; tune (the accuracy engine)</h2></div>
+      <p>Full deep-dive — general instructions, example SQL / trusted assets, synonyms, the benchmark quality loop, verified answers, and how each lever moves accuracy — in the <a href="curate-tune-genie.html">Curate &amp; tune deep-dive</a> (<code>curate-tune-genie.md</code> / <code>curate-tune-genie.html</code>).</p>
+      <h3 class="tk">14.3 Curate &amp; tune <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span> <span class="tag-pill ga">GA</span></h3>
+      <p>Curation is where the Agent goes from "cute demo" to "the number the CFO trusts." You're writing the analyst's briefing, weakest to strongest:</p>
+      <ul>
+        <li><strong>General instructions</strong> — "revenue = base + ancillary; exclude cancelled; 'last quarter' = previous full calendar quarter." Cheapest, high impact.</li>
+        <li><strong>Trusted assets — example SQL</strong> — verified query patterns Genie reuses instead of improvising joins.</li>
+        <li><strong>Metric view (<code>bookings_metrics</code>)</strong> — the strongest lever: KPI logic defined once, governed, with synonyms/display names from 15.6. <strong>15.6 metadata → 14 accuracy.</strong></li>
+        <li><strong>Synonyms</strong> — "top cabin" → First; "attach rate" → the ancillary measure; "churn" → cancellation metric.</li>
+        <li><strong>Benchmarks + quality loop</strong> — question→expected-answer pairs you re-run after each change; fix misses, re-run, watch accuracy climb.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Important</span>Tune <strong>upstream first</strong>. Most wrong answers trace to missing table/column comments or a KPI not defined in the metric view — fix those before piling on prose instructions. Curation compounds: good metadata + a metric view + a few verified answers beats a wall of instructions.</div>
+    </section>
+
+    <section class="entry" id="trust">
+      <div class="entry-head"><span class="num">07 · Trust</span><h2>14.4 + 14.5 — Test &amp; monitor, and verified answers</h2></div>
+      <h3 class="tk">14.4 Test &amp; monitor <span class="tag-pill h">Hands-on</span> <span class="tag-pill ga">GA</span></h3>
+      <p>Run your <strong>benchmark</strong> + adversarial questions before rollout; a healthy Agent <strong>asks for clarification</strong> or declines rather than inventing a join. <strong>Read the generated SQL, not just the number</strong> — a right number from wrong SQL is a latent bug. In production, Genie surfaces usage + thumbs-up/down + failing queries, and every query lands in <strong>UC audit logs</strong>. Close the loop: correct → verified answers; wrong → new instructions/examples.</p>
+      <h3 class="tk">14.5 Verified answers &amp; trust/safety <span class="tag-pill t">Theory</span> <span class="tag-pill ga">GA</span></h3>
+      <p>A <strong>verified answer</strong> is a certified <strong>question → SQL</strong> pair a data owner blesses; Genie reuses that exact SQL and shows a <strong>blue-check</strong> badge, removing model variance for the numbers that matter. Trust is layered: governance (UC permissions), transparency (SQL shown), determinism (verified answers + metric view), and graceful failure (clarify/decline over fabricate).</p>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Treat every production <strong>thumbs-down</strong> as free labelling — each one is a user telling you exactly which question your curation doesn't yet cover. It's the highest-signal input to the 14.3 quality loop.</div>
+    </section>
+
+    <section class="entry" id="agentmode">
+      <div class="entry-head"><span class="num">08 · Investigate</span><h2>14.6 — Agent mode</h2></div>
+      <h3 class="tk">14.6 Agent mode <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill ga">GA</span></h3>
+      <p><strong>Agent mode</strong> turns Genie from one-shot text-to-SQL into a planner: for a broad question — <em>"Why did revenue dip last quarter?"</em> — it breaks it into <strong>multiple sub-queries</strong>, reasons over intermediate results, and composes a <strong>cited, multi-step report</strong> (each supporting query shown). Previously called <strong>"deep research" / "Research Agent."</strong> Unity Airways: <em>"Explain the drop in Gold-tier ancillary revenue last quarter"</em> → it queries ancillary revenue by tier over time, isolates Gold, compares routes/fare classes, and narrates.</p>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Agent mode runs <strong>multiple</strong> queries — more warehouse cost + latency. Use it for genuine investigations, not "what was revenue yesterday." Verify its exact availability/label in your workspace — Genie capabilities and names change between releases.</div>
+    </section>
+
+    <section class="entry" id="api">
+      <div class="entry-head"><span class="num">09 · Integrate</span><h2>14.7 + 14.8 — Embed, and the Genie Agents API</h2></div>
+      <h3 class="tk">14.7 Embed in an external app <span class="tag-pill h">Hands-on</span> <span class="tag-pill ga">GA</span></h3>
+      <p>Two paths: an <strong>iframe embed</strong> of the Genie UI in an internal portal (fastest, branded, in-context), or <strong>API integration</strong> (14.8) rendering results in your own UI — a <strong>Databricks App</strong> (Module 10) is the natural host. Either way, calls run as an identity and <strong>UC permissions still apply</strong> — embedding does not bypass governance.</p>
+      <h3 class="tk">14.8 Genie Agents API (Conversation API) <span class="tag-pill h">Hands-on</span> <span class="tag-pill ga">GA</span></h3>
+      <p>The programmatic surface — REST (path base <code>/api/2.0/genie/spaces/{space_id}</code>) and the <code>w.genie.*</code> SDK:</p>
+      <pre><code># Python SDK (databricks-sdk 0.73.0) — the ergonomic path
+from databricks.sdk import WorkspaceClient
+w = WorkspaceClient()
+
+# 1) start + wait (the _and_wait helper polls the message to a terminal status)
+msg = w.genie.start_conversation_and_wait(space_id=SPACE_ID,
+        content="What was total revenue last quarter by fare class?")
+
+# 2) the answer is in attachments: .text (prose) and .query (generated SQL)
+for att in msg.attachments or []:
+    if att.query:
+        print(att.query.query)                       # the SQL Genie wrote
+        res = w.genie.get_message_query_result(       # 3) fetch the rows
+            space_id=SPACE_ID, conversation_id=msg.conversation_id,
+            message_id=msg.message_id or msg.id)
+        print(res.statement_response.result.data_array)
+
+# 4) follow-up in the same conversation (Genie keeps context)
+w.genie.create_message_and_wait(space_id=SPACE_ID,
+    conversation_id=msg.conversation_id, content="Now break that down by loyalty tier.")</code></pre>
+      <div class="note imp"><span class="tag">📌 Important</span>The REST path uses <strong><code>spaces</code></strong>; the SDK namespace is <strong><code>w.genie</code></strong> — that split trips people up. Poll the <strong>message</strong> for status; fetch the <strong>query-result</strong> separately for rows. Don't invent method names — the verified surface is <code>start_conversation(_and_wait)</code>, <code>create_message(_and_wait)</code>, <code>get_message</code>, <code>get_message_query_result</code> (SDK 0.73.0). Full REST + SDK round-trip: notebook <code>14-8-genie-api.py</code>.</div>
+    </section>
+
+    <section class="entry" id="genieone">
+      <div class="entry-head"><span class="num">10 · Business users</span><h2>14.9 — Genie One</h2></div>
+      <h3 class="tk">14.9 Genie One <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill ga">GA</span> <span class="tag-pill beta">Domains Preview</span></h3>
+      <p><strong>Genie One</strong> (formerly <strong>"Databricks One"</strong>) is the simplified single front door for <strong>business users</strong> — the place a non-technical stakeholder lands to ask questions across everything they're allowed to see.</p>
+      <ul>
+        <li><strong>Discovery (workspace + account level)</strong> — surfaces the Genie Agents, AI/BI dashboards, and Databricks Apps a user can access.</li>
+        <li><strong>Domains</strong> <em>(Preview)</em> — organize discoverable assets by business area (Revenue, Operations, Loyalty).</li>
+        <li><strong>Agent-mode deep research</strong> (14.6) surfaced for business users; <strong>budgets</strong> — spend controls so self-service serverless usage stays bounded.</li>
+      </ul>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · rename + maturity</span>It's <strong>"Genie One,"</strong> not "Databricks One." The core unified UI is GA, but <strong>Domains are Preview</strong>. Verify feature-by-feature availability in the customer's workspace before promising a capability.</div>
+    </section>
+
+    <section class="entry" id="worked">
+      <div class="entry-head"><span class="num">11 · Worked thread</span><h2>Unity Airways — build it end to end</h2></div>
+      <ol>
+        <li><strong>Semantics first (Module 15):</strong> <code>bookings_metrics</code> defines <code>total_revenue</code>, <code>cancellation_rate</code>, <code>ancillary_attach_rate</code> once, with synonyms/display names (15.6).</li>
+        <li><strong>Create (14.2):</strong> the <code>Unity Airways Revenue Analytics</code> Agent on a serverless warehouse; attach the star tables + the metric view; seed the three sample questions.</li>
+        <li><strong>Curate (14.3 ★):</strong> instructions, verified example SQL, synonyms; build a small benchmark set.</li>
+        <li><strong>Test (14.4):</strong> run benchmark + edge questions; read the SQL; fix misses; re-run.</li>
+        <li><strong>Verify (14.5):</strong> mark "total revenue last quarter by fare class" as a verified answer.</li>
+        <li><strong>Investigate (14.6):</strong> Agent mode on "why did Gold-tier ancillary revenue drop?" → cited multi-query report.</li>
+        <li><strong>Integrate (14.7–14.8):</strong> drive it via the Genie Agents API (<code>w.genie.start_conversation_and_wait</code> → <code>get_message_query_result</code>), or embed via iframe.</li>
+        <li><strong>Publish (14.9):</strong> business users discover + use it through Genie One, under budgets.</li>
+      </ol>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">12 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Genie's accuracy is <strong>curation, not the model</strong> — comments + a metric view + instructions + verified answers are the product (that's why 14.3 is the cornerstone and Module 15 exists). Governance is inherited: every query runs under UC permissions, lineage, and audit.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Highest-leverage step = <strong>attach the metric view</strong>. Read the SQL on every test question; treat each thumbs-down as a labelled gap. Choose the <strong>iframe</strong> for a fast embed, the <strong>API</strong> for a production, brand-controlled experience.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Renames: Genie Spaces → <strong>Genie Agents</strong>; Databricks One → <strong>Genie One</strong> (the REST path keeps <code>spaces</code>). <strong>Agent mode costs more</strong> (multiple queries). GA: core Genie, the API, Agent mode; <strong>Preview:</strong> Genie One Domains. Verify per-feature status live (live re-check pending).</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">13 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>In one sentence, what is a Genie Agent, and what actually determines whether its answers are accurate?</li>
+          <li>Name three curation levers from 14.3 and explain why attaching the <code>bookings_metrics</code> metric view is the strongest one. How does 15.6 feed Module 14?</li>
+          <li>What is a <strong>verified answer</strong>, and how is it different from (and complementary to) a metric view?</li>
+          <li>Describe the Genie Agents API round-trip: which call starts a conversation, how do you know the answer is ready, and how do you get the rows? Name two <code>w.genie.*</code> methods.</li>
+          <li>What is <strong>Agent mode</strong> for (and when should you not use it), and what is <strong>Genie One</strong> (including its former name)?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">14 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📎 <strong>Project cheat-sheet (primary)</strong> — <code>.claude/skills/genai-teacher/references/naming-conventions.md</code> <strong>§7 AI/BI Genie &amp; Genie One</strong> (verified July 2026): <strong>Genie Agents</strong> (formerly Genie Spaces / AI-BI Genie) GA; <strong>Agent mode</strong> (formerly "Research Agent"/"deep research") GA; <strong>Genie Agents API</strong> + iframe embedding GA; <strong>Genie One</strong> (formerly "Databricks One") core GA, <strong>Domains Preview</strong>.</li>
+        <li>🧩 <strong>Skill — <code>databricks-genie</code></strong>: the <code>serialized_space</code> (v2) anatomy that <em>is</em> curation — <code>data_sources.tables[].column_configs</code>, <code>instructions.example_question_sqls</code> (certified Q&amp;A), <code>join_specs</code>, <code>sql_snippets</code> (filters + measures), <code>benchmarks</code>; create/curate/test workflow; Conversation API behavior (start-conversation → follow-up with <code>conversation_id</code>).</li>
+        <li>🧩 <strong><code>databricks-sdk</code> 0.73.0</strong> (introspected at authoring): <code>w.genie.start_conversation(_and_wait)</code>, <code>create_message(_and_wait)</code>, <code>get_message</code>, <code>get_message_query_result</code>, <code>get_message_attachment_query_result</code>, <code>get_space</code>, <code>list_spaces</code>; <code>MessageStatus</code> = SUBMITTED / FILTERING_CONTEXT / ASKING_AI / PENDING_WAREHOUSE / EXECUTING_QUERY / COMPLETED / FAILED / CANCELLED / QUERY_RESULT_EXPIRED / FETCHING_METADATA.</li>
+        <li>📎 <strong>Shared P5 build brief</strong> — <code>unity_airways.analytics</code> star schema + <code>bookings_metrics</code>; locked Agent name <strong>"Unity Airways Revenue Analytics"</strong>; verified REST endpoints (<code>POST /api/2.0/genie/spaces/{space_id}/start-conversation</code>, <code>.../conversations/{conversation_id}/messages</code>, <code>GET .../messages/{message_id}</code>, <code>.../query-result</code>).</li>
+        <li>🌐 <strong>Databricks Docs</strong> (page titles confirmed live via bounded curl, July 2026; deeper content JS-rendered — <strong>live re-check pending</strong> on per-feature GA/Preview + trusted-assets page): Genie Agents <code>docs.databricks.com/aws/en/genie/</code>; Genie Agents API <code>.../genie/conversation-api</code>; Agent mode <code>.../genie/agent-mode</code>; Genie One <code>docs.databricks.com/aws/en/genie-one/genie</code>.</li>
+        <li>📗 <strong>B2 — Study Guide</strong> — AI/BI Genie for governed natural-language analytics (verify chapter; predates the Genie Agents / Genie One renames — prefer the current names above).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 14</span>
+  <span>Grounded in naming cheat-sheet §7 (Jul 2026) · databricks-genie skill · databricks-sdk 0.73.0 · Genie docs</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Concepts + create (14.1-14.2)",spine:false,comps:[
+   ["14.1 Genie Agents concepts","Theory · GA","Curated, governed natural-language interface to structured data. Generates SQL from metadata + curation, runs it on a serverless warehouse, shows the answer AND the SQL. Governance (UC permissions, lineage, audit) is inherited. Formerly 'Genie Spaces'.","module.md 14.1"],
+   ["14.2 Create & manage","Hands-on · GA","UI-first console flow: pick a serverless SQL warehouse, attach the unity_airways.analytics star schema + the bookings_metrics metric view, seed sample questions, set CAN VIEW / CAN EDIT. No create-agent SDK call.","module.md 14.2"],
+ ]},
+ {name:"Curate & tune — the cornerstone (14.3)",spine:true,comps:[
+   ["14.3 Curate & tune ★","Theory + Hands-on · GA","Where accuracy lives: general instructions, trusted assets (example SQL), synonyms, the bookings_metrics metric view (strongest lever, 15.6 metadata), and a benchmark quality loop. Fix comments + metric view upstream first.","curate-tune-genie.html"],
+ ]},
+ {name:"Trust & test (14.4-14.5)",spine:false,comps:[
+   ["14.4 Test & monitor","Hands-on · GA","Run a benchmark + adversarial questions before rollout; read the generated SQL, not just the number; monitor usage + thumbs-up/down + failing queries + UC audit logs. Each thumbs-down is a labelled curation gap.","module.md 14.4"],
+   ["14.5 Verified answers","Theory · GA","A certified question -> SQL pair a data owner blesses; Genie reuses the exact SQL + shows a blue-check badge. Complementary to the metric view: metric view pins the definition, verified answers pin the whole query.","module.md 14.5"],
+ ]},
+ {name:"Agent mode (14.6)",spine:false,comps:[
+   ["14.6 Agent mode","Theory + Hands-on · GA","Plans + runs MULTIPLE sub-queries for a broad question and composes a cited multi-step report (each query shown). Formerly 'deep research' / 'Research Agent'. Costs more warehouse time - use for real investigations.","module.md 14.6"],
+ ]},
+ {name:"Integrate (14.7-14.8)",spine:false,comps:[
+   ["14.7 Embed","Hands-on · GA","Two paths: iframe embed of the Genie UI in a portal (fast, branded), or API integration in your own UI (Databricks App is the natural host). UC permissions still apply - embedding does not bypass governance.","module.md 14.7"],
+   ["14.8 Genie Agents API","Hands-on · GA","Conversation API over REST (/api/2.0/genie/spaces/{space_id}/...) and the w.genie.* SDK: start-conversation -> poll message -> query-result -> follow-up. Verified SDK surface, databricks-sdk 0.73.0. Full round-trip: 14-8-genie-api.py.","14-8-genie-api.py"],
+ ]},
+ {name:"Business users (14.9)",spine:false,comps:[
+   ["14.9 Genie One","Theory + Hands-on · GA (Domains Preview)","Simplified single front door for business users (formerly 'Databricks One'). Workspace + account-level discovery of Genie Agents / AI-BI dashboards / Apps; Domains (Preview); Agent-mode deep research; spend budgets.","module.md 14.9"],
+ ]},
+];
+const ROWS=[
+  ["Genie Agent","Curated NL-to-SQL over UC tables + metric views on a serverless warehouse","GA"],
+  ["Curation / trusted assets","Instructions, example SQL, synonyms, join hints, column configs","GA"],
+  ["Metric view (bookings_metrics)","Governed KPI definitions inherited by Genie (Module 15 / 15.6)","GA"],
+  ["Verified answers","Certified question -> SQL, reused + badged","GA"],
+  ["Agent mode","Multi-query, cited, multi-step report (formerly deep research)","GA"],
+  ["Genie Agents API","start-conversation -> poll message -> query-result; w.genie.*","GA"],
+  ["Genie One","Business-user unified UI (formerly Databricks One); Domains","GA (Domains Preview)"],
+];
+const MERMAID_SRC=`flowchart LR
+  U["Revenue analyst<br/>'total revenue last quarter<br/>by fare class?'"]
+  subgraph GA["Genie Agent 'Unity Airways Revenue Analytics'"]
+    CUR["Curation / trusted assets<br/>instructions · verified SQL ·<br/>synonyms · join hints"]
+    NL2SQL["NL to SQL<br/>grounded by curation + metadata"]
+    VER["Verified answers<br/>reuse certified SQL if matched"]
+  end
+  subgraph UC["Unity Catalog (unity_airways.analytics)"]
+    MV["Metric view<br/>bookings_metrics (KPI definitions)"]
+    TBL["Star schema<br/>fct_bookings + dims"]
+  end
+  WH["Serverless SQL warehouse<br/>executes the SQL (UC permissions apply)"]
+  ANS["Answer<br/>table + chart + the SQL used"]
+  U --> CUR --> NL2SQL
+  VER --> NL2SQL
+  NL2SQL -->|"generated / certified SQL"| WH
+  WH --> MV
+  WH --> TBL
+  WH --> ANS --> U`;
+const MERMAID_SRC2=`sequenceDiagram
+  participant App as Client (app / notebook)
+  participant API as Genie Agents API
+  participant WH as SQL warehouse
+  App->>API: start-conversation(space_id, content)
+  API-->>App: conversation_id + message_id (SUBMITTED)
+  loop poll until terminal
+    App->>API: get message(space_id, conversation_id, message_id)
+    API-->>App: status EXECUTING_QUERY ... COMPLETED
+  end
+  App->>API: get message query-result
+  API->>WH: run generated SQL
+  WH-->>API: rows
+  API-->>App: SQL text + result rows (attachment)
+  App->>API: create message (follow-up, same conversation_id)`;
+
+/* ---------- light tutor front ---------- */
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline) ---------- */
+function drawMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

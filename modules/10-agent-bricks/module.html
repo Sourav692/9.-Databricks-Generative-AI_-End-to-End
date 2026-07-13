@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 10 Agent Bricks and no/low-code agents (module hub).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Agent Bricks and Low-Code Agents · Databricks GenAI Tutor 10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  /* ============ DESIGN SYSTEM — tokens (do not rename) ============ */
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line);
+    --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .toggle{display:none}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:16ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .ghost{display:none}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  .index-rail{display:none}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tag-pill{display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--line);border-radius:20px;color:var(--muted);margin-left:8px;vertical-align:middle}
+  .tag-pill.h{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.t{color:var(--accent-2);border-color:var(--accent-soft)}
+  .tag-pill.star{color:var(--danger);border-color:var(--danger-soft)}
+  .tag-pill.ga{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.beta{color:var(--danger);border-color:var(--danger-soft)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.3rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  h3.tk{font-family:var(--mono);font-size:.9rem;letter-spacing:.06em;margin:24px 0 6px}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.md">Databricks GenAI</a>
+    <span class="loc">Module 10 · Topics 10.1–10.8</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_10 · GenAI lesson · v1.0</span><span>Verified against naming cheat-sheet §2 (Jul 2026) + Agent Bricks / Apps skills</span></div>
+    <div class="filed">Module 10 — Agent Bricks and no/low-code agents · Topics 10.1–10.8 · Theory + Hands-on</div>
+    <h1>Agent Bricks and Low-Code Agents</h1>
+    <p class="dek">The <em>no/low-code counterpart to Module 09</em>. Instead of hand-coding a <code>ResponsesAgent</code>, you build the Unity Airways support experience in the <strong>Agent Bricks</strong> console and <strong>AI Playground</strong>, then ship it on <strong>Databricks Apps</strong> — with an escape hatch back to code whenever a tile can't do the job.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>From a hand-coded agent to console tiles and a hosted app</h2></div>
+      <p class="lead">Module 09 <em>built</em> the engine — a LangGraph loop wrapped in <code>ResponsesAgent</code>, registered to UC, deployed with <code>agents.deploy</code>. Module 10 <strong>assembles the car from parts and bolts on a dashboard</strong>: prototype in AI Playground, stand up a tile in Agent Bricks, and put a Databricks App in front. Same governed stack underneath, far less fabrication.</p>
+      <ul>
+        <li><strong>Prototype no-code</strong> (10.1) — <strong>AI Playground</strong> (GA) compares LLMs and attaches tools (UC functions, AI Search, MCP), then "Export to Databricks Apps."</li>
+        <li><strong>Build with a tile</strong> — a <strong>Knowledge Assistant</strong> (10.2 ★, GA) for cited Q&amp;A, a <strong>Multi-Agent Supervisor</strong> (10.3, GA) to route across specialists, or <strong>Information Extraction</strong> / <strong>Custom LLM</strong> (10.7 / 10.8, <em>Beta</em>) for a narrow task.</li>
+        <li><strong>Escape hatch to code</strong> (10.4) — when a tile can't express it, drop back to a <strong>Custom Agent</strong> (Python <code>ResponsesAgent</code>, Module 09).</li>
+        <li><strong>Front door</strong> (10.5 ★) — <strong>Databricks Apps</strong> hosts a Python chat UI via <code>app.yaml</code> + the <code>databricks apps</code> CLI, wired to endpoints through scoped resources.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 The rule that shapes this module</span>Start <strong>no-code</strong>, drop to code only when a tile hits a wall. Default path: <strong>AI Playground → Agent Bricks tile → Databricks App</strong>; the <strong>Custom Agent</strong> (Module 09) is the escape hatch. Name the maturity of each tile: GA — AI Playground, Knowledge Assistant, Multi-Agent Supervisor; <strong>Beta</strong> — Information Extraction, Custom LLM. <strong>Agent Bricks</strong> itself launched Beta (June 2025). Module 10 reuses the Module 04 AI Search index and can front the Module 09 agent — it doesn't replace them.</div>
+    </section>
+
+    <section class="entry" id="problem">
+      <div class="entry-head"><span class="num">02 · The problem</span><h2>Why "just code it" and "just ship the endpoint" both fail</h2></div>
+      <p>Module 09's agent was the right amount of work for a differentiated production system. It is far too much for a Tuesday-afternoon proof of value, and it leaves users with an API, not an app. Naive moves break:</p>
+      <ul>
+        <li><strong>Hand-code every agent</strong> → correct but slow; most early use cases just need cited Q&amp;A, which a <strong>Knowledge Assistant</strong> does out of the box.</li>
+        <li><strong>Wire the multi-agent system by hand</strong> → real maintenance (routing, descriptions, auth); the <strong>Multi-Agent Supervisor</strong> is the managed version.</li>
+        <li><strong>Ship the endpoint and stop</strong> → an endpoint isn't an application; without a <strong>Databricks App</strong>, only API users can reach it.</li>
+        <li><strong>Treat every tile as GA</strong> → <strong>Information Extraction</strong> and <strong>Custom LLM</strong> are <em>Beta</em>; promising them on a production date turns demos into escalations.</li>
+        <li><strong>Use tiles for everything</strong> → they cover the common shapes, not all; custom logic belongs in a <strong>Custom Agent</strong> (Module 09), not a bent tile.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">03 · Explore</span><h2>The low-code path, the 8 topics, the worked thread, and the tiles</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Low-code path</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The 8 topics</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Worked thread</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">The tiles</button>
+      </div>
+
+      <!-- PANE A: low-code path map — mirrors module.md's first Mermaid -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — The low-code path">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Prototype in Playground, build an Agent Bricks tile, front it with a Databricks App — with an escape hatch to code (Module 09) whenever a tile is not enough.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the 8 topics -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — Topic index">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a topic</div><h3>The 8 topics</h3><p>Click a topic to see what it covers, its Theory/Hands-on label, and GA/Beta status. ★ marks a cornerstone with its own deep-dive page.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: worked-thread stepper + supervisor mermaid -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="plate" data-fig="Fig. 02 — Multi-Agent Supervisor routing" style="margin-bottom:18px">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">The Supervisor is the managed twin of Module 09.9's agents-as-tools: declare sub-agents, it routes and composes.</div>
+        </div>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <div class="plate-cap" style="margin-top:14px">Rebuilding the Unity Airways support experience without an agent class.</div>
+      </div>
+
+      <!-- PANE D: the tiles table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Tile / surface</th><th>What it produces</th><th>Status</th></tr></thead><tbody id="rows"></tbody></table>
+        <div class="note imp" style="margin-top:16px"><span class="tag">📌 Name the maturity</span>GA on the main path: <strong>AI Playground</strong>, <strong>Knowledge Assistant</strong>, <strong>Multi-Agent Supervisor</strong>, <strong>Databricks Apps</strong>. <strong>Beta:</strong> <strong>Information Extraction</strong>, <strong>Custom LLM</strong> — label them and verify enrollment before a customer commitment.</div>
+      </div>
+    </section>
+
+    <section class="entry" id="playground">
+      <div class="entry-head"><span class="num">04 · Prototype</span><h2>10.1 — AI Playground: prototyping agents</h2></div>
+      <h3 class="tk">10.1 AI Playground <span class="tag-pill h">Hands-on</span> <span class="tag-pill ga">GA</span></h3>
+      <p><strong>AI Playground</strong> is the no-code chat surface where you try ideas before building anything. Compare foundation models side by side (<code>databricks-claude-sonnet-4-5</code> is the Unity Airways default), then <strong>prototype a tool-calling agent with no code</strong> by attaching tools and watching the model decide when to call them.</p>
+      <ul>
+        <li><strong>Unity Catalog functions</strong> — a governed <code>get_flight_status</code> lookup.</li>
+        <li><strong>AI Search</strong> retrieval against <code>unity_airways.rag.ua_rag_chunks_index</code> (the Module 04 index).</li>
+        <li><strong>MCP servers</strong> (managed or external) for reusable, governed tools.</li>
+        <li><strong>Export when it's good</strong> — "Export to Databricks Apps" for a hosted chat UI, or export to code for the Module 09 path.</li>
+      </ul>
+      <div class="note tip"><span class="tag">💡 Tip</span>Use Playground as the cheap, fast <em>shape-finding</em> step — decide the model, the tools, and roughly the system prompt here, then move to a Knowledge Assistant (pure Q&amp;A) or export to Apps/code. It is the lowest-cost way to kill a bad idea before you build it.</div>
+    </section>
+
+    <section class="entry" id="ka">
+      <div class="entry-head"><span class="num">05 · Cornerstone</span><h2>10.2 ★ — Knowledge Assistant: cited document Q&amp;A</h2></div>
+      <p>Full deep-dive — knowledge sources, instructions and examples, evaluation, endpoint, and embedding it in an app — in the <a href="knowledge-assistant.html">Knowledge Assistant deep-dive</a> (<code>knowledge-assistant.md</code> / <code>knowledge-assistant.html</code>).</p>
+      <h3 class="tk">10.2 Knowledge Assistant <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span> <span class="tag-pill ga">GA</span></h3>
+      <p>The fastest path to the Unity Airways FAQ bot — a <strong>cited Q&amp;A chatbot</strong> you configure, not code.</p>
+      <ul>
+        <li><strong>Point it at knowledge</strong> — a <strong>UC volume folder</strong> of PDF/text docs, or the existing <strong>AI Search index</strong> <code>unity_airways.rag.ua_rag_chunks_index</code>.</li>
+        <li><strong>Shape its behavior</strong> — a description, instructions (tone, what to cite), and example questions with guidelines that double as an evaluation set.</li>
+        <li><strong>It builds, evaluates, and serves</strong> — provisions an endpoint (<code>PROVISIONING → ONLINE</code>), grounds answers, and returns <strong>citations</strong> — the Module 05 RAG pattern with no chain code.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Important</span>A Knowledge Assistant is the no-code twin of the Module 05 RAG chain — reuse the <strong>same AI Search index</strong> so retrieval quality (chunking, embeddings) carries over. Weak answers are usually an upstream index problem (Module 03/04), not a tile problem.</div>
+    </section>
+
+    <section class="entry" id="orchestrate">
+      <div class="entry-head"><span class="num">06 · Orchestrate + escape</span><h2>10.3 + 10.4 — Multi-Agent Supervisor, and Custom Agents</h2></div>
+      <h3 class="tk">10.3 Multi-Agent Supervisor (a.k.a. Supervisor Agent) <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill ga">GA</span></h3>
+      <p>The managed version of Module 09.9's agents-as-tools. You declare specialist sub-agents; it routes and composes across <strong>Genie Agents</strong> (structured tables), <strong>Knowledge Assistants</strong> (unstructured docs), and <strong>MCP servers</strong> (tools/actions). Routing is <strong>description-driven</strong> — each sub-agent's description tells the supervisor when to pick it, exactly like a good <code>tool_description</code>. Unity Airways: policy → Knowledge Assistant, "my flight / booking" → a Genie Agent over the ops tables, actions → an MCP tool, composed into one cited answer.</p>
+      <h3 class="tk">10.4 Custom Agents — the escape hatch to code <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span></h3>
+      <p>When the tiles can't express the logic, drop back to a <strong>Custom Agent</strong>: a Python <code>ResponsesAgent</code> + framework (the Module 09.6 artifact), deployed via <code>agents.deploy()</code> or behind a Databricks App. Same UC governance and serving as the tiles — more control. Reach for it for bespoke tools, custom control flow, or non-standard I/O.</p>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Don't force a tile to do a Custom Agent's job. If you're hacking instructions to fake tool logic a tile doesn't support, that's the signal to switch to code (Module 09). The escape hatch is a feature, not a failure. And give Supervisor sub-agents narrow remits + crisp descriptions — vague/overlapping descriptions cause wrong routing.</div>
+    </section>
+
+    <section class="entry" id="apps">
+      <div class="entry-head"><span class="num">07 · Cornerstone</span><h2>10.5 ★ — Build and deploy a GenAI app on Databricks Apps</h2></div>
+      <p>Full deep-dive — <code>app.yaml</code> structure, the <code>databricks apps</code> CLI (<code>init</code> / <code>validate</code> / <code>deploy</code> / <code>get</code>), resources and scoped auth, and wiring a chat UI to the agent endpoint — in the <a href="databricks-apps.html">Databricks Apps deep-dive</a> (<code>databricks-apps.md</code> / <code>databricks-apps.html</code>).</p>
+      <h3 class="tk">10.5 Databricks Apps <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span> <span class="tag-pill ga">GA</span></h3>
+      <p>The managed platform that gives your agent a front door — a Python web app running next to your data and governance.</p>
+      <pre><code># app.yaml — the manifest that declares how the app runs
+command: ["streamlit", "run", "app.py"]
+
+# the databricks apps CLI loop
+databricks apps create ua-support-chat    # create the app (decide the data-access pattern first)
+databricks workspace import-dir . /Workspace/Users/me@unity.com/apps/ua-support-chat   # upload source
+databricks apps deploy ua-support-chat --source-code-path /Workspace/Users/me@unity.com/apps/ua-support-chat   # ship it
+databricks apps get ua-support-chat -o json   # confirm app_status.state: RUNNING</code></pre>
+      <ul>
+        <li><strong>Frameworks:</strong> Python — Streamlit, Dash, Flask, Gradio. A Streamlit chat UI fronts the Unity Airways support agent.</li>
+        <li><strong>Resources with scoped auth:</strong> the app reaches a <strong>serving endpoint</strong> (your agent, or <code>databricks-claude-sonnet-4-5</code>) and a <strong>SQL warehouse</strong> through declared resources — the app runs as its own <strong>service principal</strong>, not your token.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Important</span>Before scaffolding, decide the <strong>data-access pattern</strong> — most read-only GenAI apps use <strong>Analytics</strong> (SQL warehouse at read time); reach for <strong>Lakebase synced tables</strong> only for sub-second lookups (search, typeahead, real-time by-ID). App auth/authz (service principal, OAuth scopes, on-behalf-of-user) is covered in Module 11.9.</div>
+    </section>
+
+    <section class="entry" id="endtoend">
+      <div class="entry-head"><span class="num">08 · End-to-end</span><h2>10.6 — Get started with AI agents end-to-end</h2></div>
+      <h3 class="tk">10.6 Get started end-to-end <span class="tag-pill h">Hands-on</span></h3>
+      <p>The glue topic — the full low-code journey in one pass, so you can run it as a single demo:</p>
+      <ol>
+        <li><strong>Prototype (10.1):</strong> AI Playground — <code>databricks-claude-sonnet-4-5</code> + retriever + UC function; confirm the shape works.</li>
+        <li><strong>Build the agent (10.2 / 10.3):</strong> a Knowledge Assistant for pure Q&amp;A; a Multi-Agent Supervisor when the use case spans structured + unstructured + actions.</li>
+        <li><strong>Go custom if needed (10.4):</strong> author a Custom Agent (<code>ResponsesAgent</code>, Module 09) for logic the tiles can't express.</li>
+        <li><strong>Front it (10.5 ★):</strong> a Databricks App (Streamlit chat) wired to the endpoint via a resource; deploy with the CLI.</li>
+        <li><strong>Govern and monitor (Module 11):</strong> tracing + monitoring on the endpoint; add a Review App and AI Gateway guardrails.</li>
+      </ol>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Rehearse this end-to-end before a customer session. It lands hardest when you start in Playground (fast, visual), graduate to a Knowledge Assistant (cited answers), and finish in an app (a real front door) — each step visibly building on the last.</div>
+    </section>
+
+    <section class="entry" id="beta">
+      <div class="entry-head"><span class="num">09 · Beta tiles</span><h2>10.7 + 10.8 — Information Extraction, and Custom LLM</h2></div>
+      <h3 class="tk">10.7 Information Extraction <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill beta">Beta</span></h3>
+      <p>Turns unstructured docs / PDFs / images into a clean <strong>structured table</strong> via a <strong>generated JSON schema</strong> — no parsing code. Unity Airways: scanned booking confirmations or baggage-claim PDFs → a governed table (<code>booking_ref</code>, <code>passenger_name</code>, <code>flight_number</code>, <code>claim_amount</code>) ready for analytics or a Genie Agent. It's the console cousin of the SQL functions <code>ai_parse_document</code> / <code>ai_extract</code> (Module 03 / 11.10).</p>
+      <h3 class="tk">10.8 Custom LLM <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill beta">Beta</span></h3>
+      <p>Builds a <strong>task-tuned model</strong> from your examples for a domain text task — <strong>summarize</strong> (condense complaint threads), <strong>classify</strong> (route tickets by category/urgency), <strong>transform</strong> (rewrite notes), <strong>generate</strong> (draft policy-grounded replies). Use it for a repeated, well-scoped text task where a general chat model is overkill or inconsistent.</p>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · verify live</span>Both tiles are <strong>Beta</strong> — label the maturity, expect UI/behavior changes, and verify enrollment before a production timeline. For hardened, GA work today: <code>ai_extract</code> / <code>ai_parse_document</code> for batch extraction, and <code>ai_classify</code> / <code>ai_summarize</code> / <code>ai_gen</code> for scaled text tasks (Module 11.10). <em>(Doc pages are JS-rendered; live re-check pending.)</em></div>
+    </section>
+
+    <section class="entry" id="worked">
+      <div class="entry-head"><span class="num">10 · Worked thread</span><h2>Unity Airways — the same experience, low-code</h2></div>
+      <ol>
+        <li><strong>Prototype (10.1):</strong> AI Playground — chat with <code>databricks-claude-sonnet-4-5</code>, attach the AI Search retriever over <code>unity_airways.rag.ua_rag_chunks_index</code> and a <code>get_flight_status</code> UC function; confirm tool calls + citations.</li>
+        <li><strong>Cited Q&amp;A (10.2 ★):</strong> a Knowledge Assistant over the same index (or a UC volume of FAQ PDFs) + instructions + example questions → a cited support bot endpoint, no chain code.</li>
+        <li><strong>Compose specialists (10.3):</strong> a Multi-Agent Supervisor routes policy → the Knowledge Assistant, "my flight / booking" → a Genie Agent over the ops tables, actions → an MCP tool.</li>
+        <li><strong>Go custom only if needed (10.4):</strong> author a Custom Agent (<code>ResponsesAgent</code>, Module 09) for behavior outside the tiles; treat it as a sub-agent or the app backend.</li>
+        <li><strong>Enrich data (10.7 / 10.8, Beta):</strong> Information Extraction turns scanned booking PDFs into a table; a Custom LLM classifies inbound tickets — both labeled Beta.</li>
+        <li><strong>Front end (10.5 ★):</strong> a Databricks App (Streamlit chat) wired to the endpoint via a serving-endpoint resource; <code>databricks apps deploy</code> → confirm <code>RUNNING</code>.</li>
+        <li><strong>Govern and monitor (Module 11):</strong> tracing + monitoring on the endpoints; a Review App for feedback and AI Gateway guardrails at serving time.</li>
+      </ol>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">11 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Start no-code, drop to code only when a tile can't do it: <strong>AI Playground → Agent Bricks tile → Databricks App</strong>, with the <strong>Custom Agent</strong> (Module 09) as escape hatch. Name maturity: GA — AI Playground, Knowledge Assistant, Multi-Agent Supervisor, Databricks Apps; <strong>Beta</strong> — Information Extraction, Custom LLM. Agent Bricks launched Beta (June 2025).</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Prototype the shape in Playground first. Reuse the <strong>same AI Search index</strong> for the Knowledge Assistant that Module 05 used. Give Supervisor sub-agents narrow remits + crisp descriptions. Default a read-only app to <strong>Analytics</strong> data access; use Lakebase synced tables only for sub-second lookups.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Beta means Beta — don't promise Information Extraction / Custom LLM on a production date; prefer GA SQL AI functions for hardened pipelines. An endpoint isn't an app — without a Databricks App the agent has no front door. Doc pages are JS-rendered; verify GA/Beta status + URLs live before a customer commitment.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">12 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>What is the default no/low-code path in this module, and where is the escape hatch to code? Name the umbrella product and its launch maturity.</li>
+          <li>Which two Agent Bricks tiles are cornerstones here, and what does each produce? Which existing Unity Airways asset does the Knowledge Assistant reuse?</li>
+          <li>What does a Multi-Agent Supervisor orchestrate across, and what drives its routing? How does that map to Module 09.9?</li>
+          <li>Which two tiles are <strong>Beta</strong>, and what does each do? What GA alternative would you prefer for a hardened batch pipeline?</li>
+          <li>Name the config file and the CLI for Databricks Apps, and explain how an app reaches a serving endpoint securely.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">13 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📎 <strong>Project cheat-sheet (primary)</strong> — <code>.claude/skills/genai-teacher/references/naming-conventions.md</code> <strong>§2 Agent Bricks</strong> (verified July 2026): <strong>Agent Bricks</strong> launched <strong>Beta, June 2025</strong>; <strong>Knowledge Assistant GA (Jan 2026)</strong> — cited Q&amp;A over a UC-volume folder or AI Search index; <strong>Multi-Agent Supervisor GA (Feb 2026)</strong> — managed orchestration across Genie Agents (structured), Knowledge Assistant (unstructured), MCP servers (tools); <strong>Information Extraction Beta</strong> — docs/PDFs/images → structured table via generated JSON schema; <strong>Custom LLM Beta</strong> — domain summarize/classify/transform/generate; <strong>Custom Agents</strong> — Python <code>ResponsesAgent</code> + framework via <code>agents.deploy()</code> or Databricks Apps; <strong>AI Playground GA</strong> — compare LLMs, prototype tool-calling agents (UC functions, AI Search, MCP), "Export to Databricks Apps."</li>
+        <li>🧩 <strong>Skill — <code>databricks-agent-bricks</code></strong>: <code>manage_ka</code> (Knowledge Assistant), <code>manage_mas</code> (Multi-Agent Supervisor — sub-agents via <code>ka_tile_id</code> / <code>genie_space_id</code> / <code>endpoint_name</code> / <code>uc_function_name</code> / <code>connection_name</code>, each with a routing <code>description</code>), provisioning states <code>PROVISIONING → ONLINE</code>, reuse of Genie Spaces / model-serving endpoints as sub-agents.</li>
+        <li>🧩 <strong>Skill — <code>databricks-apps</code></strong>: <code>app.yaml</code> manifest; <code>databricks apps</code> CLI (<code>create</code> / <code>deploy --source-code-path</code> / <code>get</code> / <code>logs</code> / <code>start</code> / <code>stop</code>); the <strong>Analytics vs Lakebase synced-tables</strong> data-access decision gate; non-AppKit Python frameworks (Streamlit / FastAPI / Flask / Gradio / Dash); apps run as a service principal with scoped <strong>resources</strong> (serving endpoints, SQL warehouses).</li>
+        <li>🌐 <strong>Databricks Docs</strong> (verify live — pages are JS-rendered and returned empty body / a 301 to a non-browser fetch at authoring; <strong>live re-check pending</strong>): Knowledge Assistant <code>docs.databricks.com/aws/en/generative-ai/agent-bricks/knowledge-assistant</code>; Multi-Agent Supervisor <code>.../agent-bricks/multi-agent-supervisor</code>; AI Playground <code>docs.databricks.com/aws/en/large-language-models/ai-playground</code> (HTTP 200 confirmed); Information Extraction <code>docs.databricks.com/aws/en/agents/agent-bricks/info-extraction</code> (301 confirmed); Custom LLM <code>.../agent-bricks/custom-llm</code>; Databricks Apps <code>docs.databricks.com/aws/en/dev-tools/databricks-apps/</code>.</li>
+        <li>📘 <strong>B1 — <em>Practical MLflow for GenAI on Databricks</em></strong> (Early Release): the concepts Module 10's managed tiles build on — <strong>Ch 7</strong> agents-as-tools / multi-agent orchestration (the DIY twin of the Multi-Agent Supervisor) and MCP servers as tools; <strong>Ch 8</strong> <code>agents.deploy()</code> for the Custom Agent path. <em>(The books predate Agent Bricks / AI Playground / Databricks Apps by name — grounded in the cheat-sheet, skills, and docs above.)</em></li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 10</span>
+  <span>Grounded in naming cheat-sheet §2 (Jul 2026) · databricks-agent-bricks + databricks-apps skills · Agent Bricks / Apps docs</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Prototype (10.1)",spine:false,comps:[
+   ["10.1 AI Playground","Hands-on · GA","No-code chat surface: compare foundation models (databricks-claude-sonnet-4-5) and prototype tool-calling agents by attaching UC functions, AI Search retrieval, and MCP servers. 'Export to Databricks Apps' or export to code. The cheap, fast shape-finding step.","module.md 10.1"],
+ ]},
+ {name:"Cited Q&A — the cornerstone (10.2)",spine:true,comps:[
+   ["10.2 Knowledge Assistant ★","Theory + Hands-on · GA","Cited Q&A chatbot over a UC-volume folder of docs OR an AI Search index (reuse unity_airways.rag.ua_rag_chunks_index). Add instructions + example questions; it builds, evaluates, serves an endpoint (PROVISIONING to ONLINE) and returns citations. The no-code twin of the Module 05 RAG chain.","knowledge-assistant.html"],
+ ]},
+ {name:"Orchestrate & escape (10.3-10.4)",spine:false,comps:[
+   ["10.3 Multi-Agent Supervisor","Theory + Hands-on · GA","Managed orchestration across Genie Agents (structured tables), Knowledge Assistants (unstructured docs), and MCP servers (tools). Routing is description-driven, one description per sub-agent. The managed version of Module 09.9's agents-as-tools.","module.md 10.3"],
+   ["10.4 Custom Agents","Theory + Hands-on","The escape hatch to code: a Python ResponsesAgent + framework (Module 09.6), deployed via agents.deploy() or a Databricks App. For bespoke tools, custom control flow, non-standard I/O — when a tile can't express it.","module.md 10.4"],
+ ]},
+ {name:"Front end — the cornerstone (10.5)",spine:true,comps:[
+   ["10.5 Databricks Apps ★","Theory + Hands-on · GA","Managed hosting for Python web apps (Streamlit/Dash/Flask/Gradio) via app.yaml + the databricks apps CLI (init/validate/deploy/get). App runs as a service principal; reaches serving endpoints + SQL warehouses through scoped resources. Decide Analytics vs Lakebase data access first.","databricks-apps.html"],
+ ]},
+ {name:"End-to-end (10.6)",spine:false,comps:[
+   ["10.6 Get started end-to-end","Hands-on","The glue topic: prototype (Playground) to build (Knowledge Assistant / Supervisor) to custom-if-needed (Custom Agent) to front-end (Databricks App) to govern/monitor (Module 11). Run it as a single demo.","module.md 10.6"],
+ ]},
+ {name:"Beta tiles (10.7-10.8)",spine:false,comps:[
+   ["10.7 Information Extraction","Theory + Hands-on · Beta","Unstructured docs/PDFs/images to a structured Delta table via a generated JSON schema, no parsing code. Console cousin of ai_parse_document / ai_extract. Unity Airways: scanned booking PDFs to a governed table. Beta — verify enrollment.","module.md 10.7"],
+   ["10.8 Custom LLM","Theory + Hands-on · Beta","Task-tuned model from your examples for a domain text task: summarize, classify, transform, generate. Unity Airways: ticket classifier + thread summarizer. Beta — prefer GA SQL AI functions (ai_classify/ai_summarize/ai_gen) for scaled work.","module.md 10.8"],
+ ]},
+];
+const STEPS=[
+  ["1 · Prototype","AI Playground: databricks-claude-sonnet-4-5 + AI Search retriever over unity_airways.rag.ua_rag_chunks_index + a get_flight_status UC function; confirm tool calls and citations (10.1)."],
+  ["2 · Cited Q&A","A Knowledge Assistant over the same index (or a UC volume of FAQ PDFs) + instructions + example questions -> a cited support bot endpoint, no chain code (10.2 ★)."],
+  ["3 · Compose specialists","A Multi-Agent Supervisor routes policy -> Knowledge Assistant, 'my flight / booking' -> a Genie Agent over the ops tables, actions -> an MCP tool (10.3)."],
+  ["4 · Go custom if needed","Author a Custom Agent (ResponsesAgent, Module 09) for logic outside the tiles; treat it as a sub-agent or the app backend (10.4)."],
+  ["5 · Enrich data","Information Extraction turns scanned booking PDFs into a table; a Custom LLM classifies inbound tickets - both Beta (10.7, 10.8)."],
+  ["6 · Front end","A Databricks App (Streamlit chat) wired to the endpoint via a serving-endpoint resource; databricks apps deploy -> confirm RUNNING (10.5 ★)."],
+  ["7 · Govern & monitor","Tracing + monitoring on the endpoints; a Review App for feedback and AI Gateway guardrails at serving time (Module 11)."],
+];
+const ROWS=[
+  ["AI Playground","No-code chat to compare LLMs + prototype tool-calling agents (UC fn, AI Search, MCP); export to Apps/code","GA"],
+  ["Knowledge Assistant ★","Cited Q&A endpoint over a UC-volume folder or an AI Search index","GA (Jan 2026)"],
+  ["Multi-Agent Supervisor","Managed routing/composition across Genie Agents, Knowledge Assistants, MCP servers","GA (Feb 2026)"],
+  ["Custom Agent","Python ResponsesAgent + framework (escape hatch to Module 09 code)","Code path"],
+  ["Information Extraction","Docs/PDFs/images to a structured Delta table via a generated JSON schema","Beta"],
+  ["Custom LLM","Task-tuned model: summarize / classify / transform / generate","Beta"],
+  ["Databricks Apps ★","Python front end (Streamlit/Dash) via app.yaml + databricks apps CLI + scoped resources","GA"],
+];
+const MERMAID_SRC=`flowchart LR
+  U["Unity Airways users<br/>(passengers / support staff)"]
+  PG["AI Playground (GA)<br/>prototype: compare LLMs,<br/>attach UC fn / AI Search / MCP tools"]
+  subgraph AB["Agent Bricks console (no/low-code)"]
+    KA["Knowledge Assistant (GA)<br/>cited Q and A over docs"]
+    MAS["Multi-Agent Supervisor (GA)<br/>routes across sub-agents"]
+    CA["Custom Agent<br/>Python ResponsesAgent"]
+    IE["Information Extraction (Beta)<br/>PDFs to structured table"]
+    CL["Custom LLM (Beta)<br/>task-tuned text model"]
+  end
+  APP["Databricks App<br/>Streamlit / Dash front end<br/>app.yaml + resources"]
+  CODE["Escape hatch to code<br/>Module 09: ResponsesAgent + agents.deploy()"]
+  U --> PG --> AB
+  AB --> APP --> U
+  PG -. "export to Databricks Apps / code" .-> CODE
+  CA -. "is a hand-coded" .-> CODE
+  CODE -. "deploy as endpoint" .-> APP`;
+const MERMAID_SRC2=`flowchart TD
+  Q["Passenger question<br/>'UA217 delayed — refund?'"]
+  SUP["Multi-Agent Supervisor (GA)<br/>reads sub-agent descriptions, routes and composes"]
+  KA["Knowledge Assistant<br/>policy / FAQ (unstructured)"]
+  GEN["Genie Agent<br/>bookings / flight status (structured)"]
+  MCP["MCP server tool<br/>governed action / external"]
+  ANS["Composed, cited answer"]
+  Q --> SUP
+  SUP -->|"policy question"| KA
+  SUP -->|"my booking / flight X"| GEN
+  SUP -->|"take an action"| MCP
+  KA --> ANS
+  GEN --> ANS
+  MCP --> ANS
+  ANS --> Q`;
+
+/* ---------- light tutor front ---------- */
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0].split(" · ")[1];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline) ---------- */
+function drawMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

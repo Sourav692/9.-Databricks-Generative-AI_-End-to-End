@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Business Semantics — Unity Catalog metric views · Databricks GenAI Tutor 15</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.65;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  h3.tk{font-family:var(--mono);font-size:.9rem;letter-spacing:.06em;margin:24px 0 6px}
+  .tag-pill{display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--line);border-radius:20px;color:var(--muted);margin-left:8px;vertical-align:middle}
+  .tag-pill.h{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.t{color:var(--accent-2);border-color:var(--accent-soft)}
+  .tag-pill.star{color:var(--danger);border-color:var(--danger-soft)}
+  .tag-pill.exp{color:var(--danger);border-color:var(--danger-soft)}
+  .tabs{display:flex;flex-wrap:wrap;border-bottom:2px solid var(--ink);margin:6px 0 22px}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 16px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.4rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--rule);vertical-align:top;font-size:.96rem}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.md">Databricks GenAI</a>
+    <span class="loc">Module 15 · Topics 15.1–15.7</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_15 · GenAI lesson · v1.0</span><span>Grounded in databricks-metric-views skill</span></div>
+    <div class="filed">Module 15 — Business Semantics (Unity Catalog metric views) · Entries 15.1–15.7 · Theory + Hands-on</div>
+    <h1>Business Semantics — Metric Views</h1>
+    <p class="dek">Define each KPI <em>once</em> in YAML, and let every dashboard, SQL query, and the Module 14 <strong>Genie Agent</strong> re-aggregate it safely. One governed definition of "revenue" — no metric drift.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>One definition of a metric, many questions</h2></div>
+      <p class="lead">A <strong>metric view</strong> is a Unity Catalog object defined in <strong>YAML</strong> that stores <strong>dimensions</strong> (how you slice) apart from <strong>measures</strong> (how you aggregate). Because the two are separate, <strong>aggregation happens at query time</strong> — not baked in at creation the way a regular view fixes its <code>GROUP BY</code>. One view answers "revenue by fare class" and "revenue by month by region", and ratios stay correct at every roll-up.</p>
+      <ul>
+        <li><strong>Query it with <code>MEASURE()</code></strong> and <code>GROUP BY ALL</code> — <code>SELECT *</code> is <strong>not</strong> supported.</li>
+        <li><strong>It kills metric drift</strong> — finance, ops, analysts, and Genie all read the one governed definition, so the numbers agree.</li>
+        <li><strong>It models a star / snowflake schema</strong> — <code>joins:</code> live in the YAML, so consumers never write a JOIN.</li>
+        <li><strong>15.6 feeds Module 14</strong> — business-friendly <code>name</code>s + <code>comment</code>s are the metadata a <strong>Genie Agent</strong> reads to answer plain-English questions accurately.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 The rule that shapes this module</span>Define each metric <strong>once, in YAML</strong>, and let every tool re-aggregate it safely. The aggregation is a <strong>query-time</strong> choice via <code>MEASURE()</code> — so one definition serves many questions and ratios (cancellation rate, attach rate) recompute their numerator and denominator at any grain. Metric view <code>unity_airways.analytics.bookings_metrics</code> is the trusted KPI source the Module 14 Genie Agent queries.</div>
+    </section>
+
+    <section class="entry" id="problem">
+      <div class="entry-head"><span class="num">02 · The problem</span><h2>Why "revenue" means four different numbers</h2></div>
+      <p>Unity Airways has revenue in a finance dashboard, an ops dashboard, an analyst's notebook, and a Genie Agent — each built by a different person. One counts base fare only; one adds ancillary; one drops cancelled bookings; Genie doesn't. Same word, four numbers, no trust. Naive fixes fail:</p>
+      <ul>
+        <li><strong>A regular view with the <code>GROUP BY</code> baked in</strong> → locks the grain forever; a second grain means a second view, and rolled-up ratios come out wrong.</li>
+        <li><strong>Definitions inside each BI tool</strong> → logic lives in N tools, drifts independently, and can't be governed as one UC object.</li>
+        <li><strong>Let Genie infer metrics from raw tables</strong> → different phrasings produce different SQL; "revenue" is re-derived every time.</li>
+        <li><strong>Pre-aggregate everything into summary tables</strong> → you must predict every slice and still hand-code each ratio.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">03 · Explore</span><h2>The semantic layer, the 7 topics, the worked thread, the YAML</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Semantic layer</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The 7 topics</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Worked thread</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">YAML keys</button>
+      </div>
+
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — The semantic layer">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">One governed definition between the star schema and every consumer. Change "revenue" once; it changes for Genie, dashboards, and SQL at the same time.</div>
+        </div>
+      </div>
+
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — Topic index">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a topic</div><h3>The 7 topics</h3><p>Click a topic to see what it covers and its Theory/Hands-on label. ★ marks the cornerstone (15.3) with its own deep-dive page.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="plate" data-fig="Fig. 02 — Query flow (aggregation at query time)" style="margin-bottom:18px">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">You write a flat SELECT; the engine resolves joins, applies the filter, and aggregates at your grain.</div>
+        </div>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <div class="plate-cap" style="margin-top:14px">Building the Unity Airways semantic layer end to end.</div>
+      </div>
+
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Top-level key</th><th>Required</th><th>Purpose</th></tr></thead><tbody id="rows"></tbody></table>
+        <div class="note imp" style="margin-top:16px"><span class="tag">📌 Query rule</span>Name the <strong>dimensions</strong>, wrap every measure in <code>MEASURE()</code>, and <code>GROUP BY ALL</code>. <code>SELECT *</code> is unsupported. Metric views need a <strong>Pro/Serverless SQL warehouse</strong> (or DBR 17.2+ for <code>version: 1.1</code>).</div>
+      </div>
+    </section>
+
+    <section class="entry" id="t151">
+      <div class="entry-head"><span class="num">04 · Concept</span><h2>15.1 — What metric views are, and why a semantic layer matters</h2></div>
+      <h3 class="tk">15.1 Semantic layer <span class="tag-pill t">Theory</span></h3>
+      <p>A metric view is Unity Catalog's answer to metric drift: a governed object that stores <strong>what a metric means</strong> in YAML, so every tool computes it the same way. The core split is <strong>measures</strong> (how to aggregate) apart from <strong>dimensions</strong> (how to slice) — a regular view fuses them at creation, a metric view keeps them separate so the grain is a query-time choice.</p>
+      <ul>
+        <li><strong>Why it matters:</strong> it is the single place "revenue", "bookings", and "cancellation rate" are defined — the agreement across finance, ops, analysts, and Genie <em>is</em> the product.</li>
+        <li><strong>What it is not:</strong> not a materialized table (though it can be materialized — 15.5), not a BI-tool model. It is a first-class UC object with grants and lineage.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Important</span>The value is <strong>governance</strong>, not just convenience. "What does revenue mean and where does it come from" has one auditable answer — the YAML plus its lineage back to <code>fct_bookings</code>.</div>
+    </section>
+
+    <section class="entry" id="t152">
+      <div class="entry-head"><span class="num">05 · Create + edit</span><h2>15.2 — Create and edit metric views</h2></div>
+      <h3 class="tk">15.2 Create &amp; edit <span class="tag-pill h">Hands-on</span></h3>
+      <p>Create with one SQL statement whose body is YAML (or the <strong>Catalog Explorer</strong> visual editor). Editing = re-issue <code>CREATE OR REPLACE VIEW</code> with the updated YAML — there is no partial in-place patch in SQL.</p>
+      <pre><code>CREATE OR REPLACE VIEW unity_airways.analytics.bookings_metrics
+WITH METRICS
+LANGUAGE YAML
+AS $$
+  version: 1.1
+  comment: "Unity Airways bookings KPIs — governed semantic layer; trusted Genie source."
+  source: unity_airways.analytics.fct_bookings
+  dimensions:
+    - name: Fare Class
+      expr: fare_class
+      comment: "Cabin / booking class: Economy, Premium, Business, First."
+  measures:
+    - name: Total Revenue
+      expr: SUM(base_fare_usd + ancillary_usd)
+      comment: "Base fare plus ancillary revenue, in USD."
+    - name: Booking Count
+      expr: COUNT(booking_id)
+$$</code></pre>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Keep the <code>CREATE OR REPLACE ... WITH METRICS</code> YAML in version control. The metric view <em>is</em> code — an edit moves every downstream number, so review it like code. Verify with <code>DESCRIBE EXTENDED</code> + a one-line <code>MEASURE()</code> query.</div>
+    </section>
+
+    <section class="entry" id="t153">
+      <div class="entry-head"><span class="num">06 · Cornerstone</span><h2>15.3 ★ — Query metric views; tutorial with joins</h2></div>
+      <p>Full deep-dive — <code>MEASURE()</code>, <code>GROUP BY ALL</code>, filtering, time dimensions, star/snowflake joins, and BI/SQL/Genie consumption — in the <a href="query-metric-views.html">querying deep-dive</a> (<code>query-metric-views.md</code> / <code>query-metric-views.html</code>).</p>
+      <h3 class="tk">15.3 Query + joins <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span></h3>
+      <p>Two rules: name the <strong>dimensions</strong>, wrap every <strong>measure</strong> in <code>MEASURE()</code>. Joins are invisible — asking for <code>Region</code> or <code>Loyalty Tier</code> needs no JOIN because the YAML declared it.</p>
+      <pre><code>SELECT
+  `Fare Class`,
+  MEASURE(`Total Revenue`) AS total_revenue,
+  MEASURE(`Booking Count`)  AS bookings
+FROM unity_airways.analytics.bookings_metrics
+GROUP BY ALL
+ORDER BY total_revenue DESC</code></pre>
+      <div class="note imp"><span class="tag">📌 Important</span><code>SELECT *</code> and bare measure references fail — a measure has no value until you pick a grain. Filter dimensions in <code>WHERE</code>; to filter <em>on a measure</em>, wrap the aggregate query and filter the alias in an outer <code>SELECT</code>.</div>
+    </section>
+
+    <section class="entry" id="t154">
+      <div class="entry-head"><span class="num">07 · Modeling</span><h2>15.4 — Modeling metric views; advanced techniques</h2></div>
+      <h3 class="tk">15.4 Modeling <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span></h3>
+      <ul>
+        <li><strong>Star (one-level) joins</strong> — reference the fact as <code>source</code> and each dim by its join <code>name</code>: <code>on: source.customer_id = customers.customer_id</code>.</li>
+        <li><strong>Snowflake (nested) joins, DBR 17.1+</strong> — <code>Region</code> comes from <code>dim_airports</code> reached <em>through</em> <code>dim_flights</code>: nest the airport join under the flight join.</li>
+        <li><strong>Derived dimensions</strong> — <code>CASE</code> / <code>DATE_TRUNC</code> for business categories (<code>Booking Month</code>, priority buckets).</li>
+        <li><strong>Filtered measures</strong> — <code>COUNT(1) FILTER (WHERE status = 'cancelled')</code>, no second view.</li>
+        <li><strong>Ratio measures</strong> — <code>SUM(ancillary_usd) / SUM(base_fare_usd)</code>; numerator + denominator stay separate, so the ratio is correct at any grain.</li>
+        <li><strong>Window measures (experimental)</strong> — a <code>window:</code> block for running totals and period-over-period; shown with <code>version: 0.1</code> — verify runtime support.</li>
+      </ul>
+      <pre><code>joins:
+  - name: flights
+    source: unity_airways.analytics.dim_flights
+    on: source.flight_id = flights.flight_id
+    joins:
+      - name: origin_airport_info
+        source: unity_airways.analytics.dim_airports
+        on: flights.origin_airport = origin_airport_info.airport_code</code></pre>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>A <strong>dimension cannot</strong> contain an aggregate and a <strong>measure must</strong>. Slices go in <code>dimensions</code>; anything with <code>SUM/COUNT/AVG</code> goes in <code>measures</code>. This is the most common authoring error.</div>
+    </section>
+
+    <section class="entry" id="t155">
+      <div class="entry-head"><span class="num">08 · Materialization</span><h2>15.5 — Materialization for metric views</h2></div>
+      <h3 class="tk">15.5 Materialization <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill exp">Experimental</span></h3>
+      <p>By default a metric view computes on read. <strong>Materialization</strong> pre-computes chosen slices on a schedule (via Lakeflow / Spark Declarative Pipelines) so hot queries hit a cached table. It is a <strong>performance</strong> choice — the metric definition and query grammar never change.</p>
+      <pre><code>materialization:
+  schedule: every 6 hours
+  mode: relaxed
+  materialized_views:
+    - name: revenue_by_month_class_region
+      type: aggregated
+      dimensions: [Booking Month, Fare Class, Region]
+      measures:   [Total Revenue, Booking Count]
+    - name: full_model
+      type: unaggregated   # source + joins + filter</code></pre>
+      <ul>
+        <li><code>aggregated</code> = a specific dimension/measure combo (hot slices). <code>unaggregated</code> = the joined-and-filtered model (expensive sources/joins).</li>
+        <li>Requires <strong>serverless compute</strong> and <strong>DBR 17.2+</strong>; <code>TRIGGER ON UPDATE</code> is not supported.</li>
+      </ul>
+      <div class="note tip"><span class="tag">💡 Tip</span>Don't materialize first. Ship the view, watch which slices are hot, then materialize exactly those. Materializing everything re-creates the summary-table sprawl you were escaping.</div>
+    </section>
+
+    <section class="entry" id="t156">
+      <div class="entry-head"><span class="num">09 · Feeds Module 14</span><h2>15.6 — Agent metadata: feeding Genie/agents</h2></div>
+      <h3 class="tk">15.6 Agent metadata <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span></h3>
+      <p>The bridge to <strong>Module 14</strong>. A Genie Agent maps plain-English words to metrics using the metric view's <strong>metadata</strong>:</p>
+      <ul>
+        <li><strong>Display names = the <code>name</code> field.</strong> Naming a measure <code>Total Revenue</code> (not <code>m1</code>) is what lets "revenue" / "total sales" resolve. Business names <em>are</em> the primary agent metadata.</li>
+        <li><strong><code>comment</code> on the view and every dimension/measure</strong> is the description Genie reads to disambiguate — state meaning, units, and alternate phrasings.</li>
+        <li><strong>Synonyms in the <code>comment</code></strong> are the portable, verified way to teach alternate terms today ("a.k.a. cabin, class"). Whether the YAML also exposes a dedicated <code>synonyms</code> key or a value-<code>format</code> key is evolving — verify against current docs; embedding in <code>comment</code> works regardless.</li>
+      </ul>
+      <pre><code>- name: Cancellation Rate
+  expr: COUNT(1) FILTER (WHERE status = 'cancelled') * 1.0 / COUNT(1)
+  comment: "Share of bookings cancelled (0-1). Also known as: cancel rate, cancellation percentage."</code></pre>
+      <div class="note imp"><span class="tag">📌 Important</span>Names and comments are the <strong>interface between your data and the LLM</strong>. A metric view with clear names and rich comments is a <em>better</em> Genie source than raw tables, because the semantics are explicit instead of inferred. In Module 14 you add the metric view as a Genie data source.</div>
+    </section>
+
+    <section class="entry" id="t157">
+      <div class="entry-head"><span class="num">10 · Reference</span><h2>15.7 — YAML syntax reference; manage metric views</h2></div>
+      <h3 class="tk">15.7 YAML reference <span class="tag-pill h">Hands-on</span></h3>
+      <p>The full YAML surface is in the <strong>YAML keys</strong> tab above. Operate the object like any UC view:</p>
+      <pre><code>GRANT SELECT ON VIEW unity_airways.analytics.bookings_metrics TO `data-consumers`;
+DESCRIBE EXTENDED unity_airways.analytics.bookings_metrics;
+-- Learner surface: SQL DDL (above), Catalog Explorer, or the Python SDK.
+-- manage_metric_views(create|alter|describe|query|drop|grant) is an agent/MCP build tool, not a public API.</code></pre>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Metric views require a <strong>Pro or Serverless SQL warehouse</strong> (or DBR 17.2+ for v1.1) — not a basic/classic warehouse. If <code>WITH METRICS</code> errors, check the warehouse type and runtime version first.</div>
+    </section>
+
+    <section class="entry" id="worked">
+      <div class="entry-head"><span class="num">11 · Worked example</span><h2>Unity Airways — the full semantic layer</h2></div>
+      <p>The consolidated lab builds this end to end, and the three Module 14 Genie questions map straight onto measures + dimensions:</p>
+      <ul>
+        <li><em>"Total revenue last quarter by fare class"</em> → <code>MEASURE(`Total Revenue`)</code> by <code>Fare Class</code>, filtered on <code>Booking Quarter</code>.</li>
+        <li><em>"Which routes have the highest cancellation rate"</em> → <code>MEASURE(`Cancellation Rate`)</code> by <code>Origin Airport</code>, <code>Dest Airport</code>.</li>
+        <li><em>"Compare ancillary attach rate across loyalty tiers"</em> → <code>MEASURE(`Ancillary Attach Rate`)</code> by <code>Loyalty Tier</code>.</li>
+      </ul>
+      <pre><code>SELECT `Region`, `Loyalty Tier`,
+       MEASURE(`Total Revenue`)     AS revenue,
+       MEASURE(`Cancellation Rate`) AS cancel_rate
+FROM unity_airways.analytics.bookings_metrics
+GROUP BY ALL
+ORDER BY revenue DESC   -- no JOIN written: the YAML resolves Region + Loyalty Tier</code></pre>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">12 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Aggregation is a <strong>query-time</strong> choice (<code>MEASURE()</code> + <code>GROUP BY ALL</code>) — one view, many questions, correct ratios at any grain. The metric view is <strong>Genie's trusted source</strong> (15.6 → Module 14): names + comments are the metadata. It is <strong>one governed UC object</strong> — grants, lineage, a single definition.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Version-control the YAML; write comments for an LLM reader (meaning, units, synonyms); ship first and materialize only the hot slices.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · verify live</span><code>SELECT *</code> fails — <code>MEASURE()</code> is mandatory. Needs Pro/Serverless SQL (or DBR 17.2+); nested joins need 17.1+. Materialization + window measures are experimental. The exact YAML keys for <strong>synonyms</strong> / value <strong>formatting</strong> are evolving — embed synonyms in <code>comment</code> (portable); <em>live re-check pending</em> on dedicated keys.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">13 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>What does a metric view separate that a regular view fuses, and why does that let one view answer many questions?</li>
+          <li>Write the two rules for querying a metric view. Why does <code>SELECT *</code> fail?</li>
+          <li><code>dim_airports</code> has no key in <code>fct_bookings</code>. How do you expose <code>Region</code> as a dimension, and what runtime does that need?</li>
+          <li>Why is cancellation rate a <strong>measure</strong> (not a dimension), and what bug does that prevent when rolling up to region?</li>
+          <li>What two pieces of metadata does a Genie Agent read from a metric view, and where do synonyms go today?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">14 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>🧩 <strong>Skill — <code>databricks-metric-views</code></strong> (primary): the YAML spec (<code>version</code>, <code>source</code>, <code>comment</code>, <code>filter</code>, <code>joins</code>, <code>dimensions</code>, <code>measures</code>, <code>materialization</code>), the <code>MEASURE()</code> query rule and <code>SELECT *</code> limitation, star/snowflake join syntax, filtered/ratio/window measures, materialization types + requirements, and the <code>manage_metric_views</code> tool actions. <code>version</code> <code>1.1</code> for DBR 17.2+ (adds dim/measure <code>comment</code>), <code>0.1</code> for 16.4–17.1.</li>
+        <li>📎 <strong>P5 shared build brief</strong> — <code>scratchpad/p5-build-brief.md</code>: locked names <code>unity_airways.analytics</code> (<code>fct_bookings</code> / <code>dim_flights</code> / <code>dim_customers</code> / <code>dim_airports</code>), metric view <code>bookings_metrics</code>, the six measures + dimension set, and the 15.6 → Module 14 Genie continuity.</li>
+        <li>📎 <strong>Project cheat-sheet</strong> — <code>.claude/skills/genai-teacher/references/naming-conventions.md</code> §7 (Jul 2026): <strong>Genie Agents</strong> (formerly Genie Spaces) consume governed sources; metric views feed Genie as the trusted KPI layer.</li>
+        <li>🌐 <strong>Databricks Docs</strong> (verify live — pages are JS-rendered and returned an empty body to a plain fetch at authoring; <strong>live re-check pending</strong>): Metric Views <code>docs.databricks.com/aws/en/metric-views/</code>; YAML syntax <code>.../metric-views/data-modeling/syntax</code>; Joins <code>.../metric-views/data-modeling/joins</code>; Materialization <code>.../metric-views/materialization</code>; <code>MEASURE()</code> <code>docs.databricks.com/aws/en/sql/language-manual/functions/measure</code>. Verify the exact keys for agent <strong>synonyms</strong> / value <strong>formatting</strong> here.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 15</span>
+  <span>Grounded in databricks-metric-views skill + P5 build brief · metric-views docs (live re-check pending)</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Concept (15.1)",spine:false,comps:[
+   ["15.1 Semantic layer","Theory","Why metric views exist: they separate measures (how to aggregate) from dimensions (how to slice), so the grain is a query-time choice. The single governed place 'revenue' and 'cancellation rate' are defined — a first-class UC object with grants and lineage.","module.md 15.1"],
+ ]},
+ {name:"Build (15.2)",spine:false,comps:[
+   ["15.2 Create & edit","Hands-on","CREATE OR REPLACE VIEW ... WITH METRICS LANGUAGE YAML AS $$ ... $$. Edit by re-issuing the statement or via the Catalog Explorer visual editor. Keep the YAML in version control.","module.md 15.2"],
+ ]},
+ {name:"Query — the cornerstone (15.3)",spine:true,comps:[
+   ["15.3 Query + joins ★","Hands-on · Cornerstone","Query with MEASURE() and GROUP BY ALL (SELECT * unsupported). Joins are invisible: name Region or Loyalty Tier and the YAML resolves the star/snowflake path. Filter dimensions in WHERE; filter measures in an outer query.","query-metric-views.html"],
+ ]},
+ {name:"Model & scale (15.4-15.5)",spine:false,comps:[
+   ["15.4 Modeling","Theory + Hands-on","Star + snowflake joins, derived dimensions (CASE/DATE_TRUNC), filtered measures (FILTER WHERE), ratio measures (num/denom kept separate), and experimental window measures.","module.md 15.4"],
+   ["15.5 Materialization","Theory + Hands-on · Experimental","Pre-compute hot slices on a schedule (Lakeflow under the hood). aggregated = a specific combo; unaggregated = the joined model. Needs serverless + DBR 17.2+. A performance choice, transparent to queries.","module.md 15.5"],
+ ]},
+ {name:"Feed Genie & reference (15.6-15.7)",spine:true,comps:[
+   ["15.6 Agent metadata","Theory + Hands-on","The bridge to Module 14. Business-friendly names + rich comments (with synonyms) are the metadata a Genie Agent reads to map questions to metrics. Verified: name + comment; synonyms go in comment today.","module.md 15.6"],
+   ["15.7 YAML reference","Hands-on","The full key surface (version, source, comment, filter, joins, dimensions, measures, materialization). Manage the object via SQL DDL (CREATE OR REPLACE VIEW ... WITH METRICS / ALTER / DESCRIBE EXTENDED / DROP / GRANT), Catalog Explorer, or the Python SDK. The manage_metric_views helper is an agent/MCP build tool, not a public workspace API.","module.md 15.7"],
+ ]},
+];
+const STEPS=[
+ ["Seed the star schema","fct_bookings + dim_flights + dim_customers + dim_airports in unity_airways.analytics, each with COMMENTs (15.1 / 15.4)."],
+ ["Create the metric view","bookings_metrics: source fct_bookings, snowflake join to dim_airports through dim_flights, star join to dim_customers (15.2)."],
+ ["Define dimensions","Fare Class, Channel, Loyalty Tier, Segment, Origin/Dest Airport, Region, Booking Month, Booking Quarter (15.4)."],
+ ["Define measures","Total Revenue, Booking Count, Avg Fare, Cancellation Rate, Ancillary Attach Rate, Total Seats (15.4)."],
+ ["Add agent metadata","Business names + rich comments (with synonyms) on the view and every field, so the Module 14 Genie Agent answers accurately (15.6)."],
+ ["Query it","Revenue by fare class, revenue by month, cancellation rate by region, attach rate by loyalty tier — with MEASURE() (15.3 ★)."],
+ ["Materialize (optional)","Pre-compute the monthly-by-fare-class-by-region slice for speed (15.5)."],
+];
+const ROWS=[
+ ["version","No","1.1 (DBR 17.2+, adds dim/measure comment) or 0.1 (16.4-17.1). Defaults to 1.1."],
+ ["source","Yes","Fully-qualified source table/view (three-level name)."],
+ ["comment","No","View-level description — agent metadata for Genie."],
+ ["filter","No","Global WHERE applied to every query."],
+ ["joins","No","Star/snowflake dimension joins (name, source, on/using, nested joins)."],
+ ["dimensions","Yes","List of {name, expr, comment} — no aggregates."],
+ ["measures","Yes","List of {name, expr, comment, window?} — expr must aggregate."],
+ ["materialization","No","Experimental pre-computation block (serverless, DBR 17.2+)."],
+];
+const MERMAID_SRC=`flowchart LR
+  subgraph SRC["unity_airways.analytics star schema"]
+    F["fct_bookings (one row per booking)"]
+    D1["dim_flights"]
+    D2["dim_customers"]
+    D3["dim_airports"]
+  end
+  MV["bookings_metrics METRIC VIEW (YAML): dimensions + measures"]
+  subgraph CONS["Consumers share one definition"]
+    G["AI/BI Genie Agent (Module 14)"]
+    B["AI/BI dashboards"]
+    S["SQL Editor / notebooks"]
+    A["Alerts"]
+  end
+  F --> MV
+  D1 --> MV
+  D2 --> MV
+  D3 --> MV
+  MV --> G
+  MV --> B
+  MV --> S
+  MV --> A`;
+const MERMAID_SRC2=`flowchart TD
+  Q["Query: pick dimensions + MEASURE(...) then GROUP BY ALL"]
+  P["Metric view engine: resolve joins, apply filter, aggregate at requested grain"]
+  R["Result rows: revenue per slice; ratios correct at any roll-up"]
+  Q --> P --> R`;
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline) ---------- */
+function drawMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

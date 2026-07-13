@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Capstone C3 (Project): Ship a Governed, Monitored Agent.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+  Project brief (scenario · architecture · milestones · rubric), NOT a lesson explainer.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ship a Governed, Monitored Agent · Databricks GenAI Capstone C3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbox .acc{margin-top:12px;padding-top:12px;border-top:1px solid var(--rule);font-family:var(--mono);font-size:.72rem;letter-spacing:.03em;color:var(--ok)}
+  .stepbox .acc b{color:var(--ok)}
+  .stepbox .vn{margin-top:8px;font-family:var(--mono);font-size:.7rem;color:var(--danger);letter-spacing:.02em}
+  .stepbox pre{margin:8px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .tablewrap{overflow-x:auto}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  .pathgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+  @media(max-width:640px){.pathgrid{grid-template-columns:1fr}}
+  .pathcard{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:18px}
+  .pathcard h4{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-2);margin:0 0 8px}
+  .pathcard p{margin:.3em 0;font-size:.98rem}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="#top">Databricks GenAI</a>
+    <span class="loc">Capstone C3 · Build after P4 (Module 13)</span>
+  </div>
+</div>
+
+<header class="masthead" id="top">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Capstone C3 · Project · v1.0</span><span>Extends C1 chain + C2 @champion · Modules 09–13</span></div>
+    <div class="filed">Level 5 — Production · Spans Phase P3 (build) → P4 (deploy · govern · monitor) · [Project]</div>
+    <h1>Ship a Governed, Monitored Agent</h1>
+    <p class="dek">Turn the Unity Airways knowledge base into a tool-using assistant that answers policy <em>and</em> live-flight questions — then do the part a POC skips: deploy it, wrap it in AI Gateway guardrails, and watch it in production. <em>The agent is the brain; the graded work is the ring around it.</em></p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+
+    <section class="entry" id="brief">
+      <div class="entry-head"><span class="num">01 · The brief</span><h2>From answering bot to shipped, governed agent</h2></div>
+      <p class="lead">Unity Airways already has a policy Q&amp;A bot — the RAG chain from <strong>C1</strong>, evaluated and versioned in <strong>C2</strong>. Support leadership wants it to do more, safely, and in production.</p>
+      <ul>
+        <li><strong>One assistant, two kinds of question.</strong> Customers ask <em>"UA118 tonight — delayed? and if it's cancelled, can I get a refund?"</em> in one breath. That needs a document lookup (policy) <strong>and</strong> a live record lookup (flight status), chosen turn by turn — a tool-using <strong>agent</strong>, not a fixed chain.</li>
+        <li><strong>Safe to put in front of customers.</strong> No leaked PII, no unsafe replies, a hard request-rate cap, and controlled spend — the exact list a security review reads out.</li>
+        <li><strong>Observable in production.</strong> Quality dips and latency spikes should surface on a dashboard the same day, not arrive as a customer complaint a week later.</li>
+        <li><strong>A loop that improves it.</strong> Questions the assistant fumbles should feed back into the C2 evaluation set so the next version is measurably better.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Important</span>This capstone <strong>extends C1/C2 — it does not rebuild them.</strong> The RAG retrieval and the evaluation harness already exist. You wrap the C1 chain as <strong>one tool</strong> inside a larger agent, add a second (structured) tool, then spend most of your effort on <strong>deploy → govern → monitor</strong> — the production ring the earlier capstones stop short of.</div>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>Scenario, architecture, milestones, rubric</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-scenario" id="t-scenario" onclick="tab(this,'p-scenario')">Scenario</button>
+        <button role="tab" aria-selected="false" aria-controls="p-arch" id="t-arch" onclick="tab(this,'p-arch')">Architecture</button>
+        <button role="tab" aria-selected="false" aria-controls="p-miles" id="t-miles" onclick="tab(this,'p-miles')">Milestones</button>
+        <button role="tab" aria-selected="false" aria-controls="p-rubric" id="t-rubric" onclick="tab(this,'p-rubric')">Rubric</button>
+      </div>
+
+      <!-- PANE A: scenario + the two build paths + prerequisites -->
+      <div id="p-scenario" class="pane active" role="tabpanel" aria-labelledby="t-scenario">
+        <p><strong>What you'll build.</strong> Pick one path to the same governed outcome — both are graded on the same rubric.</p>
+        <div class="pathgrid">
+          <div class="pathcard">
+            <h4>Path A — custom ResponsesAgent</h4>
+            <p>A tool-using agent authored on <code>ResponsesAgent</code> (from <code>mlflow.pyfunc</code>) that wraps the C1 RAG chain as a <strong>retriever tool</strong>, adds a <strong><code>get_flight_status</code></strong> UC-function tool, and optionally a <strong>managed MCP</strong> tool.</p>
+            <p>Register as <code>unity_airways.rag.ua_support_agent</code>, deploy with <code>agents.deploy(...)</code>, then govern + monitor.</p>
+          </div>
+          <div class="pathcard">
+            <h4>Path B — low-code (Agent Bricks + App)</h4>
+            <p>An <strong>Agent Bricks Knowledge Assistant</strong> over the same index/docs, optionally routed by a <strong>Multi-Agent Supervisor</strong> that also reaches a Genie Agent for flight status, fronted by a <strong>Databricks App</strong>.</p>
+            <p>Same governance and monitoring requirements apply.</p>
+          </div>
+        </div>
+        <p style="margin-top:18px">Both paths end at the same place: a <strong>governed serving endpoint behind AI Gateway guardrails, with a monitoring dashboard and a Review App feedback loop.</strong></p>
+        <h3 style="font-family:var(--mono);font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin:22px 0 6px">Prerequisites — check before you start</h3>
+        <div class="tablewrap">
+        <table>
+          <thead><tr><th>Need</th><th>From</th><th>Verify</th></tr></thead>
+          <tbody>
+            <tr><td class="k">ua_rag_chunks_index</td><td>C1 (04–05)</td><td>Index shows online in the AI Search UI</td></tr>
+            <tr><td class="k">RAG chain @champion + scorecard</td><td>C2 (06–08)</td><td><code>models:/...ua_rag_chain@champion</code> loads; C2 scorecard on hand</td></tr>
+            <tr><td class="k">get_flight_status UC function</td><td>09.3</td><td><code>execute_function(...)</code> returns a row</td></tr>
+            <tr><td class="k">ResponsesAgent packaging</td><td>09.6</td><td>Log <code>agent.py</code> + resources; <code>mlflow.models.predict</code> passes</td></tr>
+            <tr><td class="k">Deploy / gateway / monitoring</td><td>Modules 11–13</td><td>P4 topics — see the verify note in Architecture</td></tr>
+            <tr><td class="k">Agent + Serving entitlements</td><td>Workspace admin</td><td><code>CREATE MODEL</code> on <code>unity_airways.rag</code>; can create an endpoint</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+
+      <!-- PANE B: architecture mermaid + clickable gateway/governance explorer -->
+      <div id="p-arch" class="pane" role="tabpanel" aria-labelledby="t-arch" hidden>
+        <div class="plate" data-fig="Fig. C3 — User → App → AI Gateway → governed agent → traces/inference tables → dashboard + scorers-in-prod">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Every request passes through AI Gateway; every call becomes a trace and an inference-table row; the dashboard and the improve loop close around the agent.</div>
+        </div>
+        <div class="note gotcha"><span class="tag">⚠️ Gotcha · P4 not yet built</span>Milestones <strong>M1–M2</strong> rest on Modules 09–10 (built &amp; approved) — exact APIs. Milestones <strong>M3 (AI Gateway), M4 (responsible-AI), M5 (monitoring)</strong> live in Modules <strong>11.3, 12, 13</strong>, which are <strong>not authored yet</strong>. This brief names the controls and cites <code>naming-conventions.md</code> §6 + the ROADMAP topic list, but <strong>does not invent</strong> gateway/guardrail/monitoring APIs. Treat every M3–M5 call as "confirm in the P4 module / current docs."</div>
+        <p style="margin-top:8px"><strong>The governance ring — click a control:</strong></p>
+        <div class="plate" data-fig="Plate — AI Gateway (11.3) + Responsible-AI (Module 12)">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a control</div><h3>The governance ring</h3><p>Click one to see what it does and which P4 module owns the exact API.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: milestone stepper M1–M5 -->
+      <div id="p-miles" class="pane" role="tabpanel" aria-labelledby="t-miles" hidden>
+        <div class="plate" data-fig="Fig. — Milestone flow across P3 → P4">
+          <div class="mermaid" id="mermaidGraph2"></div>
+        </div>
+        <div class="flowline" id="flowline" style="margin-top:18px"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE D: grading rubric -->
+      <div id="p-rubric" class="pane" role="tabpanel" aria-labelledby="t-rubric" hidden>
+        <p><strong>Meets</strong> is the bar to ship; <strong>Exceeds</strong> is what you show a customer.</p>
+        <div class="tablewrap">
+        <table>
+          <thead><tr><th>Criterion</th><th>Not yet</th><th>Meets</th><th>Exceeds</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Tool correctness &amp; governance</td><td>One / wrong tool fires; missing resources; two-level names</td><td>Retriever + get_flight_status both fire; resources complete; three-level UC names; registered</td><td>Adds managed MCP or Supervisor routing; tuned tool descriptions stay reliable across tricky mixed questions</td></tr>
+            <tr><td class="k">Safe deployment</td><td>Deploys from runs:/; no alias; runs as a person; no Review App</td><td>agents.deploy() Ready; @champion on the deployed version; Review App live</td><td>Champion/Challenger plan; one-line rollback shown; deploy-as-service-principal</td></tr>
+            <tr><td class="k">Guardrails effective</td><td>No gateway; PII / unsafe content passes through; no rate limit</td><td>AI Gateway on: guardrails, rate limits, fallbacks, payload logging; unsafe/PII prompt blocked or redacted</td><td>Least-privilege SP; tuned policy; fallback tested under induced failure; RAI checklist filled</td></tr>
+            <tr><td class="k">Monitoring catches regressions</td><td>No dashboard; quality invisible until a complaint</td><td>Dashboard shows operational + quality + business metrics on live traffic</td><td>Seeded regression caught by a scorer drop / alert before any user reports it</td></tr>
+            <tr><td class="k">Feedback loop closed</td><td>Feedback goes nowhere</td><td>Review App feedback + flagged traces feed the eval set; C2 eval re-run</td><td>Automated improve loop; measurable gain vs the C2 baseline; next version promoted on evidence</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="entry" id="deliverables">
+      <div class="entry-head"><span class="num">03 · Deliverables</span><h2>Hand in all six</h2></div>
+      <ul>
+        <li><strong>A deployed agent serving endpoint</strong> (Path A) <strong>or App URL</strong> (Path B) answering policy <em>and</em> flight-status questions, plus the <strong>Review App URL</strong>.</li>
+        <li><strong>AI Gateway configuration</strong> — guardrails, rate limits, provider fallbacks, payload logging (config export or annotated screenshots).</li>
+        <li><strong>A guardrail / responsible-AI policy</strong> — PII and safety stance, service-principal identity, UC grants, a filled RAI checklist.</li>
+        <li><strong>An AI/BI monitoring dashboard</strong> showing operational + quality + business metrics over live traffic.</li>
+        <li><strong>A short reliability &amp; safety report</strong> (1–2 pp): uptime, p50/p95 latency, guardrail-hit rate, scorer trend vs the C2 baseline, one seeded-regression incident with the rollback (repoint <code>@champion</code>), open risks.</li>
+        <li><strong>The updated evaluation set</strong> — the C2 dataset grown with production examples, plus the re-run scorecard.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="stretch">
+      <div class="entry-head"><span class="num">04 · Stretch &amp; cert map</span><h2>Go further, and where it lands on the exam</h2></div>
+      <p><strong>Stretch goals</strong></p>
+      <ul>
+        <li><strong>Multi-agent Supervisor (10.3).</strong> Front the agent with a Multi-Agent Supervisor (GA) that routes structured questions to a Genie Agent and unstructured ones to the Knowledge Assistant.</li>
+        <li><strong>Batch <code>ai_query</code> (11.5 / 11.10).</strong> Run the agent or a scorer over a table of historical questions for offline quality sweeps and regression testing at scale.</li>
+        <li><strong>Cost caps via Unity AI Gateway budgets.</strong> Put a spend threshold / hard cap on the endpoint. <em>Unity AI Gateway (budgets, MCP-service governance) is Beta (§6) — direction of travel; confirm current status.</em></li>
+      </ul>
+      <p style="margin-top:14px"><strong>Certification mapping</strong> — C3 is the capstone for the production half of the blueprint (domain names per ROADMAP Track C; confirm the current blueprint at exam time):</p>
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th>Exam domain</th><th>Modules</th><th>Exercised by</th></tr></thead>
+        <tbody>
+          <tr><td class="k">App development (Designing &amp; Building)</td><td>01, 02, 05, 09, 10</td><td>M1 — tools, ResponsesAgent / Agent Bricks, mixed-question routing</td></tr>
+          <tr><td class="k">Deployment &amp; operations</td><td>11, 04</td><td>M2 / M3 — register, agents.deploy(), @champion, AI Gateway</td></tr>
+          <tr><td class="k">Governance</td><td>12</td><td>M4 — guardrails, PII, service-principal identity, UC grants, audit</td></tr>
+          <tr><td class="k">Monitoring &amp; evaluation</td><td>08, 13</td><td>M5 — inference tables, production scorers, dashboard, improve loop</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember on this build</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>The graded difficulty is the <strong>ring, not the brain</strong>. Wrapping the C1 chain as a tool and assembling a <code>ResponsesAgent</code> is a day of work. The endpoint that stays safe under a bad prompt, the dashboard that catches a regression before a customer does, and the loop that feeds fixes back into eval — that is where a governed agent is won or lost.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Set <code>@champion</code> on the deployed version and standardize the rollback drill: a regression is one <code>set_registered_model_alias(...)</code> away from resolved, with no client change — the same move from 06.5 / C2. Rehearse it once during M5 so the incident in your reliability report is a controlled demo, not a fire.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · verify the P4 APIs</span>Modules <strong>11 (serving + AI Gateway), 12 (responsible-AI), 13 (monitoring)</strong> are <strong>not authored yet</strong>. M3–M5 here describe the required controls at the right altitude and cite <code>naming-conventions.md</code> §6 + the ROADMAP topic names — they deliberately name <strong>no specific gateway/guardrail/monitoring function or parameter</strong>. Confirm exact APIs in those modules and current docs when P4 ships; the runnable notebook lands with them.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <p><strong>📝 Notes:</strong> <em>space for your own — endpoint names, gateway config, dashboard link, incident log.</em></p>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Which C1/C2 artifact becomes a <strong>tool</strong> inside this agent, and which brand-new tool joins it? Name the three <code>resources=[...]</code> entries the deployed agent needs.</li>
+          <li>What does <code>agents.deploy(...)</code> create beyond the serving endpoint, and how does the <strong>Review App</strong> differ in audience from a <strong>Databricks App</strong>?</li>
+          <li>Name the four AI Gateway controls in M3 and the one production artifact payload logging writes into.</li>
+          <li>In M5, what three metric families belong on the dashboard, and how does a flagged production answer make the <em>next</em> agent version better?</li>
+          <li>A regression hits the live agent. Give the one-line rollback, and say why callers need no change. (Same move as 06.5 / C2.)</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding &amp; continuity</h2></div>
+      <ul>
+        <li>🔗 <strong>C1 — Unity Airways Support RAG Knowledge Base</strong> (00–05): the AI Search index <code>unity_airways.rag.ua_rag_chunks_index</code> and the registered RAG chain wrapped here as a retriever tool.</li>
+        <li>🔗 <strong>C2 — Evaluate, Trace &amp; Version the RAG App</strong> (06–08): the evaluated chain, the <code>@champion</code> alias, and the scorecard that becomes the monitoring baseline and improve-loop target.</li>
+        <li>📄 <strong>Module 09 (built &amp; approved)</strong> — <code>modules/09-agent-fundamentals/create-tools.md</code> (09.3: <code>VectorSearchRetrieverTool</code>, <code>UCFunctionToolkit</code>, <code>get_flight_status</code>) and <code>responsesagent.md</code> (09.6: <code>ResponsesAgent</code>, Model-as-Code, <code>resources=[DatabricksServingEndpoint, DatabricksVectorSearchIndex, DatabricksFunction]</code>, register to <code>unity_airways.rag.ua_support_agent</code>, hand off to <code>agents.deploy(...)</code>).</li>
+        <li>📄 <strong>Module 10 (built &amp; approved)</strong> — <code>knowledge-assistant.md</code> (10.2: Knowledge Assistant, GA) and <code>databricks-apps.md</code> (10.5: a Databricks App fronting the endpoint; Review App vs Databricks App).</li>
+        <li>🧭 <strong>Naming cross-check</strong> — <code>.claude/skills/genai-teacher/references/naming-conventions.md</code>: §2 (ResponsesAgent recommended; <code>agents.deploy()</code> → endpoint + Review App + feedback model; Knowledge Assistant GA / Multi-Agent Supervisor GA; managed MCP Public Preview), §4 (<code>databricks-claude-sonnet-4-5</code>), <strong>§6 (AI Gateway — guardrails, rate limits, PII detection/redaction (Preview), payload logging → inference tables, fallbacks; Unity AI Gateway budgets/MCP governance is Beta)</strong>, §1 (production monitoring reuses the same scorers/judges — Beta).</li>
+        <li>🗺️ <strong>ROADMAP — Level 5 (P4, not yet authored)</strong> — Module 11 (11.1 Serving, 11.2 Review App, 11.3 AI Gateway, 11.5/11.10 <code>ai_query</code>), Module 12 (12.1–12.3 guardrails/PII, 12.8 service principals), Module 13 (13.2 inference tables, 13.5 AI/BI dashboard, 13.6 alerts, 13.7 improve loop). Referenced at altitude; exact APIs land when those modules are built.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Capstone C3 · [Project]</span>
+  <span>Extends C1 + C2 · Grounded in Modules 09–10 · P4 topics 11–13 at altitude</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"AI Gateway on the serving endpoint (Module 11.3)",spine:true,comps:[
+   ["AI guardrails (safety filter)","block unsafe replies","Filters unsafe or off-policy content on the way in and out of the endpoint. Named in naming-conventions §6; the exact config surface and toggles are the Module 12 / 11.3 topic — do not assume an API from this brief.","Module 11.3 / 12 — verify API"],
+   ["Rate limits","cap request rate","Per-user and per-endpoint request caps stop a runaway client or abuse from draining capacity. Acceptance: requests past quota are rejected.","Module 11.3 — verify config"],
+   ["Provider fallbacks","survive a provider outage","Route to a backup model provider when the primary fails, so the agent keeps answering. Test it under an induced failure for the Exceeds bar.","Module 11.3 — verify config"],
+   ["Payload logging","feed the tables","Logs requests/responses to an inference table — the raw material for the monitoring dashboard and production scorers in M5.","Module 11.3 → inference tables (13.2)"],
+ ]},
+ {name:"Responsible-AI controls (Module 12)",spine:false,comps:[
+   ["PII detection / redaction","protect personal data","Detects and redacts personal data in prompts/responses. §6 marks PII detection/redaction Preview — confirm status and exact toggles in Module 12.3.","Module 12.3 — Preview, verify"],
+   ["Input validation","reject bad input","Validates/limits input before it reaches the model (length, format, injected instructions). Topic 12.1.","Module 12.1 — verify"],
+   ["Deploy-as-service-principal","least-privilege identity","The endpoint runs as an SP with only EXECUTE on the model plus scoped grants — not a person's identity. Mechanics in 12.8; grant pattern mirrors 06.5.","Module 12.8 — verify grants"],
+   ["Responsible-AI checklist","prove it","Guardrails on, PII handling, data classification, audit trail — a filled checklist is a graded deliverable (12.7).","Module 12.7 — deliverable"],
+ ]},
+];
+const STEPS=[
+  ["M1 · Build tools + assemble the agent  ·  [P3]",
+   "<b>09.3 / 09.6 / 10.2.</b> Path A: build/reuse the retriever tool (<code>VectorSearchRetrieverTool</code> over <code>ua_rag_chunks_index</code> — the C1 chain as a tool), the <code>get_flight_status</code> UC-function tool via <code>UCFunctionToolkit</code>, optionally a managed MCP tool; assemble a <code>ResponsesAgent</code> in <code>agent.py</code> ending in <code>set_model(...)</code>. Path B: a Knowledge Assistant (+ optional Supervisor).",
+   "Acceptance: a policy question AND a flight-status question both answer correctly; the MLflow trace shows the right tool firing; Path A lists <code>resources=[DatabricksServingEndpoint, DatabricksVectorSearchIndex, DatabricksFunction]</code> and passes <code>mlflow.models.predict(..., env_manager='uv')</code>.",
+   ""],
+  ["M2 · Register + deploy  ·  [P3→P4]",
+   "<b>11.1 / 11.2.</b> Register the agent to UC as <code>unity_airways.rag.ua_support_agent</code> and set <code>@champion</code> (same alias mechanic as C2 / 06.5). Deploy with <code>agents.deploy(...)</code> → serving endpoint + Review App + feedback model, tracing and inference tables enabled. Path B: publish the KA/Supervisor and wrap it in a Databricks App (10.5).",
+   "Acceptance: endpoint reaches Ready and a smoke query matches <code>predict()</code>; the Review App URL is live and an SME can rate; <code>@champion</code> points at the deployed version.",
+   ""],
+  ["M3 · Put it behind AI Gateway  ·  [P4]",
+   "<b>11.3.</b> Enable AI Gateway on the endpoint and configure four controls: guardrails (safety), rate limits, provider fallbacks, and usage + payload logging to inference tables.",
+   "Acceptance: requests past quota are rejected; payload logging writes an inference table; a fallback provider is configured and documented; the gateway config is captured.",
+   "Verify: control set named in naming-conventions §6; exact config surface + parameters are the Module 11.3 topic — confirm there / in current docs. No gateway API asserted here."],
+  ["M4 · Responsible-AI controls  ·  [P4]",
+   "<b>Module 12.</b> Turn on AI guardrails (safety) and PII detection/redaction, add input validation, and run the agent as a least-privilege service principal (deploy-as-SP) with only EXECUTE on the model + scoped grants.",
+   "Acceptance: an unsafe / PII prompt is blocked or redacted (not passed through); the endpoint runs as an SP identity; a responsible-AI checklist (guardrails, PII, data classification, audit) is filled.",
+   "Verify: PII detection/redaction is Preview (§6); guardrail toggles + SP/grant mechanics are Module 12 (12.1–12.3, 12.8). Requirement stated, not the API."],
+  ["M5 · Monitoring + the improve loop  ·  [P4]",
+   "<b>Module 13.</b> Stand up production monitoring: inference tables feeding an AI/BI dashboard with operational (latency p50/p95, volume, errors), quality (<code>mlflow.genai</code> scorers on live traces), and business metrics. Close the loop: Review App feedback + flagged traces expand the C2 eval set (the Improve step, 13.7).",
+   "Acceptance: the dashboard renders all three metric families; a deliberately seeded regression shows as a scorer drop / alert; production examples flow back into the eval set and re-running C2 eval reflects them.",
+   "Verify: production monitoring reuses the same scorers/judges and is Beta (§1); inference tables, AI/BI dashboard, alerts, improve loop are Module 13 (13.2, 13.5, 13.6, 13.7). Confirm the monitoring config + dashboard template there."],
+];
+const MERMAID_SRC=`flowchart TB
+  subgraph CLIENT["1 - Who talks to it"]
+    user["Unity Airways customer / support agent"]
+    app["Databricks App - branded chat UI (10.5)"]
+    review["Review App - SMEs grade answers (11.2)"]
+  end
+  user --> app
+  user --> review
+  subgraph GW["2 - AI Gateway on the endpoint (11.3 / Module 12)"]
+    guard["AI guardrails: safety + PII detect/redact"]
+    rate["Rate limits"]
+    fb["Provider fallbacks"]
+    log["Payload logging"]
+  end
+  app --> guard
+  review --> guard
+  guard --> rate --> fb
+  subgraph AGENT["3 - Governed agent (endpoint: unity_airways.rag.ua_support_agent)"]
+    ra["ResponsesAgent (09.6)<br/>LLM databricks-claude-sonnet-4-5"]
+    t1["VectorSearchRetrieverTool<br/>ua_rag_chunks_index (C1 chain as tool)"]
+    t2["UC function tool<br/>get_flight_status"]
+    t3["Managed MCP tool (Preview) - optional"]
+    ra --> t1
+    ra --> t2
+    ra --> t3
+  end
+  fb --> ra
+  subgraph OBS["4 - Traces + inference tables to monitoring (Module 13)"]
+    trace["MLflow Traces (request + tool spans)"]
+    itable["Inference tables (payload logs)"]
+    scorer["Production scorers - mlflow.genai (Beta)"]
+    dash["AI/BI monitoring dashboard (13.5)<br/>operational + quality + business"]
+  end
+  log --> itable
+  ra --> trace
+  trace --> scorer
+  itable --> dash
+  scorer --> dash
+  subgraph LOOP["5 - Improve loop (13.7)"]
+    feedback["Review App feedback + flagged traces"]
+    evalset["Expand the C2 evaluation set"]
+  end
+  review --> feedback --> evalset -.->|next version| ra
+  dash -.->|regression spotted| feedback`;
+const MERMAID_SRC2=`flowchart LR
+  m1["M1 - Build tools + agent<br/>09.3 / 09.6 / 10.2"] --> m2["M2 - Register + deploy<br/>11.1 / 11.2"]
+  m2 --> m3["M3 - AI Gateway<br/>11.3"]
+  m3 --> m4["M4 - Responsible-AI<br/>Module 12"]
+  m4 --> m5["M5 - Monitoring + improve<br/>Module 13"]
+  m5 -.->|feedback re-enters| m1`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  const s=STEPS[idx];
+  let html=`<div class="sn">Milestone ${idx+1} / ${STEPS.length}</div><div class="st">${s[0]}</div><div>${s[1]}</div>`;
+  if(s[2])html+=`<div class="acc">✓ ${s[2]}</div>`;
+  if(s[3])html+=`<div class="vn">⚠ ${s[3]}</div>`;
+  box.innerHTML=html;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent="M"+(i+1);n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

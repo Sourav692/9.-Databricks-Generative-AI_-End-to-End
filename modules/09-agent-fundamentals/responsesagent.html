@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Topic 09.6 (cornerstone): Packaging an agent with ResponsesAgent and registering in Unity Catalog.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ResponsesAgent + UC · Databricks GenAI Tutor 09.6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(1.8rem,4.8vw,2.9rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.05rem;margin:6px 0 10px;overflow-wrap:anywhere}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.1rem;font-weight:600;margin:4px 0 8px}
+  .stepbox pre{margin:8px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI</a>
+    <span class="loc">Module 09 · Topic 09.6 ★</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_09.6 · Cornerstone · v1.0</span><span>Verified against 📘B1 Ch7 · MLflow source · docs</span></div>
+    <div class="filed">Module 09 — Agent fundamentals and tools · Topic 09.6 · Hands-on ★</div>
+    <h1>ResponsesAgent + Unity Catalog</h1>
+    <p class="dek">Wrap the Unity Airways support agent in MLflow's recommended authoring interface, log it as Model-as-Code with its dependent resources, and register it as <code>unity_airways.rag.ua_support_agent</code>. <em>Author on ResponsesAgent — not ChatAgent, not ChatModel.</em></p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>From notebook agent to governed model</h2></div>
+      <p class="lead">Coming out of 09.3 and 09.5 you have a working agent: it retrieves from <code>unity_airways.rag.ua_rag_chunks_index</code>, calls the UC function <code>get_flight_status</code>, and generates with <code>databricks-claude-sonnet-4-5</code>. A notebook object is not a product. Packaging it means three things at once: a reproducible build, a standard streaming tool-aware I/O contract, and a record of the governed services it calls.</p>
+      <ul>
+        <li><strong>Author on <code>ResponsesAgent</code>.</strong> MLflow's recommended, framework-agnostic interface, built on the OpenAI Responses schema. You get tracing, streaming, multi-turn history, and tool-call history for free. Lineage: <code>ChatModel</code> (legacy) → <code>ChatAgent</code> (superseded) → <strong><code>ResponsesAgent</code></strong>.</li>
+        <li><strong>Implement one method.</strong> <code>predict(self, request: ResponsesAgentRequest) -&gt; ResponsesAgentResponse</code>; optionally add <code>predict_stream(...)</code> yielding <code>ResponsesAgentStreamEvent</code>s.</li>
+        <li><strong>Log as Model-as-Code</strong> (the 05.6 pattern): end <code>agent.py</code> with <code>mlflow.models.set_model(agent)</code>, then <code>mlflow.pyfunc.log_model(python_model="agent.py", name="agent", resources=[...])</code>. Store the code, not a pickle.</li>
+        <li><strong>Declare resources + register to UC.</strong> List the LLM endpoint, the index, and the UC function so deployment mints scoped credentials; register as <code>unity_airways.rag.ua_support_agent</code>. Then deploy via <code>agents.deploy(...)</code> (Module 11) or Databricks Apps (Module 10.5).</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>The pipeline, the moves, and the schema</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Pipeline</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The five moves</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Walkthrough</button>
+        <button role="tab" aria-selected="false" aria-controls="p-migrate" id="t-migrate" onclick="tab(this,'p-migrate')">Interfaces</button>
+        <button role="tab" aria-selected="false" aria-controls="p-res" id="t-res" onclick="tab(this,'p-res')">Resources</button>
+      </div>
+
+      <!-- PANE A: pipeline mermaid — mirrors responsesagent.md diagram 1 -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — Author → set_model → log_model + resources → register → deploy">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">The agent object never gets pickled. Wrap it, point set_model at it, log the code plus resources, verify, then register.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the packaging moves -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — What you call to package the agent">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select an item</div><h3>Packaging moves</h3><p>Click one to see what it does and where it bites.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: stepper walkthrough of the build -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE D: interface migration mermaid -->
+      <div id="p-migrate" class="pane" role="tabpanel" aria-labelledby="t-migrate" hidden>
+        <div class="plate" data-fig="Fig. 02 — Author on the current interface; recognize the legacy path">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">The arrow of history points at ResponsesAgent. Recognize the older classes in customer code; do not author new agents on them.</div>
+        </div>
+      </div>
+
+      <!-- PANE E: the request/response schema + resource classes -->
+      <div id="p-res" class="pane" role="tabpanel" aria-labelledby="t-res" hidden>
+        <table>
+          <thead><tr><th>Type / class</th><th>From</th><th>What it carries / does</th></tr></thead>
+          <tbody>
+            <tr><td class="k">ResponsesAgentRequest</td><td>mlflow.types.responses</td><td>input (message history: system/user/assistant, tool calls), optional custom_inputs, context (conversation_id, user_id)</td></tr>
+            <tr><td class="k">ResponsesAgentResponse</td><td>mlflow.types.responses</td><td>output (list of items), optional custom_outputs metadata</td></tr>
+            <tr><td class="k">ResponsesAgentStreamEvent</td><td>mlflow.types.responses</td><td>a streamed unit: type (e.g. response.output_item.done) + item / delta</td></tr>
+            <tr><td class="k">DatabricksServingEndpoint</td><td>mlflow.models.resources</td><td>endpoint_name="databricks-claude-sonnet-4-5" — the LLM</td></tr>
+            <tr><td class="k">DatabricksVectorSearchIndex</td><td>mlflow.models.resources</td><td>index_name="unity_airways.rag.ua_rag_chunks_index" — the retriever</td></tr>
+            <tr><td class="k">DatabricksFunction</td><td>mlflow.models.resources</td><td>function_name="unity_airways.rag.get_flight_status" — the UC tool</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Every service the agent reaches at run time must appear in <code>resources</code>, or the deployed agent fails auth when it calls it.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="how">
+      <div class="entry-head"><span class="num">03 · How it works</span><h2>Wrap the agent, implement predict</h2></div>
+      <p>A <code>ResponsesAgent</code> subclass stores your framework agent and exposes it through the standard Responses contract. <code>predict</code> is the one method you must implement; <code>predict_stream</code> is optional but recommended, and a clean <code>predict</code> just drives it and keeps the completed items.</p>
+      <pre><code>from typing import Generator
+from mlflow.pyfunc import ResponsesAgent
+from mlflow.types.responses import (
+    ResponsesAgentRequest, ResponsesAgentResponse, ResponsesAgentStreamEvent,
+)
+
+class UASupportAgent(ResponsesAgent):
+    def __init__(self, agent):
+        self.agent = agent   # the LangGraph / LangChain agent from 09.5
+
+    def predict(self, request: ResponsesAgentRequest) -&gt; ResponsesAgentResponse:
+        outputs = [
+            event.item
+            for event in self.predict_stream(request)
+            if event.type == "response.output_item.done"
+        ]
+        return ResponsesAgentResponse(output=outputs, custom_outputs=request.custom_inputs)
+
+    def predict_stream(
+        self, request: ResponsesAgentRequest
+    ) -&gt; Generator[ResponsesAgentStreamEvent, None, None]:
+        for chunk in self._run_agent_streaming(request.input):
+            yield ResponsesAgentStreamEvent(
+                **self.create_text_delta(delta=chunk.text, item_id=chunk.id)
+            )
+        yield ResponsesAgentStreamEvent(type="response.output_item.done", item=final_item)</code></pre>
+      <ul>
+        <li><strong>Framework-agnostic.</strong> The wrapper adapts any underlying agent (LangGraph, LangChain, raw Python) to the OpenAI Responses schema, so existing OpenAI-compatible chat UIs connect with no rewrite.</li>
+        <li><strong>Only <code>predict</code> / <code>predict_stream</code> are yours.</strong> <code>create_text_delta(delta=..., item_id=...)</code> is a base-class helper for token events. The framework↔Responses converters (📘B1 calls them <code>_responses_to_cc()</code> / <code>_langchain_to_responses()</code>) are functions you write — do not invent other methods on the base class.</li>
+        <li><strong>Tracing for free.</strong> <code>mlflow.langchain.autolog()</code> captures every step, input, output, and tool call as an MLflow trace when the agent runs.</li>
+      </ul>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>The two books predate parts of this surface. 📘B1 Ch7 does use <code>ResponsesAgent</code>, but older blogs and 📗B2 still show <code>ChatModel</code> / <code>ChatAgent</code>. When a customer's code subclasses those, that is the <strong>legacy</strong> path — the migration target is <code>ResponsesAgent</code>. The <code>SplitChatMessagesRequest</code> / <code>StringResponse</code> helpers are deprecated.</div>
+    </section>
+
+    <section class="entry" id="dothis">
+      <div class="entry-head"><span class="num">04 · Run this</span><h2>Wire, log, verify, register</h2></div>
+      <p><strong>Prereqs:</strong> serverless or DBR ML runtime, <strong>MLflow ≥ 3.1</strong>; the 09.3 tools in UC (<code>unity_airways.rag.ua_rag_chunks_index</code>, <code>unity_airways.rag.get_flight_status</code>); access to <code>databricks-claude-sonnet-4-5</code>; and rights to create a model in <code>unity_airways.rag</code> (<code>USE CATALOG</code> + <code>USE SCHEMA</code> + <code>CREATE MODEL</code>).</p>
+      <pre><code>%pip install -U mlflow databricks-langchain langgraph
+dbutils.library.restartPython()</code></pre>
+      <p><strong>1. In <code>agent.py</code> — wire the tools and LLM from <code>databricks-langchain</code>:</strong></p>
+      <pre><code>from databricks_langchain import ChatDatabricks, VectorSearchRetrieverTool, UCFunctionToolkit
+
+retriever_tool = VectorSearchRetrieverTool(
+    index_name="unity_airways.rag.ua_rag_chunks_index",
+    num_results=5,
+    tool_description="Search Unity Airways policies and FAQ: cancellations, baggage, refunds.",
+)
+uc_toolkit = UCFunctionToolkit(function_names=["unity_airways.rag.get_flight_status"])
+
+llm   = ChatDatabricks(endpoint="databricks-claude-sonnet-4-5")
+tools = [retriever_tool, *uc_toolkit.tools]
+# agent = your LangGraph/LangChain reasoning loop over (llm, tools) from 09.5</code></pre>
+      <p><strong>2. Still in <code>agent.py</code> — wrap in ResponsesAgent and set the model (last line):</strong></p>
+      <pre><code>import mlflow
+mlflow.langchain.autolog()
+responses_agent = UASupportAgent(agent)
+mlflow.models.set_model(responses_agent)   # &lt;-- this object is the model</code></pre>
+      <p><strong>3. Smoke-test in the notebook, then log as Model-as-Code with resources:</strong></p>
+      <pre><code>from mlflow.models.resources import (
+    DatabricksServingEndpoint, DatabricksVectorSearchIndex, DatabricksFunction,
+)
+
+with mlflow.start_run():
+    logged_agent = mlflow.pyfunc.log_model(
+        python_model="agent.py",          # log the code, not the object
+        name="agent",
+        resources=[
+            DatabricksServingEndpoint(endpoint_name="databricks-claude-sonnet-4-5"),
+            DatabricksVectorSearchIndex(index_name="unity_airways.rag.ua_rag_chunks_index"),
+            DatabricksFunction(function_name="unity_airways.rag.get_flight_status"),
+        ],
+        pip_requirements=["mlflow", "databricks-langchain", "langgraph"],
+    )</code></pre>
+      <p><strong>4. Pre-deployment check — load + predict in a clean env:</strong></p>
+      <pre><code>mlflow.models.predict(
+    model_uri=f"runs:/{logged_agent.run_id}/agent",
+    input_data={"input": [{"role": "user", "content": "Is flight UA118 on time?"}]},
+    env_manager="uv",
+)</code></pre>
+      <p><strong>5. Register to Unity Catalog (creates version 1):</strong></p>
+      <pre><code>mlflow.set_registry_uri("databricks-uc")
+UC_MODEL = "unity_airways.rag.ua_support_agent"   # catalog.schema.model
+registered = mlflow.register_model(model_uri=logged_agent.model_uri, name=UC_MODEL)
+print(registered.name, registered.version)        # unity_airways.rag.ua_support_agent 1</code></pre>
+      <p><strong>6. Hand off to deployment</strong> (forward reference — not taught here):</p>
+      <pre><code># Module 11 — Agent Framework deploy: serving endpoint + review app + feedback model
+from databricks import agents
+agents.deploy(UC_MODEL, registered.version)
+# Or package it behind a Databricks App — Module 10.5.</code></pre>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>The topic reduces to five moves: <strong>wrap it</strong> (<code>ResponsesAgent</code> subclass), <strong>declare it</strong> (<code>set_model</code> in <code>agent.py</code>), <strong>log it</strong> (<code>pyfunc.log_model</code> with <code>resources</code>), <strong>verify it</strong> (<code>mlflow.models.predict</code>), <strong>register it</strong> (<code>catalog.schema.model</code> in UC). Deployment then reads the registered version. Author on <code>ResponsesAgent</code>; recognize <code>ChatAgent</code>/<code>ChatModel</code> only as the migration path.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Keep <code>agent.py</code> self-contained and importable — no notebook-only globals, no <code>dbutils</code> at import time. That is what lets MLflow re-execute it cleanly at load and makes the <code>mlflow.models.predict</code> check trustworthy. Put endpoint / index / function names at the top of the file so the resource list and the agent read the same constants. Implement <code>predict_stream</code> even if your first consumer doesn't stream — then <code>predict</code> is a three-line wrapper over it.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>📘B1 Ch7 registers this agent as <code>workspace.unity_airways.unity-airways-booking-agent</code> (catalog <code>workspace</code>, schema <code>unity_airways</code>, hyphenated name). This project standardizes on <code>CATALOG="unity_airways"</code>, <code>SCHEMA="rag"</code>, model <code>ua_support_agent</code>. Use the project's three-level name; avoid hyphenated model names. And never omit a resource — a deployed agent that calls an unlisted endpoint, index, or function fails auth at run time.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Which authoring interface do you use for a new agent, and what are the two older ones you should only recognize as a migration path? Which request/response helpers are deprecated?</li>
+          <li>Which one method must a <code>ResponsesAgent</code> subclass implement, what type does it take, and what type does it return? What does <code>predict_stream</code> yield?</li>
+          <li>Why do you log with <code>python_model="agent.py"</code> instead of passing the agent object, and what single line must <code>agent.py</code> end with?</li>
+          <li>The agent calls an LLM, a retriever index, and a UC function. Write the three <code>resources=[...]</code> entries (class + kwarg) that make deployment authenticate to them.</li>
+          <li>Give the two lines that point the registry at Unity Catalog and register the logged agent as <code>unity_airways.rag.ua_support_agent</code>. Where does deployment happen after that?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📘 B1 — <em>Practical MLflow for Generative AI on Databricks</em>, Ch 7 ("Packaging and Deploying Advanced GenAI applications with ResponsesAgent"): <code>from mlflow.types.responses import ResponsesAgentRequest, ResponsesAgentResponse</code>; <code>class ...(ResponsesAgent)</code> with <code>predict(request) -&gt; ResponsesAgentResponse</code> and <code>predict_stream(...) -&gt; Generator[ResponsesAgentStreamEvent, ...]</code> + <code>create_text_delta(...)</code>; <code>mlflow.langchain.autolog()</code> + <code>mlflow.models.set_model(...)</code>; <code>from mlflow.models.resources import DatabricksFunction</code>; <code>mlflow.pyfunc.log_model(name="agent", python_model="agent.py", pip_requirements=[...], resources=resources)</code>; pre-deploy <code>mlflow.models.predict(..., env_manager="uv")</code>; <code>set_registry_uri("databricks-uc")</code> → <code>register_model(...)</code>; tools <code>VectorSearchRetrieverTool</code> + <code>UCFunctionToolkit</code> from <code>databricks_langchain</code>. O'Reilly Early Release — RAW &amp; UNEDITED; APIs verified against current docs.</li>
+        <li>🌐 MLflow Python API — <code>ResponsesAgent</code> exported from <code>mlflow.pyfunc</code> (<code>mlflow.pyfunc.model.ResponsesAgent</code>); request/response/stream types in <code>mlflow.types.responses</code>; resource classes <code>DatabricksServingEndpoint</code>, <code>DatabricksVectorSearchIndex</code>, <code>DatabricksFunction</code> in <code>mlflow.models.resources</code>. Import paths + class names <strong>verified against MLflow source</strong> (<code>mlflow/pyfunc/__init__.py</code>, <code>mlflow/models/resources.py</code>).</li>
+        <li>🌐 Databricks Docs — "Author AI agents" (Agent Framework): <code>ResponsesAgent</code> recommended; deploy via <code>from databricks import agents; agents.deploy(...)</code>. <code>docs.databricks.com/aws/en/generative-ai/agent-framework/author-agent</code> (live re-check pending — JS-rendered page; grounded on §2 cheat-sheet + book).</li>
+        <li>🧭 Naming cross-check: <code>references/naming-conventions.md</code> §2 (<strong>ResponsesAgent</strong> recommended; <code>ChatAgent</code> superseded → <code>ChatModel</code> legacy; <code>SplitChatMessagesRequest</code>/<code>StringResponse</code> deprecated; register agent to UC via <code>set_registry_uri("databricks-uc")</code> → <code>register_model</code> → <code>catalog.schema.model</code>; deploy with <code>agents.deploy(...)</code>) and §1 (Models-from-Code recommended; import is <code>databricks-langchain</code>).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Topic 09.6 ★</span>
+  <span>Grounded in 📘B1 Ch7 · MLflow source · Databricks docs</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"Author the agent",spine:false,comps:[
+   ["class UASupportAgent(ResponsesAgent)","wrap it","Subclass mlflow.pyfunc.ResponsesAgent and store your framework agent. Framework-agnostic: adapts LangGraph/LangChain/raw Python to the OpenAI Responses schema so existing chat UIs connect with no rewrite.","Author here — not ChatAgent / ChatModel"],
+   ["predict(request) -> ResponsesAgentResponse","the one required method","Runs the agent and returns structured output. A clean version drives predict_stream and keeps only the response.output_item.done events. request.input is the message history.","ResponsesAgentRequest in, ResponsesAgentResponse out"],
+   ["predict_stream(request)","streaming (recommended)","Yields ResponsesAgentStreamEvent as the agent produces output; use create_text_delta(delta, item_id) for token events. Enables token-by-token streaming for chat UIs.","Optional but implement it anyway"],
+ ]},
+ {name:"Package and govern",spine:true,comps:[
+   ["mlflow.models.set_model(agent)","declare it","Last executable line of agent.py. Tells MLflow which object is the model. The Model-as-Code entry point — same call you used for the chain in 05.6.","Must be the last line of agent.py"],
+   ["pyfunc.log_model(python_model='agent.py', resources=[...])","log it","Logs the CODE (not a pickle) plus the environment and the resource list. MLflow re-runs agent.py at load time, rebuilding the agent fresh. Flavor: pyfunc.ResponsesAgent.","Model-as-Code — nothing fragile to unpickle"],
+   ["resources=[ServingEndpoint, VectorSearchIndex, Function]","declare dependencies","From mlflow.models.resources: the LLM endpoint, the retriever index, the UC function. Deployment reads these and mints scoped, short-lived credentials for each — automatic auth passthrough.","Omit one and the deployed agent fails auth"],
+   ["mlflow.models.predict(..., env_manager='uv')","verify it","Pre-deployment check: MLflow rebuilds the env from the logged artifacts, loads the model, and calls it. Catches a broken environment before you register or deploy.","Run before registering"],
+   ["set_registry_uri('databricks-uc') + register_model(...)","register it","Promotes the logged agent into Unity Catalog under the three-level name unity_airways.rag.ua_support_agent — a versioned, governed model with lineage. Deploy with agents.deploy(...) or Databricks Apps.","catalog.schema.model, always three levels"],
+ ]},
+];
+const STEPS=[
+  ["Wire tools + LLM (agent.py)","VectorSearchRetrieverTool over ua_rag_chunks_index and UCFunctionToolkit for get_flight_status, both from databricks_langchain, plus ChatDatabricks('databricks-claude-sonnet-4-5'). The reasoning loop over (llm, tools) is your 09.5 agent."],
+  ["Wrap in ResponsesAgent","class UASupportAgent(ResponsesAgent) with predict(request) -> ResponsesAgentResponse and predict_stream(request). predict collects the response.output_item.done events from the stream."],
+  ["Set the model (last line)","mlflow.langchain.autolog(); responses_agent = UASupportAgent(agent); mlflow.models.set_model(responses_agent). This declares the model for Model-as-Code logging."],
+  ["Log with resources","mlflow.pyfunc.log_model(python_model='agent.py', name='agent', resources=[DatabricksServingEndpoint, DatabricksVectorSearchIndex, DatabricksFunction], pip_requirements=[...]). Logs the code plus the resource list."],
+  ["Pre-deployment check","mlflow.models.predict(model_uri=f'runs:/{logged_agent.run_id}/agent', input_data={'input':[{'role':'user','content':'Is flight UA118 on time?'}]}, env_manager='uv'). Rebuilds the env and calls the model."],
+  ["Register to Unity Catalog","mlflow.set_registry_uri('databricks-uc'); mlflow.register_model(model_uri=logged_agent.model_uri, name='unity_airways.rag.ua_support_agent'). Creates version 1 in Catalog Explorer."],
+  ["Hand off to deploy","from databricks import agents; agents.deploy('unity_airways.rag.ua_support_agent', version) [Module 11], or package behind a Databricks App [Module 10.5]. Deploy is forward-referenced, not taught here."],
+];
+const MERMAID_SRC=`flowchart TB
+  subgraph BUILD["From 09.3 / 09.5 - you already have an agent"]
+    tools["Tools: retriever over ua_rag_chunks_index<br/>plus UCFunctionToolkit for get_flight_status"]
+    llm["ChatDatabricks('databricks-claude-sonnet-4-5')"]
+    tools --> agent["inner agent (LangGraph / LangChain)"]
+    llm --> agent
+  end
+  subgraph AUTHOR["Author with ResponsesAgent (agent.py)"]
+    agent --> wrap["class UASupportAgent(ResponsesAgent):<br/>predict(request) and predict_stream(request)"]
+    wrap --> setm["mlflow.models.set_model(agent) - last line of agent.py"]
+  end
+  subgraph LOG["Log as Model-as-Code"]
+    setm --> logm["mlflow.pyfunc.log_model(python_model='agent.py', name='agent', resources=[...])"]
+    res["resources: DatabricksServingEndpoint + DatabricksVectorSearchIndex + DatabricksFunction"] --> logm
+    logm --> check["pre-deploy check: mlflow.models.predict(...)"]
+  end
+  subgraph REG["Register + deploy"]
+    check --> reg["set_registry_uri('databricks-uc') then register_model to unity_airways.rag.ua_support_agent"]
+    reg --> deploy["agents.deploy(...) [Module 11] or Databricks Apps [Module 10.5]"]
+  end`;
+const MERMAID_SRC2=`flowchart LR
+  cm["ChatModel<br/>(legacy)"] --> ca["ChatAgent<br/>(being superseded)"]
+  ca --> ra["ResponsesAgent<br/>(recommended - author here)"]
+  ra --> feats["OpenAI Responses schema<br/>auto-tracing + streaming<br/>multi-turn + tool-call history"]
+  cm -.->|"deprecated helpers"| dep["SplitChatMessagesRequest<br/>StringResponse<br/>(do not use)"]`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

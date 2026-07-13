@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 08 Evaluating GenAI applications (module hub).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Evaluating GenAI Applications · Databricks GenAI Tutor 08</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  /* ============ DESIGN SYSTEM — tokens (do not rename) ============ */
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line);
+    --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .toggle{display:none}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:16ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .ghost{display:none}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  .index-rail{display:none}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tag-pill{display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--line);border-radius:20px;color:var(--muted);margin-left:8px;vertical-align:middle}
+  .tag-pill.h{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.t{color:var(--accent-2);border-color:var(--accent-soft)}
+  .tag-pill.star{color:var(--danger);border-color:var(--danger-soft)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.3rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  h3.tk{font-family:var(--mono);font-size:.9rem;letter-spacing:.06em;margin:24px 0 6px}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.md">Databricks GenAI</a>
+    <span class="loc">Module 08 · Topics 08.1–08.10</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_08 · GenAI lesson · v1.0</span><span>Verified against 📘B1 Ch6 + naming cheat-sheet</span></div>
+    <div class="filed">Module 08 — Evaluating GenAI Applications · Topics 08.1–08.10 · Theory + Hands-on</div>
+    <h1>GenAI Evaluation</h1>
+    <p class="dek">You changed the retrieval, the prompt, or the model — did the <em>Unity Airways</em> assistant get better or worse? This module replaces "looks good to me" with evidence: a versioned dataset, a fixed set of <strong>scorers</strong>, and one call to <code>mlflow.genai.evaluate(...)</code> that scores the <strong>trace</strong> and links results to the app version.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>From "seems fine" to a number you can defend</h2></div>
+      <p class="lead">Module 05 <em>built</em> <code>unity_airways.rag.ua_rag_chain</code> and Module 07 made it <strong>observable</strong>. Module 08 makes every change <strong>decidable</strong>: run the app over a curated dataset, apply scorers, log per-row scores + aggregates with lineage to the LoggedModel version — then promote or discard on evidence.</p>
+      <ul>
+        <li><strong>Four building blocks</strong> — datasets (<code>inputs</code>/<code>outputs</code>/<code>expectations</code>), scorers (code + LLM judges), evaluation runs, and feedback. The <strong>Evaluation Harness</strong> ties them together (08.1 ★).</li>
+        <li>One entry point: <strong><code>mlflow.genai.evaluate(data=, predict_fn=, scorers=[...])</code></strong>. Two modes: <strong>direct</strong> (<code>predict_fn</code> calls the app) and <strong>answer-sheet</strong> (precomputed outputs / existing traces).</li>
+        <li><strong>Scorers</strong> are code-based (<code>@scorer</code> → <code>Feedback</code>) or <strong>LLM judges</strong> (<code>RelevanceToQuery</code>, <code>Safety</code>, <code>Correctness</code>, <code>RetrievalGroundedness</code>, …). Some judges need ground-truth <code>expectations</code>; many do not (08.4 ★).</li>
+        <li><strong>Compare</strong> <code>rag_chain</code> vs the <code>llm_only</code> baseline on the same dataset; open the <strong>traces that flipped</strong> to diagnose (08.5). Needs <strong>MLflow ≥ 3.1</strong> (<code>make_judge</code> ≥ 3.4).</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 The rule that shapes this module</span>In MLflow 3.x <strong>you name the scorers, the harness never guesses</strong>. The entry point is <code>mlflow.genai.evaluate(data=, predict_fn=, scorers=[...])</code> — <code>scorers=[...]</code> is <strong>required</strong>. There is <strong>no</strong> <code>agents.evaluate()</code>, and <code>mlflow.evaluate(model_type="databricks-agent")</code> is the retired MLflow-2 path. It scores the <strong>trace</strong>, not just the string, so retrieval judges read the RETRIEVER span from Module 07.</div>
+    </section>
+
+    <section class="entry" id="problem">
+      <div class="entry-head"><span class="num">02 · The problem</span><h2>Why eyeballing and one accuracy number fail</h2></div>
+      <p>A passenger asks <em>"My flight UA217 was delayed in Tokyo — am I eligible for a refund?"</em> You bump the retrieval <code>k</code>. Better or worse? Naive evaluation breaks:</p>
+      <ul>
+        <li><strong>Eyeball a few answers</strong> → not reproducible; two reviewers disagree and there's no record to point to.</li>
+        <li><strong>One accuracy number</strong> → GenAI quality is multi-dimensional (grounded, relevant, safe, on-brand, fast, cheap); a single score hides the trade-offs.</li>
+        <li><strong>Reuse <code>mlflow.evaluate(model_type="databricks-agent")</code></strong> → superseded; the MLflow 3 path is <code>mlflow.genai.evaluate(...)</code> with explicit <code>scorers=[...]</code>.</li>
+        <li><strong>Score the text string</strong> → retrieval quality, groundedness, latency, and cost live in the <strong>trace</strong>. MLflow 3.x scores the trace so a groundedness judge reads the exact retrieved chunks.</li>
+        <li><strong>Trust an LLM judge blindly</strong> → a judge is a model with opinions; uncalibrated it over/under-scores. Align it with human labels first (08.8).</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">03 · Explore</span><h2>The eval loop, the 10 topics, the worked thread, and the judges</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Eval loop</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The 10 topics</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Worked thread</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Judges & ground truth</button>
+      </div>
+
+      <!-- PANE A: eval-loop map — mirrors module.md's first Mermaid -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — The evaluation loop">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Change one variable, re-run against a fixed dataset, let the aggregate point you to the rows that moved — the traces explain the why.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the 10 topics -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — Topic index">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a topic</div><h3>The 10 topics</h3><p>Click a topic to see what it covers and its Theory/Hands-on label. ★ marks a cornerstone with its own deep-dive page.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: worked-thread stepper -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="plate" data-fig="Fig. 02 — ground-truth decision" style="margin-bottom:18px">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">Reference-free judges run on any row; reference-based judges (Correctness) need an expectations answer key.</div>
+        </div>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <div class="plate-cap" style="margin-top:14px">Promoting a retrieval change with evidence — rag_chain vs llm_only, diagnosed with traces.</div>
+      </div>
+
+      <!-- PANE D: built-in judges + ground-truth table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Built-in judge</th><th>Judges</th><th>Needs expectations?</th></tr></thead><tbody id="rows"></tbody></table>
+        <div class="note imp" style="margin-top:16px"><span class="tag">📌 The ground-truth split · three buckets</span><strong>(1) Needs a ground-truth answer</strong> (<code>expected_facts</code> / <code>expected_response</code>): <code>Correctness</code> <em>and</em> <code>RetrievalSufficiency</code> — the retrieval judge people forget belongs here. <strong>(2) Needs per-row <code>guidelines</code></strong> (criteria, not a factual answer): <code>ExpectationsGuidelines</code>. <strong>(3) Reference-free</strong> (no labels): <code>RelevanceToQuery</code>, <code>Safety</code>, <code>RetrievalGroundedness</code>, <code>RetrievalRelevance</code>, plain <code>Guidelines</code> — run them on any production trace. Old MLflow-2 names (<code>groundedness</code>, <code>chunk_relevance</code>, <code>relevance_to_query</code>, <code>guideline_adherence</code>, <code>context_sufficiency</code>) are deprecated.</div>
+      </div>
+    </section>
+
+    <section class="entry" id="stack">
+      <div class="entry-head"><span class="num">04 · Cornerstone</span><h2>08.1 ★ — the MLflow 3.x stack &amp; the Evaluation Harness</h2></div>
+      <p>Full deep-dive — the four building blocks, harness internals, direct vs answer-sheet modes, and "evaluate the trace, not the text" — in the <a href="eval-harness.html">Evaluation Harness deep-dive</a> (<code>eval-harness.md</code> / <code>eval-harness.html</code>).</p>
+      <h3 class="tk">08.1 The evaluation stack <span class="tag-pill t">Theory</span> <span class="tag-pill star">Cornerstone</span></h3>
+      <p>MLflow 3.x makes evaluation a <strong>governed workflow</strong> of four building blocks: <strong>datasets</strong> (<code>mlflow.genai.datasets</code>), <strong>scorers</strong> (<code>mlflow.genai.scorers</code> + <code>mlflow.genai.judges</code>), <strong>evaluation runs</strong> (<code>mlflow.genai.evaluate()</code>), and <strong>feedback</strong> (assessments on traces). The <strong>Evaluation Harness</strong> automates supplying inputs, invoking the app, and computing metrics — the same logic runs in a notebook or a production job.</p>
+      <pre><code>import mlflow
+
+eval_results = mlflow.genai.evaluate(
+    data=eval_dataset,                # inputs / outputs / expectations
+    predict_fn=rag_chain_predict_fn,  # direct mode: harness invokes the app
+    scorers=unity_airways_scorers,    # REQUIRED — you name them; no auto-select
+)</code></pre>
+      <div class="note imp"><span class="tag">📌 Important</span>MLflow 3.x scores the <strong>trace</strong>. Groundedness and retrieval relevance need the retrieved context; safety/guidelines use the response + metadata; latency and cost come from span timings and tokens. Direct mode creates a fresh trace via <code>predict_fn</code>; answer-sheet mode uses existing traces.</div>
+    </section>
+
+    <section class="entry" id="datasets">
+      <div class="entry-head"><span class="num">05 · Datasets</span><h2>08.2 — building &amp; managing evaluation datasets</h2></div>
+      <h3 class="tk">08.2 Evaluation datasets <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span></h3>
+      <p>Build from three sources: <strong>production/dev traces</strong>, <strong>expert-labeled cases</strong>, and <strong>curated edge cases</strong>. The schema is <code>inputs</code> (required), <code>outputs</code> (answer-sheet mode), and <code>expectations</code> (optional ground truth). Reserved <code>expectations</code> keys: <code>expected_facts</code> / <code>expected_response</code> (Correctness), <code>guidelines</code> (Guidelines), <code>expected_retrieved_context</code> (retrieval).</p>
+      <pre><code>from mlflow.genai.datasets import create_dataset, get_dataset
+
+CATALOG, SCHEMA = "unity_airways", "rag"
+eval_dataset = create_dataset(name=f"{CATALOG}.{SCHEMA}.eval_dataset")
+
+# every merge auto-creates a new version with UC lineage
+eval_dataset = eval_dataset.merge_records([
+  {"inputs": {"question": "My flight UA217 was delayed in Tokyo. Refund?"},
+   "expectations": {"expected_facts": ["Refund depends on fare type",
+                                       "Waiver WX-2025 applies only to affected segment"]}},
+])</code></pre>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · verify live</span>SDK limits: <strong>max 2,000 records</strong>, <strong>≤ 20 expectation fields</strong> per entry, no CMK yet. Prefer archiving over hard-delete — a hard purge leaves the lineage reference but you can't resolve it back to the table. <em>(Exact current limits: live re-check pending.)</em></div>
+      <div class="note tip"><span class="tag">💡 Tip</span>Keep the seed set small on purpose so it's cheap to run frequently and catches regressions early. Grow it as feedback arrives; retire cases that no longer reflect policy.</div>
+    </section>
+
+    <section class="entry" id="code-scorers">
+      <div class="entry-head"><span class="num">06 · Scorers</span><h2>08.3 — code-based scorers</h2></div>
+      <h3 class="tk">08.3 Code-based scorers <span class="tag-pill h">Hands-on</span></h3>
+      <p>A scorer turns a raw prediction into a measurable <code>Feedback</code> (value + rationale). Code-based scorers are <code>@scorer</code>-decorated Python functions — deterministic, no token cost, ideal for continuous checks: schema validity, exact match, phone/date presence, flight-code format, business rules.</p>
+      <pre><code>from mlflow.genai.scorers import scorer
+from mlflow.entities import Feedback
+
+@scorer(name="response_length")
+def ua_response_length_scorer(outputs) -> Feedback:
+    response = outputs if isinstance(outputs, str) else outputs.get("response", "")
+    n = len(str(response).split())
+    if n &lt; 5:   return Feedback(value=0.0, rationale=f"Too short ({n} words)")
+    if n &gt; 120: return Feedback(value=0.5, rationale=f"Quite long ({n} words)")
+    return Feedback(value=1.0, rationale=f"Appropriate length ({n} words)")</code></pre>
+      <p><strong>Design principles:</strong> single point of truth (one scorer, one thing); stable interface (deterministic, normalize text, parse dates); interpretable 0.0–1.0 scale; deterministic first, judgment second — "a regex should not be replaced by an LLM to find a phone number."</p>
+      <div class="note tip"><span class="tag">💡 Tip</span>Code-based scorers can emit <strong>operational</strong> signals too — read span timings/tokens from the trace and report a normalized latency or cost value that feeds SLO dashboards.</div>
+    </section>
+
+    <section class="entry" id="judges">
+      <div class="entry-head"><span class="num">07 · Cornerstone</span><h2>08.4 ★ — LLM-as-a-Judge &amp; which judges need ground truth</h2></div>
+      <p>Full deep-dive — built-in judges, <code>Guidelines</code> vs <code>ExpectationsGuidelines</code>, custom <code>make_judge()</code>, model pinning, and the ground-truth decision — in the <a href="llm-as-judge.html">LLM-as-a-Judge deep-dive</a> (<code>llm-as-judge.md</code> / <code>llm-as-judge.html</code>).</p>
+      <h3 class="tk">08.4 LLM judges <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span></h3>
+      <p>LLM judges grade nuance — relevance, safety, correctness — reading the <strong>full trace</strong> and returning a score + rationale. Built-ins import from <code>mlflow.genai.scorers</code>; pass <code>model=</code> to pin a judge model. For full control, build a custom judge with <code>make_judge()</code>.</p>
+      <pre><code>from mlflow.genai.scorers import (
+    RelevanceToQuery, Safety, RetrievalGroundedness, Correctness, Guidelines)
+
+eval_model = "databricks:/databricks-claude-sonnet-4-5"   # override + pin for stability
+ua_relevancy    = RelevanceToQuery(model=eval_model)
+ua_safety       = Safety(model=eval_model)
+ua_groundedness = RetrievalGroundedness(model=eval_model)   # hallucination signal
+ua_correctness  = Correctness(model=eval_model)             # needs expectations
+ua_tone = Guidelines(name="professional_tone",
+    guidelines="Professional airline-support tone; reference 'Unity Airways'.",
+    model=eval_model)
+
+from mlflow.genai.judges import make_judge   # custom judge (MLflow >= 3.4)
+ua_coherence = make_judge(name="coherence", instructions=(
+    "Evaluate coherence and policy-adherence.\n"
+    "Question: {{ inputs }}\nResponse: {{ outputs }}\n"
+    "Categorize as 'coherent', 'somewhat coherent', or 'incoherent'."))</code></pre>
+      <div class="note imp"><span class="tag">📌 Important · the ground-truth split (three buckets)</span><strong>(1) Needs a ground-truth answer</strong> (<code>expected_facts</code> / <code>expected_response</code>): <code>Correctness</code> <em>and</em> <code>RetrievalSufficiency</code> — the retrieval judge people forget requires ground truth. <strong>(2) Needs per-row <code>guidelines</code></strong> (criteria, not a factual answer): <code>ExpectationsGuidelines</code>. <strong>(3) Reference-free</strong> (no labels): <code>RelevanceToQuery</code>, <code>Safety</code>, <code>RetrievalGroundedness</code>, <code>RetrievalRelevance</code>, plain <code>Guidelines</code>. So run reference-free judges on every trace; invest in an <code>expected_facts</code>/<code>expected_response</code> answer key only where <code>Correctness</code> and <code>RetrievalSufficiency</code> matter most.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Judges default to Databricks-hosted LLMs — pass <code>model=</code> and pin it. <code>make_judge()</code> needs <strong>MLflow ≥ 3.4</strong> (older used deprecated <code>custom_prompt_judge</code>). Don't use MLflow-2 names (<code>groundedness</code>, <code>chunk_relevance</code>, …).</div>
+    </section>
+
+    <section class="entry" id="run">
+      <div class="entry-head"><span class="num">08 · Run &amp; compare</span><h2>08.5 — running, comparing, diagnosing with traces</h2></div>
+      <h3 class="tk">08.5 Evaluation runs <span class="tag-pill h">Hands-on</span></h3>
+      <p>An evaluation run binds one dataset version + one candidate + one scorer set, logging traces (one per row), feedback, aggregate metrics, and metadata. Load the Module 05 chain, wrap it in a <code>predict_fn</code>, and run.</p>
+      <pre><code>loaded_chain = mlflow.langchain.load_model(
+    f"models:/{CATALOG}.{SCHEMA}.ua_rag_chain/{MODEL_VERSION}")
+
+def rag_chain_predict_fn(question: str) -> dict:
+    return loaded_chain.invoke({"messages": [{"role": "user", "content": question}]})
+
+with mlflow.start_run(run_name="ua_rag_eval"):
+    mlflow.set_tag("candidate", "rag_chain")   # tag so runs stay comparable
+    res_rag = mlflow.genai.evaluate(
+        data=eval_dataset, predict_fn=rag_chain_predict_fn,
+        scorers=unity_airways_scorers)</code></pre>
+      <p><strong>Compare rag_chain vs llm_only:</strong> re-run the same dataset + scorers against the Module 06 <code>llm_only</code> baseline, tag <code>candidate=llm_only</code>. Rule: fix the dataset, pin versions, change <strong>one</strong> variable per run, tag it. In the UI filter by tag, select both runs, read the headline metrics — then open the traces that flipped.</p>
+      <div class="note tip"><span class="tag">💡 Tip · diagnose</span>Zero traces → data schema vs <code>predict_fn</code> mismatch. Scorer crashes → defensive checks + neutral value. Output shape varies → normalize in a post-processor. Slow → inspect span timings (retrieval vs judge calls). Layer on difficulty bands, bootstrap CIs, and a persisted failure table.</div>
+    </section>
+
+    <section class="entry" id="feedback">
+      <div class="entry-head"><span class="num">09 · Human loop</span><h2>08.6 — capturing human-in-the-loop feedback</h2></div>
+      <h3 class="tk">08.6 Human feedback <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span></h3>
+      <p>Scorers miss nuance — tone, empathy, subtle gaps. MLflow stores human judgment as an <strong>Assessment</strong> on a trace: <code>Feedback</code> (what the app produced) and <code>Expectations</code> (what correct looks like). Every Assessment records a <strong>source</strong> (human / judge / code).</p>
+      <pre><code>from mlflow.entities.assessment import AssessmentSource, AssessmentSourceType
+
+mlflow.log_feedback(
+    trace_id=trace_id, name="user_feedback", value=satisfied, rationale=note,
+    source=AssessmentSource(source_type=AssessmentSourceType.HUMAN, source_id=user_id))
+
+# Domain-expert review at scale — Labeling Sessions (Review App)
+from mlflow.genai.labeling import create_labeling_session
+session = create_labeling_session(name="refund_policy_review",
+    label_schemas=[accuracy_schema.name, ideal_schema.name])
+session.add_traces(mlflow.search_traces(
+    filter_string="assessments.user_feedback = false", max_results=20))
+print("Share with experts:", session.url)</code></pre>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Treat user comments as personal data — if policy forbids raw text, store a category code + hashed session id. Developer feedback is opinionated; treat it as advisory until a designated reviewer signs off.</div>
+    </section>
+
+    <section class="entry" id="rubrics">
+      <div class="entry-head"><span class="num">10 · Rubrics &amp; calibration</span><h2>08.7 + 08.8 — qualitative rubrics and calibrating metrics</h2></div>
+      <h3 class="tk">08.7 Qualitative rubrics <span class="tag-pill t">Theory</span></h3>
+      <p>Quality, safety, and hallucination are judged against <strong>rubrics</strong> an LLM judge applies consistently. <strong>Quality</strong> → a <code>Guidelines</code> judge (tone, completeness). <strong>Safety</strong> → the <code>Safety</code> judge + domain non-negotiables ("never invent a fee waiver"). <strong>Hallucination</strong> → this <em>is</em> groundedness: <code>RetrievalGroundedness</code> checks the answer against retrieved chunks; a low score is your hallucination signal. Book 2's RAG dimensions: relevance, grounding (reduces hallucination), consistency, retrieval quality — all application-driven.</p>
+      <h3 class="tk">08.8 Calibrating metrics <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span></h3>
+      <p>A judge is a model with opinions; a threshold is a product decision. <strong>Calibrate</strong> both against human labels. For a threshold: label ~100 past answers, plot, set bands (the book lands on Pass = 40–110 words, Review = 25–39 / 111–140, Fail = &lt;25 / &gt;140) — recorded <em>with the scorer version</em>, validated per slice. For a judge (groundedness): compare judge scores to human labels, measure <strong>agreement</strong>, refine the rubric / pin the model / move the threshold, re-check.</p>
+      <div class="note imp"><span class="tag">📌 Important</span>A rubric is only as good as its wording. Vague criteria ("be helpful") produce noisy scores. Write it like a brief for a new support agent: concrete, testable, tied to a real outcome. "Calibrate with small human-reviewed samples so you don't over-trust a single model's opinion."</div>
+    </section>
+
+    <section class="entry" id="mep">
+      <div class="entry-head"><span class="num">11 · Discipline</span><h2>08.9 — evidence-driven development &amp; the MEP</h2></div>
+      <h3 class="tk">08.9 Minimum Evaluable Product <span class="tag-pill t">Theory</span></h3>
+      <p>The Develop phase ends not at the first green check but when one realistic path runs end to end <strong>and leaves the scaffolding to measure the next change</strong>. The <strong>MEP</strong> is the smallest slice that is both useful and measurable — one representative journey plus the scorers to judge future changes against it.</p>
+      <ul>
+        <li>For Unity Airways: answer <em>"Can I change my flight tomorrow?"</em> — one booking-lookup tool, one citation step, one grounded response. Trace it, export a few requests, attach two scorers: <strong>structure validity</strong> + <strong>groundedness with citation</strong>.</li>
+        <li>Every run tests a claim you can say out loud: "tightening the refund prompt raises groundedness on refund intents while leaving helpfulness flat."</li>
+        <li>The loop: hypothesis → representative scenarios → inspect traces → evaluate on a fixed seed set → compare to a baseline → promote or discard on evidence. Set <strong>stop-the-line</strong> thresholds (safety violations, schema breakage, key-scorer drops).</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Important</span>Evidence-driven development is a culture, not a tool. Teams that adopt the MEP stop arguing from anecdotes and start pointing to trace evidence, controlled comparisons, and domain-aligned metrics. The goal: a loop that is "intentionally boring."</div>
+    </section>
+
+    <section class="entry" id="traditional">
+      <div class="entry-head"><span class="num">12 · Traditional metrics</span><h2>08.10 — BLEU, ROUGE, perplexity, exact-match (vs judges)</h2></div>
+      <h3 class="tk">08.10 Traditional text-eval metrics <span class="tag-pill t">Theory</span></h3>
+      <p>Reference-based NLG metrics are cheap, deterministic, and comparable — but blind to grounding and hallucination.</p>
+      <table>
+        <thead><tr><th>Metric</th><th>Measures</th><th>Blind to</th></tr></thead>
+        <tbody>
+          <tr><td><b>ROUGE</b></td><td>Recall n-gram overlap w/ reference (summarization)</td><td>Meaning; paraphrase</td></tr>
+          <tr><td><b>BLEU</b></td><td>Precision n-gram overlap (translation)</td><td>Meaning; paraphrase</td></tr>
+          <tr><td><b>BERTScore</b></td><td>Semantic similarity via embeddings</td><td>Factual grounding</td></tr>
+          <tr><td><b>Perplexity</b></td><td>How well an LM predicts text (lower better)</td><td>Task correctness; grounding</td></tr>
+          <tr><td><b>Exact-match</b></td><td>Binary string equality (extractive QA)</td><td>Anything phrased differently</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Prefer LLM judges</strong> for open-ended RAG answers where "correct" can be phrased many ways and grounding/safety matter. Log traditional metrics like any other: <code>mlflow.log_metric("rouge_score", 0.78)</code>. The exam point: MLflow enables consistent tracking + comparison of any metric.</p>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>A high BLEU/ROUGE against one reference can still be a <strong>hallucination</strong> if the reply invents a policy the reference happened to phrase similarly. Use these as a cheap first filter, never the promotion gate for a policy-answering RAG app.</div>
+    </section>
+
+    <section class="entry" id="worked">
+      <div class="entry-head"><span class="num">13 · Worked thread</span><h2>Unity Airways — promoting a retrieval change with evidence</h2></div>
+      <ol>
+        <li><strong>Hypothesis (08.9):</strong> raising <code>k</code> 3→5 lifts groundedness on refund intents without hurting relevance or latency.</li>
+        <li><strong>Dataset (08.2):</strong> 40 rows from Module 07 traces + expert-labeled refund cases with <code>expected_facts</code>, at <code>unity_airways.rag.eval_dataset</code>.</li>
+        <li><strong>Scorers (08.3–08.4):</strong> <code>RelevanceToQuery</code>, <code>Safety</code>, <code>RetrievalGroundedness</code>, <code>Correctness</code> + code-based <code>response_length</code> + a <code>Guidelines</code> tone judge — passed explicitly.</li>
+        <li><strong>Baseline run:</strong> <code>mlflow.genai.evaluate(...)</code> on <code>ua_rag_chain</code>; tag <code>candidate=rag_chain, k=3</code>.</li>
+        <li><strong>Compare vs llm_only (08.5):</strong> same dataset + scorers on the Module 06 <code>llm_only</code> baseline — groundedness collapses (no context to ground in). Retrieval earns its keep.</li>
+        <li><strong>Candidate run:</strong> re-run with <code>k=5</code> — groundedness 0.71 → 0.89, relevance flat, latency +40ms (in envelope).</li>
+        <li><strong>Diagnose the flip (08.5):</strong> open the one regressed row's trace — RETRIEVER pulled a baggage chunk. Add to the failure table.</li>
+        <li><strong>Calibrate (08.8):</strong> confirm the groundedness judge agrees with human labels on the refund slice before trusting 0.89.</li>
+        <li><strong>Promote:</strong> hypothesis held — promote the <code>k=5</code> LoggedModel version, linked to dataset + runs + traces.</li>
+        <li><strong>Monitor (Module 13):</strong> the same scorers now watch production; a groundedness drop alerts before a customer complains.</li>
+      </ol>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">14 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Entry point <code>mlflow.genai.evaluate(data=, predict_fn=, scorers=[...])</code> — <code>scorers</code> is required, no auto-select, no <code>agents.evaluate()</code>. Scorers = code-based (<code>@scorer</code>→<code>Feedback</code>) + LLM judges (<code>RelevanceToQuery</code>, <code>Safety</code>, <code>Correctness</code>, <code>RetrievalGroundedness</code>, …). Dataset fields <code>inputs</code>/<code>outputs</code>/<code>expectations</code>. It scores the <strong>trace</strong>.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Fix the dataset, pin versions, change one variable, tag the run. Reference-free judges everywhere; <code>expectations</code> only where correctness matters. Calibrate a judge against human labels before trusting its number. The same scorers you register here monitor production (Module 13) — build the instrument once.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Don't use <code>mlflow.evaluate(model_type="databricks-agent")</code> or MLflow-2 judge names. Don't expect <code>Correctness</code> without <code>expectations</code>. Don't trust an uncalibrated judge. Don't treat BLEU/ROUGE as the promotion gate for a RAG policy assistant — they miss hallucination.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">15 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Write the MLflow 3 evaluation call for the Unity Airways chain. Which argument is mandatory that MLflow 2 used to infer, and what are the two <code>mlflow.genai.evaluate</code> modes?</li>
+          <li>Name the four building blocks of the MLflow 3.x evaluation stack and each API home.</li>
+          <li>Which built-in judges need <code>expectations</code> and which don't? Two examples of each.</li>
+          <li>You compare <code>rag_chain</code> vs <code>llm_only</code> and groundedness drops for one. What rule keeps the comparison fair, and where do you diagnose a single flipped row?</li>
+          <li>When would you use BLEU/ROUGE/exact-match over an LLM judge, and why are they the wrong promotion gate for a RAG policy assistant?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">16 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📘 B1 — <em>Practical MLflow for GenAI on Databricks</em> (Early Release), <strong>Ch 6 "Evaluating GenAI Applications with MLflow"</strong> (primary): four building blocks (Fig 6-1); <strong>Evaluation Harness</strong>; <code>mlflow.genai.evaluate()</code>; dataset schema <code>inputs</code>/<code>outputs</code>/<code>expectations</code> (Tables 6-1/6-2/6-3) and reserved keys (Table 6-4); dataset SDK (<code>create_dataset</code>/<code>get_dataset</code>/<code>delete_dataset</code>/<code>merge_records</code>; 2,000-record + 20-field limits); code-based scorers (<code>@scorer</code>→<code>Feedback</code>); LLM judges (<code>RelevanceToQuery</code>, <code>Safety</code>, <code>Correctness</code>, <code>RetrievalGroundedness</code>, <code>RetrievalRelevance</code>, <code>RetrievalSufficiency</code>), <code>Guidelines</code>/<code>ExpectationsGuidelines</code>, <code>make_judge()</code> (≥3.4); scorer lifecycle; run structure (Fig 6-4) and modes (Figs 6-5/6-6); comparing runs + troubleshooting (Table 6-5); human feedback (Assessment = <code>Feedback</code>+<code>Expectations</code>; <code>log_feedback</code>; Labeling Sessions). <strong>Ch 2</strong>: evidence-driven development, the Minimum Evaluable Product, threshold calibration.</li>
+        <li>📗 B2 — <em>Databricks Certified GenAI Engineer Associate Study Guide</em>, <strong>Evaluating RAG Model Performance Using MLflow</strong>: RAG dimensions (relevance, grounding/hallucination, consistency, retrieval quality; Table 6-2); NLG metrics ROUGE (recall), BLEU (precision), BERTScore (semantic) and their limits; logging via <code>mlflow.log_metric</code>/<code>log_artifact</code>. <em>(Perplexity + exact-match taught as standard NLG/QA context; B2 explicitly covers ROUGE/BLEU/BERTScore.)</em></li>
+        <li>🌐 MLflow Docs — MLflow 3 GenAI evaluation (<code>mlflow.genai.evaluate</code>, scorers, judges, <code>make_judge</code>): <code>mlflow.org/docs/latest/genai/eval-monitor/</code>. <em>(Scorer names <code>Correctness</code>/<code>Guidelines</code>/<code>RetrievalGroundedness</code>/<code>Safety</code> and <code>predict_fn</code> confirmed live at authoring; others per B1 + cheat-sheet — live re-check pending.)</em></li>
+        <li>🌐 Databricks Docs — MLflow 3 GenAI evaluation &amp; judges: <code>docs.databricks.com/aws/en/mlflow3/genai/eval-monitor/concepts/judges/</code>.</li>
+        <li>📎 Project cheat-sheet — <code>.claude/skills/genai-teacher/references/naming-conventions.md</code> §1 (eval rows: <code>mlflow.genai.evaluate(data=, predict_fn=, scorers=[...])</code>; scorers/judges/custom; built-in names; <code>inputs</code>/<code>outputs</code>/<code>expectations</code>; no <code>agents.evaluate</code>) and §9 (pitfalls).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 08</span>
+  <span>Grounded in 📘B1 Ch6 (primary) · Ch2 · 📗B2 RAG eval · MLflow 3 eval docs · naming §1</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Stack & harness (08.1)",spine:true,comps:[
+   ["08.1 The evaluation stack ★","Theory","Four building blocks: datasets, scorers, evaluation runs, feedback. The Evaluation Harness automates supplying inputs, invoking the app, and computing metrics. Entry: mlflow.genai.evaluate(data=, predict_fn=, scorers=[...]). Direct vs answer-sheet mode.","eval-harness.html"],
+ ]},
+ {name:"Datasets & scorers (08.2-08.3)",spine:false,comps:[
+   ["08.2 Evaluation datasets","Theory + Hands-on","Versioned inputs/outputs/expectations via mlflow.genai.datasets. Build from traces, expert labels, curated edge cases. Reserved expectations keys: expected_facts, expected_response, guidelines, expected_retrieved_context. Limits: 2000 rows, 20 fields.","module.md 08.2"],
+   ["08.3 Code-based scorers","Hands-on","@scorer decorator returning Feedback(value, rationale). Deterministic, no token cost. Schema validity, exact match, presence checks, business rules. Single point of truth; deterministic first, judgment second.","module.md 08.3"],
+ ]},
+ {name:"LLM judges — the cornerstone (08.4)",spine:true,comps:[
+   ["08.4 LLM-as-a-Judge ★","Theory + Hands-on","Built-in judges read the full trace: RelevanceToQuery, Safety, RetrievalGroundedness, RetrievalRelevance, RetrievalSufficiency, Correctness, Guidelines, ExpectationsGuidelines. Three buckets: Correctness + RetrievalSufficiency need a ground-truth answer (expected_facts/expected_response); ExpectationsGuidelines needs per-row guidelines; the rest are reference-free. Custom via make_judge() (>=3.4).","llm-as-judge.html"],
+ ]},
+ {name:"Run, compare, feedback (08.5-08.6)",spine:false,comps:[
+   ["08.5 Run & compare","Hands-on","Bind dataset + candidate + scorers. Wrap the chain in predict_fn. Compare rag_chain vs llm_only: fix dataset, pin versions, change one variable, tag. Diagnose regressions by opening the flipped traces (Table 6-5).","module.md 08.5"],
+   ["08.6 Human feedback","Theory + Hands-on","Assessment on a trace: Feedback (what the app produced) + Expectations (what's correct). mlflow.log_feedback with AssessmentSource. Labeling Sessions + Review App for domain experts.","module.md 08.6"],
+ ]},
+ {name:"Rubrics, calibration, discipline (08.7-08.9)",spine:false,comps:[
+   ["08.7 Qualitative rubrics","Theory","Quality/safety/hallucination rubrics. Hallucination = groundedness (RetrievalGroundedness reads the retrieved chunks). B2 dimensions: relevance, grounding, consistency, retrieval quality.","module.md 08.7"],
+   ["08.8 Calibrating metrics","Theory + Hands-on","Align judges + thresholds with human labels. Label ~100 answers, set Pass/Review/Fail bands, version them. Measure judge-vs-human agreement; refine rubric / pin model / move threshold.","module.md 08.8"],
+   ["08.9 Minimum Evaluable Product","Theory","The smallest useful + measurable slice: one representative journey + scorers to judge changes. Every run tests a stated hypothesis. Promote/discard on evidence, not vibes.","module.md 08.9"],
+ ]},
+ {name:"Traditional metrics (08.10)",spine:false,comps:[
+   ["08.10 BLEU/ROUGE/perplexity/exact-match","Theory","Reference-based NLG metrics: ROUGE (recall), BLEU (precision), BERTScore (semantic), perplexity (LM fit), exact-match (string equality). Cheap but blind to grounding/hallucination. Prefer LLM judges for open-ended RAG. Log via mlflow.log_metric.","module.md 08.10"],
+ ]},
+];
+const STEPS=[
+  ["1 · Hypothesis","Raising retrieval k from 3 to 5 will lift groundedness on refund intents without hurting relevance or latency (08.9)."],
+  ["2 · Dataset","40 rows from Module 07 traces + expert-labeled refund cases with expected_facts, versioned at unity_airways.rag.eval_dataset (08.2)."],
+  ["3 · Scorers","RelevanceToQuery, Safety, RetrievalGroundedness, Correctness + code-based response_length + a Guidelines tone judge — passed explicitly (08.3-08.4)."],
+  ["4 · Baseline run","mlflow.genai.evaluate(data=, predict_fn=rag_chain_predict_fn, scorers=...) on ua_rag_chain; tag candidate=rag_chain, k=3."],
+  ["5 · Compare vs llm_only","Same dataset + scorers on the Module 06 llm_only baseline (no retrieval). Groundedness collapses — retrieval earns its keep (08.5)."],
+  ["6 · Candidate run","Re-run rag_chain with k=5. Groundedness 0.71 -> 0.89, relevance flat, latency +40ms (within envelope)."],
+  ["7 · Diagnose the flip","Open the one regressed row's trace: the RETRIEVER span pulled a baggage chunk. Add it to the failure table (08.5)."],
+  ["8 · Calibrate","Confirm the groundedness judge agrees with human labels on the refund slice before trusting the 0.89 (08.8)."],
+  ["9 · Promote","Hypothesis held — promote the k=5 LoggedModel version, linked to dataset, runs, and traces."],
+  ["10 · Monitor","The same scorers now watch production traffic; a groundedness drop alerts before a customer complains (Module 13)."],
+];
+const ROWS=[
+  ["RelevanceToQuery","Does the reply address the question asked?","No"],
+  ["Safety","Toxic/harmful content, PII disclosure","No"],
+  ["RetrievalGroundedness","Answer supported by retrieved context (hallucination signal)?","No"],
+  ["RetrievalRelevance","Do retrieved docs match the request?","No"],
+  ["RetrievalSufficiency","Do retrieved docs contain all needed info?","Yes — expected_facts / expected_response"],
+  ["Correctness","Does the answer match the ground-truth key?","Yes — expected_facts / expected_response"],
+  ["Guidelines","Global pass/fail rules (tone, brand, disclaimers)","No (rules in the judge)"],
+  ["ExpectationsGuidelines","Per-row rules supplied in the dataset","Yes — guidelines in expectations"],
+];
+const MERMAID_SRC=`flowchart TD
+  DS["Evaluation dataset<br/>inputs · (outputs) · expectations<br/>versioned in UC"]
+  PF["predict_fn<br/>wraps ua_rag_chain.invoke()"]
+  SC["scorers=[...]<br/>code-based + LLM judges<br/>explicit, no auto-select"]
+  EV["mlflow.genai.evaluate(data=, predict_fn=, scorers=[...])"]
+  TR["Scored traces<br/>one per row + Feedback"]
+  AGG["Aggregate metrics<br/>correctness · groundedness · safety · latency"]
+  CMP["Compare versions<br/>rag_chain vs llm_only"]
+  DIAG["Open the flipped traces<br/>diagnose the regression"]
+  FIX["Fix: k / prompt / model / re-chunk"]
+  DS --> EV
+  PF --> EV
+  SC --> EV
+  EV --> TR
+  EV --> AGG
+  AGG --> CMP
+  CMP --> DIAG
+  DIAG --> FIX
+  FIX -->|"re-run on the same dataset"| EV`;
+const MERMAID_SRC2=`flowchart LR
+  Q{"Compare against a<br/>known correct answer?"}
+  Q -->|"Yes — needs expectations"| GT["Correctness (expected_facts / expected_response)<br/>RetrievalSufficiency (expected_facts / expected_response)<br/>ExpectationsGuidelines (per-row guidelines)"]
+  Q -->|"No — judges output/trace as-is"| NGT["RelevanceToQuery · Safety<br/>RetrievalGroundedness<br/>RetrievalRelevance · Guidelines"]`;
+
+/* ---------- light tutor front ---------- */
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0].split(" · ")[1];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline) ---------- */
+function drawMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

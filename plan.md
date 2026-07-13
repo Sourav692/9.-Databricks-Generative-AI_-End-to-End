@@ -222,20 +222,20 @@ Tick as built; paste the path. `[ ]` todo · `[~]` in progress · `[x]` done (re
 ### P2 — MLflow MLOps
 - [x] **06** module.md · [x] module.html · [x] 06-module-lab.py · [x] ★06.2 mlflow-2-to-3 (md+html) · [x] ★06.5 uc-model-registry (md+html) · [x] 06-5-uc-model-registry.py — reviewer ✅ (content ✅ first pass; notebooks ✅ first pass) — `modules/06-mlflow-core/` · `notebooks/06-mlflow-core/`
 - [x] **07** module.md · [x] module.html · [x] 07-module-lab.py · [x] ★07.2–07.3 tracing (md+html) — reviewer ✅ (content 🟡→fixed; notebook 🔴 search_traces bug→fixed) — `modules/07-mlflow-tracing/` · `notebooks/07-mlflow-tracing/`
-- [ ] **08** module.md · [ ] module.html · [ ] 08-module-lab.py · [ ] ★08.1 · [ ] ★08.4
+- [x] **08** module.md · [x] module.html · [x] 08-module-lab.py · [x] ★08.1 eval-harness (md+html) · [x] ★08.4 llm-as-judge (md+html) · [x] 08-4-llm-as-judge.py — reviewer ✅ (hub 🔴 ground-truth-split→fixed; cornerstones ✅; nb A ✅, nb B 🟡→fixed) — `modules/08-evaluating-genai/` · `notebooks/08-evaluating-genai/`
 
 ### P3 — Agents
-- [ ] **09** module.md · [ ] module.html · [ ] 09-module-lab.py · [ ] ★09.3 · [ ] ★09.6
-- [ ] **10** module.md · [ ] module.html · [ ] 10-module-lab.py · [ ] ★10.2 · [ ] ★10.5
+- [x] **09** module.md · [x] module.html · [x] 09-module-lab.py · [x] ★09.3 create-tools (md+html) · [x] ★09.6 responsesagent (md+html) · [x] 09-3-create-tools.py · [x] 09-6-responsesagent.py — reviewer ✅ (hub 🟡 naming-drift→fixed; cornerstones ✅; notebooks 🟡 seed-table→fixed) — `modules/09-agent-fundamentals/` · `notebooks/09-agent-fundamentals/`
+- [x] **10** module.md · [x] module.html · [x] 10-module-lab.py · [x] ★10.2 knowledge-assistant (md+html) · [x] ★10.5 databricks-apps (md+html) · [x] 10-5-databricks-apps.py — reviewer ✅ (hub 🟡 apps-CLI→fixed; cornerstones ✅; notebooks ✅ first pass) — `modules/10-agent-bricks/` · `notebooks/10-agent-bricks/`
 
 ### P4 — Production
-- [ ] **11** module.md · [ ] module.html · [ ] 11-module-lab.py · [ ] ★11.1 · [ ] ★11.3 · [ ] ★11.10
-- [ ] **12** module.md · [ ] module.html · [ ] 12-module-lab.py · [ ] ★12.2
-- [ ] **13** module.md · [ ] module.html · [ ] 13-module-lab.py · [ ] ★13.5
+- [x] **11** module.md · [x] module.html · [x] 11-module-lab.py · [x] ★11.1 model-serving (md+html) · [x] 11-1-model-serving.py · [x] ★11.3 ai-gateway (md+html) · [x] ★11.10 ai-functions-at-scale (md+html) · [x] 11-10-ai-functions.py — reviewer ✅ (11.3+hub ✅ first pass; 11.1 🟡 innerHTML-escape→fixed; 11.10 🟡 version-gate/snapshot→fixed; nb 11-10 🔴 errorMessage-field→fixed; nb module-lab 🔴 errorMessage+seed→fixed; endpoint-name aligned to `ua-support-agent`) — `modules/11-deployment-serving/` · `notebooks/11-deployment-serving/`
+- [x] **12** module.md · [x] module.html · [x] 12-module-lab.py · [x] ★12.2 ai-guardrails (md+html) · [x] 12-2-ai-guardrails.py — reviewer ✅ (hub 🟡 GRANT-USAGE→USE-CATALOG/SCHEMA→fixed; 12.2 🟡 streaming-overstatement→fixed; nb 12-2 🟡 get_open_ai_client-deprecation-note→fixed; nb module-lab 🟡 polish→fixed) · **cross-cut accuracy fix:** AI Gateway on **agent endpoints supports only inference tables** (guardrails/rate-limits need an FM/external endpoint) — added as a GOTCHA in 11.3, 12.2, and both labs — `modules/12-responsible-genai/` · `notebooks/12-responsible-genai/`
+- [x] **13** module.md · [x] module.html · [x] 13-module-lab.py · [x] ★13.5 aibi-dashboard (md+html) · [x] 13-5-aibi-dashboard.py — reviewer ✅ (13.5 🟡 sql_warehouse_id-arg + token-key hedge→fixed; hub 🟡 ai_classify-preferred + experiment_names/attributes.status→reconciled; nb 13-5 🟡 errorMessage-comment→fixed; nb module-lab 🟡 sample_rate-attr→fixed) — `modules/13-production-monitoring/` · `notebooks/13-production-monitoring/`
 
-### P5 — Conversational Analytics
-- [ ] **14** module.md · [ ] module.html · [ ] 14-module-lab.py · [ ] ★14.3 · [ ] 14-8-genie-api.py
-- [ ] **15** module.md · [ ] module.html · [ ] 15-module-lab.py · [ ] ★15.3
+### P5 — Conversational Analytics ✅ (built + INDEPENDENTLY reviewed ✅ by genai-teacher-reviewer, 12 artifacts)
+- [x] **14** module.md · [x] module.html · [x] 14-module-lab.py · [x] ★14.3 curate-tune-genie (md+html) · [x] 14-8-genie-api.py — reviewer ✅ (content 🟡→fixed: `trusted-assets`→`set-up` URL, dead stepper JS removed; notebooks ✅ first pass — `w.genie.*` + `MessageStatus` verified vs `databricks-sdk` 0.73.0) — `modules/14-aibi-genie/` · `notebooks/14-aibi-genie/`
+- [x] **15** module.md · [x] module.html · [x] 15-module-lab.py · [x] ★15.3 query-metric-views (md+html) · [x] 15-3-query-metric-views.py — reviewer ✅ (content 🟡→fixed: next-stop→M14, inline-SQL backticks, `manage_metric_views` clarified as agent/build-tool; notebooks ✅ first pass) — `modules/15-business-semantics/` · `notebooks/15-business-semantics/`
 
 ### P6 — Architect & Frontier
 - [ ] **16** module.md · [ ] module.html · [ ] 16-module-lab.py · [ ] ★16.1
@@ -244,6 +244,15 @@ Tick as built; paste the path. `[ ]` todo · `[~]` in progress · `[x]` done (re
 ### P7 — Cross-cutting
 - [ ] **Track C** module.md · [ ] module.html · [ ] mock-exam.md
 - [ ] **Track D** module.md · [ ] architecture-one-pager.html · [ ] poc-scorecard.html · [ ] production-readiness-checklist.html
+
+### 🏁 Capstone projects
+Location: `capstones/`. Each = **MD brief + interactive HTML (architecture + milestones + grading rubric) + runnable NB**. Decision (2026-07-13): build the **specs (MD+HTML) up front**; the runnable `.py` capstone notebook is built when that capstone's phase is reached. Each capstone reuses the prior capstone's Unity Airways artifact.
+- [x] **C1** capstone-1-rag-knowledge-base — **md ✅ · html ✅** · ⏸ py (build after P1) — reviewer ✅ first pass — integrates Modules 00–05 → registered RAG chain — `capstones/`
+- [x] **C2** capstone-2-eval-trace-version — **md ✅ · html ✅** · ⏸ py (build after P2) — reviewer ✅ first pass — integrates 06–08 on 03–05 → evaluated/versioned RAG + scorecard — `capstones/`
+- [x] **C3** capstone-3-governed-agent — **md ✅ · html ✅** · ⏸ py (build after P4) — reviewer ✅ first pass — integrates 09–13 on 03–08 → deployed, guardrailed, monitored agent — `capstones/`
+- [x] **C4 (FINAL)** capstone-4-genai-platform — **md ✅ · html ✅** · ⏸ py (build at end) — reviewer ✅ first pass — **= ★17.7**, integrates all 00–17 (+ Genie 14/15, architecture 16/17) → full reference solution + cert map — `capstones/`
+> ⏸ py = runnable capstone notebook deferred to each capstone's phase (C1/C2 buildable now; C3 after P4; C4 at end). Specs (md+html) all reviewer-✅.
+> **Topic coverage:** AI Functions (C1 `ai_parse_document`/`ai_extract`, C3/C4 `ai_query`) ✅ · Agent Bricks (C3/C4 Knowledge Assistant + Multi-Agent Supervisor) ✅ · **MLflow Prompt Registry (02.5)** woven through **C1** (author+register `unity_airways.rag.ua_rag_prompt` v1, chain loads by URI), **C2** (version v1/v2 → evaluate → promote `@champion`), **C4** (platform prompt-version governance) ✅ — continuity verified.
 
 ---
 
