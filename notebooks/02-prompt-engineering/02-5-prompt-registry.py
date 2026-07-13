@@ -40,7 +40,7 @@
 
 import mlflow
 
-CATALOG = "main"        # <-- change to a catalog you can write to
+CATALOG = "genai"        # <-- change to a catalog you can write to
 SCHEMA = "default"      # <-- change to a schema where you hold CREATE FUNCTION, EXECUTE, MANAGE
 MODEL_ENDPOINT = "databricks-claude-sonnet-4-5"  # verify on Serving > supported models
 

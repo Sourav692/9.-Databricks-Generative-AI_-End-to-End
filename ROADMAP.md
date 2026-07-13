@@ -240,7 +240,7 @@ Four integrative projects that turn "topics learned" into "a thing shipped." Eac
 
 ## Level 7 — Architect & Frontier
 
-### Module 16 — Cost, performance & scaling  ⬜
+### Module 16 — Cost, performance & scaling  ✅
 - 16.1 Mosaic AI architecture overview; model serving at scale `[T]` · 📗B2 Ch9
 - 16.2 Context length & embedding dimension trade-offs `[T]` · 📗B2 Ch9
 - 16.3 Batch inference workloads suitable for `ai_query()` `[T+H]` · 📗B2 Ch9
@@ -248,7 +248,9 @@ Four integrative projects that turn "topics learned" into "a thing shipped." Eac
 - 16.5 Controlling LLM/GenAI costs with Databricks features `[T]` · 📗B2 Ch6, Ch8
 - 16.6 **Fine-tuning & provisioned throughput** — custom / fine-tuned weights (Mosaic AI Model Training); *beyond the exam blueprint* `[T]` · 🌐Docs
 
-### Module 17 — Reference architectures & unifying GenAI systems  ⬜
+### Module 17 — Reference architectures & unifying GenAI systems  ✅
+<!-- hub (17.1–17.7) built in P6; ★17.7 spec = Capstone C4 (✅); runnable capstone notebook deferred (build at end) -->
+
 - 17.1 The 5-phase GenAI lifecycle (Develop→Evaluate→Deploy→Monitor→Improve) as architecture `[T]` · 📘B1 Ch2
 - 17.2 MLflow Traces as the shared integration artifact `[T]` · 📘B1 Ch10
 - 17.3 **OpenTelemetry** for cross-stack tracing `[T+H]` · 📘B1 Ch10
@@ -259,7 +261,7 @@ Four integrative projects that turn "topics learned" into "a thing shipped." Eac
 
 ---
 
-## Track C — Certification prep (cross-cutting)
+## Track C — Certification prep (cross-cutting)  ✅
 
 *Run alongside Levels 1–7; maps the above to the exam blueprint.*
 - C.1 Exam format, blueprint, domains & weights `[T]` · 📗B2 Ch1, Ch10
@@ -275,7 +277,7 @@ Four integrative projects that turn "topics learned" into "a thing shipped." Eac
 
 ---
 
-## Track D — FDE delivery toolkit (cross-cutting)
+## Track D — FDE delivery toolkit (cross-cutting)  ✅
 
 *Run from Level 4 onward; turns knowledge into customer-facing delivery skill.*
 - D.1 Discovery questions for customer GenAI maturity mapping `[T]`

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production-Readiness Checklist — Unity Airways GenAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Spline+Sans+Mono:wght@400;500;600&family=Spline+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f4f1ea; --paper-2:#efe9dd; --card:#fbf9f4; --line:#e0d8c8;
+    --ink:#26211c; --muted:#6b6155; --faint:#9c9183;
+    --flame:#ff3621; --flame-deep:#d6260f; --violet:#7b4bd6; --frost:#1a7f78;
+    --amber:#c07b1e; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Spline Sans",sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:34px 22px 80px}
+  a{color:var(--flame-deep);text-decoration:none}a:hover{text-decoration:underline}
+  code,.mono{font-family:"Spline Sans Mono",monospace}
+  code{background:rgba(0,0,0,.05);padding:.06em .35em;border-radius:5px;font-size:.9em}
+
+  .crumb{font-family:"Spline Sans Mono",monospace;font-size:.74rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted)}
+  .eyebrow{font-family:"Spline Sans Mono",monospace;font-size:.74rem;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--flame);margin:22px 0 10px}
+  h1{font-family:"Fraunces",serif;font-weight:900;font-size:clamp(1.9rem,4.6vw,2.9rem);
+    line-height:1.03;margin:0 0 14px;letter-spacing:-.02em}
+  h1 .drip{font-style:italic;background:linear-gradient(105deg,var(--flame),var(--violet));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .lede{font-size:1.1rem;color:var(--muted);max-width:70ch;margin:0 0 16px}
+  .pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+  .pill{font-family:"Spline Sans Mono",monospace;font-size:.68rem;letter-spacing:.06em;
+    text-transform:uppercase;padding:5px 11px;border-radius:999px;border:1px solid var(--line);
+    background:var(--card);color:var(--muted)}
+  .pill.flame{border-color:var(--flame);color:var(--flame-deep)}
+  .pill.violet{border-color:var(--violet);color:var(--violet)}
+
+  section{border-top:1px solid var(--line);margin-top:30px;padding-top:24px}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:1.5rem;margin:0 0 12px}
+  p{margin:0 0 12px}
+  .oneliner{font-size:1.16rem;font-weight:600;border-left:3px solid var(--flame);
+    padding:4px 0 4px 16px;margin:4px 0 12px}
+  .reuse{background:var(--paper-2);border:1px dashed var(--faint);border-radius:12px;
+    padding:12px 16px;font-size:.9rem;color:var(--muted);margin-top:14px}
+  .reuse b{color:var(--ink)}
+
+  /* verdict */
+  .verdict{position:sticky;top:10px;z-index:5;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);padding:16px 18px;margin-bottom:18px;display:flex;
+    align-items:center;gap:18px;flex-wrap:wrap}
+  .vbadge{font-family:"Spline Sans Mono",monospace;font-weight:600;font-size:1.05rem;
+    padding:8px 16px;border-radius:10px;letter-spacing:.04em;white-space:nowrap}
+  .vbadge.ship{background:var(--frost);color:#fff}
+  .vbadge.block{background:var(--flame);color:#fff}
+  .meter{flex:1;min-width:180px}
+  .meter .bar{height:12px;border-radius:999px;background:var(--paper-2);overflow:hidden;border:1px solid var(--line)}
+  .meter .fill{height:100%;width:0;background:linear-gradient(90deg,var(--flame),var(--frost));transition:width .3s}
+  .meter .lbl{font-family:"Spline Sans Mono",monospace;font-size:.72rem;color:var(--muted);margin-top:6px}
+  .vwhy{font-size:.9rem;color:var(--muted);flex-basis:100%;margin:0}
+
+  /* checklist */
+  .grp{margin-bottom:18px}
+  .grphead{display:flex;align-items:baseline;gap:10px;margin:0 0 8px}
+  .grphead h3{font-family:"Fraunces",serif;font-weight:600;font-size:1.12rem;margin:0}
+  .grpcount{font-family:"Spline Sans Mono",monospace;font-size:.72rem;color:var(--muted)}
+  .item{display:flex;align-items:flex-start;gap:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:11px;padding:11px 14px;margin-bottom:7px;cursor:pointer;transition:border-color .15s}
+  .item:hover{border-color:var(--faint)}
+  .item.done{border-left:4px solid var(--frost)}
+  .item.open{border-left:4px solid var(--flame)}
+  .box{flex:0 0 20px;width:20px;height:20px;border:2px solid var(--faint);border-radius:6px;
+    margin-top:2px;display:grid;place-items:center;font-size:13px;color:#fff;transition:all .15s}
+  .item.done .box{background:var(--frost);border-color:var(--frost)}
+  .itxt{flex:1}
+  .itxt .lab{font-size:.96rem}
+  .itxt .sub{font-size:.82rem;color:var(--muted);margin-top:2px}
+  .item:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+  .owner{font-family:"Spline Sans Mono",monospace;font-size:.64rem;letter-spacing:.05em;
+    text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:2px 8px;
+    color:var(--muted);white-space:nowrap;margin-top:2px}
+  .beta{font-family:"Spline Sans Mono",monospace;font-size:.6rem;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--amber);border:1px solid var(--amber);border-radius:999px;
+    padding:1px 6px;margin-left:6px}
+  .preview{font-family:"Spline Sans Mono",monospace;font-size:.6rem;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--violet);border:1px solid var(--violet);border-radius:999px;
+    padding:1px 6px;margin-left:6px}
+
+  .callout{background:var(--paper-2);border:1px solid var(--line);border-left:4px solid var(--flame);
+    border-radius:var(--radius);padding:16px 18px}
+  .callout .lbl{font-family:"Spline Sans Mono",monospace;font-size:.68rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--flame-deep);display:block;margin-bottom:8px}
+  .callout ul{margin:0;padding-left:18px}.callout li{margin:5px 0}
+  .doclinks{list-style:none;padding:0;margin:0}.doclinks li{padding:4px 0;font-size:.92rem}
+  .verified{font-family:"Spline Sans Mono",monospace;font-size:.7rem;color:var(--faint);
+    margin-top:14px;letter-spacing:.06em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <span class="crumb">Track D · FDE Delivery Toolkit · Reusable Template</span>
+  <div class="eyebrow">Databricks · Delivery Asset · Production-Readiness Checklist</div>
+  <h1>Production-Readiness <span class="drip">gate</span></h1>
+  <p class="lede">The gate between pilot and production: reliability, security, governance, cost, and monitoring items, each with an owner and a status. All-green ships; every open item carries a named owner. Worked here for the <b>Unity Airways</b> support agent.</p>
+  <div class="pills">
+    <span class="pill flame">Reusable template</span>
+    <span class="pill">Interactive — click to check</span>
+    <span class="pill violet">Production exit gate</span>
+    <span class="pill">Verified July 2026 docs</span>
+  </div>
+  <div class="reuse"><b>How to reuse:</b> swap owners and item wording for the customer's org; keep the categories. The rule the board cares about: <b>all-green, or every red item has a named owner and a date.</b> Click items to toggle. The example below is Unity Airways mid-hardening.</div>
+
+  <!-- IN ONE LINE -->
+  <section>
+    <h2>What this gate is for</h2>
+    <p class="oneliner">A production-readiness checklist proves the pilot can survive real traffic, a security review, an audit, a budget, and a 2 a.m. page — before it gets any of them.</p>
+  </section>
+
+  <!-- LIVE VERDICT + CHECKLIST -->
+  <section>
+    <h2>Work the checklist</h2>
+    <div class="verdict" role="status" aria-live="polite">
+      <span class="vbadge" id="vbadge">—</span>
+      <div class="meter">
+        <div class="bar"><div class="fill" id="fill"></div></div>
+        <div class="lbl" id="mlbl">0 / 0 items green</div>
+      </div>
+      <p class="vwhy" id="vwhy"></p>
+    </div>
+    <div id="list"></div>
+  </section>
+
+  <!-- ENDPOINT SPLIT CALLOUT -->
+  <section>
+    <h2>The one thing reviewers correct you on</h2>
+    <div class="callout">
+      <span class="lbl">Get the endpoint split right</span>
+      <ul>
+        <li><b>AI Gateway guardrails, rate limits, provider fallbacks, and budgets</b> live on the foundation-model endpoint <code>ua-support-llm</code> that the agent calls.</li>
+        <li>The <b>agent endpoint</b> <code>ua-support-agent</code> created by <code>agents.deploy(...)</code> carries <b>inference tables (payload logging) only</b>.</li>
+        <li>Two endpoints, two jobs: put the guardrail story on the FM endpoint and the observability story on the agent endpoint.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- REFERENCES -->
+  <section>
+    <h2>References</h2>
+    <ul class="doclinks">
+      <li><a href="https://docs.databricks.com/aws/en/ai-gateway/">AI Gateway — guardrails, rate limits, fallbacks, budgets, payload logging</a></li>
+      <li><a href="https://docs.databricks.com/aws/en/generative-ai/agent-framework/deploy-agent">Deploy an agent — agents.deploy(), inference tables, Review App</a></li>
+      <li><a href="https://docs.databricks.com/aws/en/mlflow3/genai/eval-monitor/">MLflow 3 — production monitoring (Beta), scorers-as-monitors</a></li>
+      <li>Capstone C4 deliverables — <code>capstones/capstone-4-genai-platform.md</code></li>
+    </ul>
+    <p class="verified">Verified against docs.databricks.com · July 2026 · Beta items (Unity AI Gateway budgets, production monitoring, Prompt Registry) and Preview items (PII detection/redaction) flagged inline — live re-check pending</p>
+  </section>
+
+</div>
+
+<script>
+  // groups of {label, sub, owner, done, beta?}
+  var GROUPS = [
+    {cat:"Reliability", items:[
+      {l:"Provider fallbacks configured", s:"AI Gateway on FM endpoint ua-support-llm (Mod 11)", o:"Platform", d:true},
+      {l:"Autoscaling / concurrency sized", s:"Model Serving, held under a load test (Mod 16)", o:"Platform", d:true},
+      {l:"Endpoint-sizing decision documented", s:"pay-per-token vs provisioned throughput, with reasons (Mod 16)", o:"FDE", d:true},
+      {l:"Load test at 10x traffic meets SLO", s:"p95 target holds under peak (Mod 16)", o:"SRE", d:false}
+    ]},
+    {cat:"Security", items:[
+      {l:"Guardrails on FM endpoint ua-support-llm", s:"AI Gateway content-safety service policies (Mod 12)", o:"Security", d:true},
+      {l:"PII detection / redaction enabled", s:"AI Gateway on FM endpoint (Mod 12)", o:"Security", d:false, prev:true},
+      {l:"Rate limits on FM endpoint", s:"blunt abuse and runaway cost (Mod 11)", o:"Platform", d:true},
+      {l:"No credentials in code", s:"Databricks secrets; UC-governed access (Mod 00)", o:"FDE", d:true},
+      {l:"Red-team pass recorded", s:"jailbreak, injection-via-docs, PII fishing, tool misuse (D.5)", o:"FDE", d:false}
+    ]},
+    {cat:"Governance", items:[
+      {l:"Least-privilege UC grants", s:"on model, UC-function tools, source data, metric views (Mod 12)", o:"Data Gov", d:true},
+      {l:"Lineage + audit verified end to end", s:"Unity Catalog (Mod 00)", o:"Data Gov", d:true},
+      {l:"Promoted via @champion alias", s:"no run URIs in production (Mod 06)", o:"FDE", d:true},
+      {l:"Prompt governed in Prompt Registry", s:"prompts:/...@champion, versioned like a model (Mod 02)", o:"FDE", d:true, beta:true}
+    ]},
+    {cat:"Cost", items:[
+      {l:"Cost per 1k requests measured", s:"against the agreed target (Mod 16)", o:"FDE", d:true},
+      {l:"Batch vs real-time chosen per workload", s:"ai_query for bulk enrichment (Mod 11/16)", o:"FDE", d:true},
+      {l:"Unity AI Gateway budget with hard cap", s:"spend cannot run away (Mod 16)", o:"Finance", d:false, beta:true}
+    ]},
+    {cat:"Monitoring & observability", items:[
+      {l:"MLflow 3 tracing on every call", s:"spans on request path (Mod 07)", o:"FDE", d:true},
+      {l:"Inference tables on agent endpoint", s:"ua-support-agent payload logging (Mod 13)", o:"Platform", d:true},
+      {l:"Production monitoring scorers on live traces", s:"reuse eval scorers (Mod 13)", o:"FDE", d:true, beta:true},
+      {l:"AI/BI dashboard + alerts to on-call", s:"quality + volume + cost, paging wired (Mod 13)", o:"SRE", d:false}
+    ]},
+    {cat:"Quality & rollback", items:[
+      {l:"Eval scorecard clears threshold", s:"mlflow.genai.evaluate on champion (Mod 08)", o:"FDE", d:true},
+      {l:"Eval gate in CI blocks regressions", s:"Lakeflow Job runs eval before promotion (Mod 08)", o:"FDE", d:false},
+      {l:"Rollback rehearsed", s:"repoint @champion to the prior version (Mod 06)", o:"FDE", d:true},
+      {l:"On-call rotation + runbook exists", s:"who is paged, what they do (D.5)", o:"SRE", d:true}
+    ]}
+  ];
+
+  var flat = [];
+  var list = document.getElementById('list');
+  GROUPS.forEach(function(g){
+    var box = document.createElement('div'); box.className='grp';
+    var head = document.createElement('div'); head.className='grphead';
+    head.innerHTML = '<h3>'+g.cat+'</h3><span class="grpcount" data-cat="'+g.cat+'"></span>';
+    box.appendChild(head);
+    g.items.forEach(function(it){
+      var idx = flat.length; flat.push({it:it, cat:g.cat});
+      var el = document.createElement('div');
+      el.className = 'item ' + (it.d?'done':'open');
+      el.setAttribute('tabindex','0'); el.setAttribute('role','checkbox');
+      el.setAttribute('aria-checked', it.d?'true':'false');
+      el.dataset.i = idx;
+      el.innerHTML =
+        '<div class="box">'+(it.d?'&#10003;':'')+'</div>' +
+        '<div class="itxt"><div class="lab">'+it.l+(it.beta?'<span class="beta">Beta</span>':'')+(it.prev?'<span class="preview">Preview</span>':'')+'</div>'+
+        '<div class="sub">'+it.s+'</div></div>' +
+        '<span class="owner">'+it.o+'</span>';
+      box.appendChild(el);
+    });
+    list.appendChild(box);
+  });
+
+  function paint(){
+    var green=0;
+    flat.forEach(function(f,i){
+      var el = list.querySelector('.item[data-i="'+i+'"]');
+      var on = f.it.d;
+      el.classList.toggle('done', on); el.classList.toggle('open', !on);
+      el.setAttribute('aria-checked', on?'true':'false');
+      el.querySelector('.box').innerHTML = on?'&#10003;':'';
+      if(on) green++;
+    });
+    // per-group counts
+    GROUPS.forEach(function(g){
+      var done = g.items.filter(function(x){return x.d;}).length;
+      list.querySelector('.grpcount[data-cat="'+g.cat+'"]').textContent = done+'/'+g.items.length;
+    });
+    var total = flat.length, pct=Math.round(green/total*100);
+    document.getElementById('fill').style.width = pct+'%';
+    document.getElementById('mlbl').textContent = green+' / '+total+' items green';
+    var open = flat.filter(function(f){return !f.it.d;});
+    var badge=document.getElementById('vbadge'), why=document.getElementById('vwhy');
+    badge.className='vbadge';
+    if(open.length===0){
+      badge.classList.add('ship'); badge.textContent='SHIP';
+      why.innerHTML='All items green. The pilot is production-ready — hand over the architecture one-pager to the board.';
+    } else {
+      badge.classList.add('block'); badge.textContent='BLOCKED · '+open.length;
+      var owners = {}; open.forEach(function(f){ (owners[f.it.o]=owners[f.it.o]||[]).push(f.it.l); });
+      var parts = Object.keys(owners).map(function(o){ return '<b>'+o+'</b> ('+owners[o].length+')'; });
+      why.innerHTML = open.length+' open item'+(open.length>1?'s':'')+', each with a named owner: '+parts.join(', ')+'. Ship only when green or every red item has an owner and a date.';
+    }
+  }
+  function toggle(i){ flat[i].it.d = !flat[i].it.d; paint(); }
+  list.addEventListener('click', function(e){
+    var el=e.target.closest('.item'); if(!el) return; toggle(+el.dataset.i);
+  });
+  list.addEventListener('keydown', function(e){
+    var el=e.target.closest('.item'); if(!el) return;
+    if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(+el.dataset.i); }
+  });
+  paint();
+</script>
+</body>
+</html>

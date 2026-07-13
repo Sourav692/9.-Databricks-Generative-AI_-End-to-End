@@ -33,7 +33,7 @@
 
 # COMMAND ----------
 
-CATALOG = "main"          # <-- change to a catalog you can write to
+CATALOG = "genai"          # <-- change to a catalog you can write to
 SCHEMA  = "airways"       # Unity Airways use-case schema
 VOLUME  = "faq_docs"      # managed volume for unstructured RAG source files
 TABLE   = "bookings"      # structured booking records (Delta)

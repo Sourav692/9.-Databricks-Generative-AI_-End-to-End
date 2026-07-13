@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Learning Hub homepage.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+  Self-contained (inline CSS/JS); links out to every module, deep-dive, notebook, capstone, and track.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Databricks GenAI — End-to-End Learning Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:1080px; --radius:9px;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+    --serif:"Source Serif 4",Georgia,serif;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important;transition:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:1.02rem;
+    line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  a:hover{color:var(--accent)}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+
+  /* topbar */
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.88);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar nav{display:flex;gap:18px;flex-wrap:wrap}
+  .topbar nav a{color:var(--muted);text-decoration:none;border:none}
+  .topbar nav a:hover{color:var(--accent)}
+  @media(max-width:720px){.topbar nav{display:none}}
+
+  /* masthead */
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:60px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
+    display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:20px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.4vw,3.3rem);
+    line-height:1.05;letter-spacing:-.03em;margin:0 0 14px;text-transform:uppercase;max-width:20ch}
+  .dek{font-size:1.2rem;line-height:1.6;color:var(--ink);max-width:64ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+  .stat{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);
+    border:1px solid var(--line);background:var(--card);border-radius:2px;padding:7px 11px}
+  .stat b{color:var(--accent-2);font-weight:700}
+  .stat.done{border-color:var(--ok);color:var(--ok)}
+
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px}
+  section{padding:44px 0;border-top:1px solid var(--line)}
+  .sec-head{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+    display:flex;align-items:center;gap:10px;margin:0 0 6px}
+  .sec-head::before{content:"";width:22px;height:1px;background:var(--accent);opacity:.6}
+  h2.sec-title{font-family:var(--serif);font-weight:600;font-size:clamp(1.4rem,3vw,1.9rem);margin:.1em 0 .5em;letter-spacing:-.01em}
+  .sec-note{color:var(--muted);max-width:70ch;margin:0 0 8px}
+
+  /* controls */
+  .controls{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin:20px 0 6px}
+  .search{flex:1;min-width:220px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);border-radius:7px;padding:9px 13px}
+  .search input{border:0;background:transparent;outline:none;font-family:var(--serif);font-size:1rem;color:var(--ink);width:100%}
+  .search .ic{font-family:var(--mono);color:var(--faint);font-size:.9rem}
+  .paths{display:flex;flex-wrap:wrap;gap:7px}
+  .paths .lbl{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);align-self:center;margin-right:2px}
+  .pchip{appearance:none;cursor:pointer;font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;background:transparent;color:var(--ink);
+    border:1px solid var(--line);border-radius:2px;padding:7px 11px;transition:.16s}
+  .pchip:hover{border-color:var(--ink)}
+  .pchip[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .pchip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* level groups */
+  .level{margin-top:30px}
+  .level-head{display:flex;align-items:baseline;gap:12px;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line-2)}
+  .level-head .lv{font-family:var(--mono);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+  .level-head .lt{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+
+  /* module card */
+  .mod{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:18px 18px 16px;display:flex;flex-direction:column;gap:2px;
+    transition:border-color .18s,box-shadow .18s,transform .18s}
+  .mod:hover{border-color:var(--ink);box-shadow:0 3px 0 var(--accent-soft)}
+  .mod.dim{opacity:.32}
+  .mod.hit{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+  .mod.hidden{display:none}
+  .mod-top{display:flex;align-items:center;justify-content:space-between}
+  .mod-num{font-family:var(--mono);font-weight:800;font-size:1.15rem;color:var(--accent)}
+  .mod-lv{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);border:1px solid var(--line);border-radius:2px;padding:2px 6px}
+  .mod h3{font-family:var(--serif);font-weight:600;font-size:1.14rem;line-height:1.25;margin:6px 0 3px}
+  .mod .desc{font-size:.92rem;line-height:1.5;color:var(--muted);margin:0 0 10px}
+  .mod .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+  .mod .links a{font-family:var(--mono);font-size:.68rem;letter-spacing:.03em;text-decoration:none;border:1px solid var(--line);border-radius:2px;padding:4px 8px;color:var(--ink);white-space:nowrap}
+  .mod .links a:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .mod .links a.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .mod .links a.primary:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+  .mod .sub{margin-top:9px;font-size:.82rem;line-height:1.5}
+  .mod .sub .sl{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);display:block;margin-bottom:2px}
+  .mod .sub a{color:var(--accent-2);text-decoration-color:var(--line)}
+  .noresult{display:none;font-family:var(--mono);font-size:.8rem;color:var(--muted);padding:18px 0}
+
+  /* capstone + track cards */
+  .cap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-top:18px}
+  .cap{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px}
+  .cap.final{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent-soft)}
+  .cap .cn{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+  .cap h3{font-family:var(--serif);font-weight:600;font-size:1.16rem;margin:5px 0 4px;line-height:1.25}
+  .cap .integ{font-family:var(--mono);font-size:.66rem;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+  .cap p{font-size:.92rem;color:var(--muted);margin:0 0 12px}
+  .cap .links,.trk .links{display:flex;flex-wrap:wrap;gap:6px}
+  .cap .links a,.trk .links a{font-family:var(--mono);font-size:.68rem;text-decoration:none;border:1px solid var(--line);border-radius:2px;padding:4px 9px;color:var(--ink)}
+  .cap .links a:hover,.trk .links a:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .trk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-top:18px}
+  .trk{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px}
+  .trk h3{font-family:var(--serif);font-weight:600;font-size:1.2rem;margin:4px 0 6px}
+  .trk .tk{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+  .trk p{font-size:.92rem;color:var(--muted);margin:0 0 12px}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px 22px;font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;color:var(--muted);margin-top:16px}
+  .legend b{color:var(--ink);font-weight:700}
+
+  footer{max-width:var(--wrap);margin:0 auto;padding:36px 24px 64px;border-top:1px solid var(--line);
+    font-family:var(--mono);font-size:.72rem;color:var(--faint);line-height:1.9}
+  footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="#top">Databricks GenAI · Learning Hub</a>
+    <nav>
+      <a href="#curriculum">Curriculum</a>
+      <a href="#capstones">Capstones</a>
+      <a href="#tracks">Tracks</a>
+      <a href="ROADMAP.md">Roadmap</a>
+    </nav>
+  </div>
+</div>
+
+<header class="masthead" id="top">
+  <div class="inner">
+    <div class="kicker"><span>Databricks Generative AI · End to End</span><span>Fundamentals → Architect</span></div>
+    <h1>GenAI on Databricks — Learning Hub</h1>
+    <p class="dek">From fundamentals to architect-level GenAI on Databricks — theory <em>and</em> hands-on, grounded in the official docs and two reference books. Every concept is taught on one running example: <em>Unity Airways</em> ✈️, an airline you build from a RAG knowledge base to a governed, monitored, multi-surface GenAI platform.</p>
+    <div class="stats">
+      <span class="stat"><b>18</b> modules</span>
+      <span class="stat"><b>26</b> deep-dives</span>
+      <span class="stat"><b>34</b> notebooks</span>
+      <span class="stat"><b>4</b> capstones</span>
+      <span class="stat"><b>2</b> tracks</span>
+      <span class="stat done">✅ complete</span>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+
+  <!-- CURRICULUM -->
+  <section id="curriculum">
+    <div class="sec-head">Curriculum</div>
+    <h2 class="sec-title">18 modules, eight levels, one running example</h2>
+    <p class="sec-note">Each module ships a written guide (<b>📖</b>), an interactive page (<b>🖥️</b>), cornerstone deep-dives (<b>★</b>), and Databricks-importable notebooks (<b>📓</b>). Filter by keyword, or pick a learning path to highlight its modules.</p>
+
+    <div class="controls">
+      <label class="search"><span class="ic">⌕</span><input id="q" type="search" placeholder="Filter modules — try &quot;rag&quot;, &quot;agent&quot;, &quot;genie&quot;, &quot;serving&quot;…" aria-label="Filter modules" autocomplete="off"></label>
+      <div class="paths">
+        <span class="lbl">Path</span>
+        <button class="pchip" data-path="rag" aria-pressed="false">🚀 Fastest RAG</button>
+        <button class="pchip" data-path="agent" aria-pressed="false">🤖 Agent</button>
+        <button class="pchip" data-path="analytics" aria-pressed="false">📊 Analytics</button>
+        <button class="pchip" data-path="cert" aria-pressed="false">🎓 Cert</button>
+      </div>
+    </div>
+    <p class="noresult" id="noresult">No modules match that filter.</p>
+
+    <div id="levels">
+      <!-- Level 0 -->
+      <div class="level" data-level="L0">
+        <div class="level-head"><span class="lv">Level 0</span><span class="lt">Orientation &amp; Environment</span></div>
+        <div class="grid">
+          <article class="mod" data-mod="00" data-tags="platform foundations unity catalog lakehouse compute mosaic ai marketplace">
+            <div class="mod-top"><span class="mod-num">00</span><span class="mod-lv">L0</span></div>
+            <h3>Platform foundations for GenAI</h3>
+            <p class="desc">Lakehouse, Unity Catalog, compute, and where each piece of Mosaic AI fits.</p>
+            <div class="links"><a class="primary" href="modules/00-platform-foundations/module.html">🖥️ Interactive</a><a href="modules/00-platform-foundations/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dive</span><a href="modules/00-platform-foundations/mosaic-ai-landscape.html">Mosaic AI landscape</a></div>
+            <div class="sub"><span class="sl">📓 Notebook</span><a href="notebooks/00-platform-foundations/00-module-lab.py">module lab</a></div>
+          </article>
+        </div>
+      </div>
+
+      <!-- Level 1 -->
+      <div class="level" data-level="L1">
+        <div class="level-head"><span class="lv">Level 1</span><span class="lt">GenAI Foundations</span></div>
+        <div class="grid">
+          <article class="mod" data-mod="01" data-tags="genai llm fundamentals tokens embeddings foundation model apis external models">
+            <div class="mod-top"><span class="mod-num">01</span><span class="mod-lv">L1</span></div>
+            <h3>GenAI &amp; LLM fundamentals</h3>
+            <p class="desc">LLMs, tokens, context windows, embeddings, and Foundation Model APIs.</p>
+            <div class="links"><a class="primary" href="modules/01-genai-llm-fundamentals/module.html">🖥️ Interactive</a><a href="modules/01-genai-llm-fundamentals/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dive</span><a href="modules/01-genai-llm-fundamentals/foundation-model-apis.html">Foundation Model APIs</a></div>
+            <div class="sub"><span class="sl">📓 Notebook</span><a href="notebooks/01-genai-llm-fundamentals/01-module-lab.py">module lab</a></div>
+          </article>
+          <article class="mod" data-mod="02" data-tags="prompt engineering structured output templates injection mlflow prompt registry">
+            <div class="mod-top"><span class="mod-num">02</span><span class="mod-lv">L1</span></div>
+            <h3>Prompt engineering</h3>
+            <p class="desc">Core techniques, structured output, and the MLflow Prompt Registry.</p>
+            <div class="links"><a class="primary" href="modules/02-prompt-engineering/module.html">🖥️ Interactive</a><a href="modules/02-prompt-engineering/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dive</span><a href="modules/02-prompt-engineering/prompt-registry.html">MLflow Prompt Registry</a></div>
+            <div class="sub"><span class="sl">📓 Notebooks</span><a href="notebooks/02-prompt-engineering/02-module-lab.py">module lab</a> · <a href="notebooks/02-prompt-engineering/02-5-prompt-registry.py">prompt registry</a></div>
+          </article>
+        </div>
+      </div>
+
+      <!-- Level 2 -->
+      <div class="level" data-level="L2">
+        <div class="level-head"><span class="lv">Level 2</span><span class="lt">RAG Core</span></div>
+        <div class="grid">
+          <article class="mod" data-mod="03" data-tags="data prep chunking rag ai functions ai_parse_document ai_extract sdp lakeflow delta">
+            <div class="mod-top"><span class="mod-num">03</span><span class="mod-lv">L2</span></div>
+            <h3>Data prep &amp; chunking</h3>
+            <p class="desc">Turn raw docs into clean, retrievable chunks — AI Functions parsing and SDP ingestion.</p>
+            <div class="links"><a class="primary" href="modules/03-data-prep-chunking/module.html">🖥️ Interactive</a><a href="modules/03-data-prep-chunking/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dives</span><a href="modules/03-data-prep-chunking/chunking-strategies.html">Chunking strategies</a> · <a href="modules/03-data-prep-chunking/ai-parse-extract.html">AI Functions parsing</a></div>
+            <div class="sub"><span class="sl">📓 Notebooks</span><a href="notebooks/03-data-prep-chunking/03-module-lab.py">module lab</a> · <a href="notebooks/03-data-prep-chunking/03-8-ai-parse-extract.py">ai_parse/extract</a> · <a href="notebooks/03-data-prep-chunking/03-9-sdp-ingestion.py">SDP ingestion</a></div>
+          </article>
+          <article class="mod" data-mod="04" data-tags="embeddings ai search vector search index hybrid reranking retriever endpoint">
+            <div class="mod-top"><span class="mod-num">04</span><span class="mod-lv">L2</span></div>
+            <h3>Embeddings &amp; AI Search</h3>
+            <p class="desc">Build and query a vector index; hybrid search and cross-encoder reranking.</p>
+            <div class="links"><a class="primary" href="modules/04-embeddings-ai-search/module.html">🖥️ Interactive</a><a href="modules/04-embeddings-ai-search/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dives</span><a href="modules/04-embeddings-ai-search/create-query-index.html">Create &amp; query an index</a> · <a href="modules/04-embeddings-ai-search/reranking.html">Reranking</a></div>
+            <div class="sub"><span class="sl">📓 Notebooks</span><a href="notebooks/04-embeddings-ai-search/04-module-lab.py">module lab</a> · <a href="notebooks/04-embeddings-ai-search/04-3-create-query-index.py">create/query index</a></div>
+          </article>
+          <article class="mod" data-mod="05" data-tags="rag chain langchain model as code versioning retriever chatdatabricks">
+            <div class="mod-top"><span class="mod-num">05</span><span class="mod-lv">L2</span></div>
+            <h3>Building a RAG chain</h3>
+            <p class="desc">Assemble, log, and version a RAG chain — LangChain and Model-as-Code.</p>
+            <div class="links"><a class="primary" href="modules/05-building-rag-chain/module.html">🖥️ Interactive</a><a href="modules/05-building-rag-chain/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dives</span><a href="modules/05-building-rag-chain/rag-chain.html">Full RAG chain</a> · <a href="modules/05-building-rag-chain/model-as-code.html">Model-as-Code</a></div>
+            <div class="sub"><span class="sl">📓 Notebooks</span><a href="notebooks/05-building-rag-chain/05-module-lab.py">module lab</a> · <a href="notebooks/05-building-rag-chain/05-3-rag-chain.py">RAG chain</a> · <a href="notebooks/05-building-rag-chain/05-6-model-as-code.py">model-as-code</a></div>
+          </article>
+        </div>
+      </div>
+
+      <!-- Level 3 -->
+      <div class="level" data-level="L3">
+        <div class="level-head"><span class="lv">Level 3</span><span class="lt">MLOps for GenAI with MLflow</span></div>
+        <div class="grid">
+          <article class="mod" data-mod="06" data-tags="mlflow core experiments runs unity catalog model registry aliases mlflow 3">
+            <div class="mod-top"><span class="mod-num">06</span><span class="mod-lv">L3</span></div>
+            <h3>MLflow for GenAI core</h3>
+            <p class="desc">Experiments, runs, and the Unity Catalog Model Registry with aliases.</p>
+            <div class="links"><a class="primary" href="modules/06-mlflow-core/module.html">🖥️ Interactive</a><a href="modules/06-mlflow-core/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dives</span><a href="modules/06-mlflow-core/mlflow-2-to-3.html">MLflow 2 → 3</a> · <a href="modules/06-mlflow-core/uc-model-registry.html">UC Model Registry</a></div>
+            <div class="sub"><span class="sl">📓 Notebooks</span><a href="notebooks/06-mlflow-core/06-module-lab.py">module lab</a> · <a href="notebooks/06-mlflow-core/06-5-uc-model-registry.py">UC Model Registry</a></div>
+          </article>
+          <article class="mod" data-mod="07" data-tags="mlflow tracing autolog manual spans observability opentelemetry">
+            <div class="mod-top"><span class="mod-num">07</span><span class="mod-lv">L3</span></div>
+            <h3>MLflow Tracing</h3>
+            <p class="desc">Auto and manual tracing to see inside every LLM and tool call.</p>
+            <div class="links"><a class="primary" href="modules/07-mlflow-tracing/module.html">🖥️ Interactive</a><a href="modules/07-mlflow-tracing/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dive</span><a href="modules/07-mlflow-tracing/tracing.html">Auto + manual tracing</a></div>
+            <div class="sub"><span class="sl">📓 Notebook</span><a href="notebooks/07-mlflow-tracing/07-module-lab.py">module lab</a></div>
+          </article>
+          <article class="mod" data-mod="08" data-tags="evaluating genai evaluation scorers llm as a judge mlflow.genai.evaluate correctness">
+            <div class="mod-top"><span class="mod-num">08</span><span class="mod-lv">L3</span></div>
+            <h3>Evaluating GenAI</h3>
+            <p class="desc">mlflow.genai.evaluate, built-in scorers, and LLM-as-a-judge.</p>
+            <div class="links"><a class="primary" href="modules/08-evaluating-genai/module.html">🖥️ Interactive</a><a href="modules/08-evaluating-genai/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dives</span><a href="modules/08-evaluating-genai/eval-harness.html">Evaluation harness</a> · <a href="modules/08-evaluating-genai/llm-as-judge.html">LLM-as-a-judge</a></div>
+            <div class="sub"><span class="sl">📓 Notebooks</span><a href="notebooks/08-evaluating-genai/08-module-lab.py">module lab</a> · <a href="notebooks/08-evaluating-genai/08-4-llm-as-judge.py">LLM-as-a-judge</a></div>
+          </article>
+        </div>
+      </div>
+
+      <!-- Level 4 -->
+      <div class="level" data-level="L4">
+        <div class="level-head"><span class="lv">Level 4</span><span class="lt">Agents</span></div>
+        <div class="grid">
+          <article class="mod" data-mod="09" data-tags="agent fundamentals tools responsesagent uc functions vector search retriever tool agent framework">
+            <div class="mod-top"><span class="mod-num">09</span><span class="mod-lv">L4</span></div>
+            <h3>Agent fundamentals &amp; tools</h3>
+            <p class="desc">ResponsesAgent, UC-function tools, and the vector-search retriever tool.</p>
+            <div class="links"><a class="primary" href="modules/09-agent-fundamentals/module.html">🖥️ Interactive</a><a href="modules/09-agent-fundamentals/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dives</span><a href="modules/09-agent-fundamentals/create-tools.html">Create tools</a> · <a href="modules/09-agent-fundamentals/responsesagent.html">ResponsesAgent packaging</a></div>
+            <div class="sub"><span class="sl">📓 Notebooks</span><a href="notebooks/09-agent-fundamentals/09-module-lab.py">module lab</a> · <a href="notebooks/09-agent-fundamentals/09-3-create-tools.py">create tools</a> · <a href="notebooks/09-agent-fundamentals/09-6-responsesagent.py">ResponsesAgent</a></div>
+          </article>
+          <article class="mod" data-mod="10" data-tags="agent bricks low code no code knowledge assistant supervisor databricks apps ai playground">
+            <div class="mod-top"><span class="mod-num">10</span><span class="mod-lv">L4</span></div>
+            <h3>Agent Bricks &amp; low-code</h3>
+            <p class="desc">Knowledge Assistant, Multi-Agent Supervisor, and Databricks Apps.</p>
+            <div class="links"><a class="primary" href="modules/10-agent-bricks/module.html">🖥️ Interactive</a><a href="modules/10-agent-bricks/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dives</span><a href="modules/10-agent-bricks/knowledge-assistant.html">Knowledge Assistant</a> · <a href="modules/10-agent-bricks/databricks-apps.html">Databricks Apps</a></div>
+            <div class="sub"><span class="sl">📓 Notebooks</span><a href="notebooks/10-agent-bricks/10-module-lab.py">module lab</a> · <a href="notebooks/10-agent-bricks/10-5-databricks-apps.py">Databricks Apps</a></div>
+          </article>
+        </div>
+      </div>
+
+      <!-- Level 5 -->
+      <div class="level" data-level="L5">
+        <div class="level-head"><span class="lv">Level 5</span><span class="lt">Production: Deploy, Govern, Monitor</span></div>
+        <div class="grid">
+          <article class="mod" data-mod="11" data-tags="deployment serving model serving ai gateway ai functions batch ai_query provisioned throughput">
+            <div class="mod-top"><span class="mod-num">11</span><span class="mod-lv">L5</span></div>
+            <h3>Deployment &amp; serving</h3>
+            <p class="desc">Model Serving, AI Gateway, and batch inference with AI Functions.</p>
+            <div class="links"><a class="primary" href="modules/11-deployment-serving/module.html">🖥️ Interactive</a><a href="modules/11-deployment-serving/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dives</span><a href="modules/11-deployment-serving/model-serving.html">Model Serving</a> · <a href="modules/11-deployment-serving/ai-gateway.html">AI Gateway</a> · <a href="modules/11-deployment-serving/ai-functions-at-scale.html">AI Functions at scale</a></div>
+            <div class="sub"><span class="sl">📓 Notebooks</span><a href="notebooks/11-deployment-serving/11-module-lab.py">module lab</a> · <a href="notebooks/11-deployment-serving/11-1-model-serving.py">Model Serving</a> · <a href="notebooks/11-deployment-serving/11-10-ai-functions.py">AI Functions</a></div>
+          </article>
+          <article class="mod" data-mod="12" data-tags="responsible genai guardrails governance pii safety compliance">
+            <div class="mod-top"><span class="mod-num">12</span><span class="mod-lv">L5</span></div>
+            <h3>Responsible GenAI</h3>
+            <p class="desc">AI Guardrails, PII handling, and governance for GenAI.</p>
+            <div class="links"><a class="primary" href="modules/12-responsible-genai/module.html">🖥️ Interactive</a><a href="modules/12-responsible-genai/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dive</span><a href="modules/12-responsible-genai/ai-guardrails.html">AI Guardrails</a></div>
+            <div class="sub"><span class="sl">📓 Notebooks</span><a href="notebooks/12-responsible-genai/12-module-lab.py">module lab</a> · <a href="notebooks/12-responsible-genai/12-2-ai-guardrails.py">AI Guardrails</a></div>
+          </article>
+          <article class="mod" data-mod="13" data-tags="production monitoring inference tables scorers monitors ai bi dashboard drift improve">
+            <div class="mod-top"><span class="mod-num">13</span><span class="mod-lv">L5</span></div>
+            <h3>Production monitoring</h3>
+            <p class="desc">Inference tables, scorers-as-monitors, and an AI/BI monitoring dashboard.</p>
+            <div class="links"><a class="primary" href="modules/13-production-monitoring/module.html">🖥️ Interactive</a><a href="modules/13-production-monitoring/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dive</span><a href="modules/13-production-monitoring/aibi-dashboard.html">AI/BI monitoring dashboard</a></div>
+            <div class="sub"><span class="sl">📓 Notebooks</span><a href="notebooks/13-production-monitoring/13-module-lab.py">module lab</a> · <a href="notebooks/13-production-monitoring/13-5-aibi-dashboard.py">AI/BI dashboard</a></div>
+          </article>
+        </div>
+      </div>
+
+      <!-- Level 6 -->
+      <div class="level" data-level="L6">
+        <div class="level-head"><span class="lv">Level 6</span><span class="lt">Conversational Analytics &amp; the Semantic Layer</span></div>
+        <div class="grid">
+          <article class="mod" data-mod="14" data-tags="ai bi genie agents conversation api genie one natural language analytics verified answers">
+            <div class="mod-top"><span class="mod-num">14</span><span class="mod-lv">L6</span></div>
+            <h3>AI/BI Genie</h3>
+            <p class="desc">Natural-language analytics: Genie Agents, the Conversation API, and Genie One.</p>
+            <div class="links"><a class="primary" href="modules/14-aibi-genie/module.html">🖥️ Interactive</a><a href="modules/14-aibi-genie/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dive</span><a href="modules/14-aibi-genie/curate-tune-genie.html">Curate &amp; tune a Genie Agent</a></div>
+            <div class="sub"><span class="sl">📓 Notebooks</span><a href="notebooks/14-aibi-genie/14-module-lab.py">module lab</a> · <a href="notebooks/14-aibi-genie/14-8-genie-api.py">Genie Conversation API</a></div>
+          </article>
+          <article class="mod" data-mod="15" data-tags="business semantics unity catalog metric views measure semantic layer synonyms">
+            <div class="mod-top"><span class="mod-num">15</span><span class="mod-lv">L6</span></div>
+            <h3>Business Semantics (metric views)</h3>
+            <p class="desc">Unity Catalog metric views as a governed semantic layer for BI and Genie.</p>
+            <div class="links"><a class="primary" href="modules/15-business-semantics/module.html">🖥️ Interactive</a><a href="modules/15-business-semantics/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dive</span><a href="modules/15-business-semantics/query-metric-views.html">Query metric views</a></div>
+            <div class="sub"><span class="sl">📓 Notebooks</span><a href="notebooks/15-business-semantics/15-module-lab.py">module lab</a> · <a href="notebooks/15-business-semantics/15-3-query-metric-views.py">query metric views</a></div>
+          </article>
+        </div>
+      </div>
+
+      <!-- Level 7 -->
+      <div class="level" data-level="L7">
+        <div class="level-head"><span class="lv">Level 7</span><span class="lt">Architect &amp; Frontier</span></div>
+        <div class="grid">
+          <article class="mod" data-mod="16" data-tags="cost performance scaling mosaic ai architecture provisioned throughput batch profiling model training">
+            <div class="mod-top"><span class="mod-num">16</span><span class="mod-lv">L7</span></div>
+            <h3>Cost, performance &amp; scaling</h3>
+            <p class="desc">Mosaic AI architecture, batch vs real-time, profiling, and provisioned throughput.</p>
+            <div class="links"><a class="primary" href="modules/16-cost-performance-scaling/module.html">🖥️ Interactive</a><a href="modules/16-cost-performance-scaling/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Deep-dive</span><a href="modules/16-cost-performance-scaling/mosaic-ai-architecture.html">Mosaic AI architecture</a></div>
+            <div class="sub"><span class="sl">📓 Notebook</span><a href="notebooks/16-cost-performance-scaling/16-module-lab.py">module lab</a></div>
+          </article>
+          <article class="mod" data-mod="17" data-tags="reference architectures unifying mlflow integration plane opentelemetry mcp agent server capstone">
+            <div class="mod-top"><span class="mod-num">17</span><span class="mod-lv">L7</span></div>
+            <h3>Reference architectures</h3>
+            <p class="desc">Tie the whole stack together — MLflow as the integration plane; leads into the capstone.</p>
+            <div class="links"><a class="primary" href="modules/17-reference-architectures/module.html">🖥️ Interactive</a><a href="modules/17-reference-architectures/module.md">📖 Guide</a></div>
+            <div class="sub"><span class="sl">★ Topic 17.7</span><a href="#capstones">The C4 capstone ↓</a></div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAPSTONES -->
+  <section id="capstones">
+    <div class="sec-head">Capstone projects</div>
+    <h2 class="sec-title">Four projects that ship a thing, not just topics</h2>
+    <p class="sec-note">Each capstone builds on the previous one's Unity Airways artifact and comes as a brief (📖), an interactive spec (🖥️), and a runnable notebook (📓).</p>
+    <div class="cap-grid">
+      <div class="cap">
+        <div class="cn">C1</div>
+        <h3>Support RAG Knowledge Base</h3>
+        <div class="integ">Integrates 00–05</div>
+        <p>Ingestion → AI Search index → a registered RAG chain that answers policy questions with citations.</p>
+        <div class="links"><a href="capstones/capstone-1-rag-knowledge-base.md">📖 Brief</a><a href="capstones/capstone-1-rag-knowledge-base.html">🖥️ Spec</a><a href="capstones/capstone-1-rag-knowledge-base.py">📓 Notebook</a></div>
+      </div>
+      <div class="cap">
+        <div class="cn">C2</div>
+        <h3>Evaluate, Trace &amp; Version the RAG App</h3>
+        <div class="integ">Integrates 06–08</div>
+        <p>A trace-instrumented, evaluated and versioned RAG chain with a quality scorecard and a <code>@champion</code> alias.</p>
+        <div class="links"><a href="capstones/capstone-2-eval-trace-version.md">📖 Brief</a><a href="capstones/capstone-2-eval-trace-version.html">🖥️ Spec</a><a href="capstones/capstone-2-eval-trace-version.py">📓 Notebook</a></div>
+      </div>
+      <div class="cap">
+        <div class="cn">C3</div>
+        <h3>Ship a Governed, Monitored Agent</h3>
+        <div class="integ">Integrates 09–13</div>
+        <p>A tool-using agent deployed behind AI Gateway guardrails, with monitoring and a Review App.</p>
+        <div class="links"><a href="capstones/capstone-3-governed-agent.md">📖 Brief</a><a href="capstones/capstone-3-governed-agent.html">🖥️ Spec</a><a href="capstones/capstone-3-governed-agent.py">📓 Notebook</a></div>
+      </div>
+      <div class="cap final">
+        <div class="cn">C4 ⭐ &nbsp;= Topic 17.7</div>
+        <h3>Unity Airways GenAI Platform</h3>
+        <div class="integ">Integrates all 00–17</div>
+        <p>The full reference solution: RAG + agent + eval/monitoring + Genie analytics, with a cert-readiness map.</p>
+        <div class="links"><a href="capstones/capstone-4-genai-platform.md">📖 Brief</a><a href="capstones/capstone-4-genai-platform.html">🖥️ Spec</a><a href="capstones/capstone-4-genai-platform.py">📓 Notebook</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRACKS -->
+  <section id="tracks">
+    <div class="sec-head">Cross-cutting tracks</div>
+    <h2 class="sec-title">Certification prep &amp; the FDE delivery toolkit</h2>
+    <div class="trk-grid">
+      <div class="trk">
+        <div class="tk">Track C</div>
+        <h3>🎓 Certification prep</h3>
+        <p>The Databricks Certified Generative AI Engineer Associate blueprint mapped to every module, a readiness checklist, and an original 32-question practice bank.</p>
+        <div class="links"><a href="modules/track-c-certification/module.html">🖥️ Interactive hub</a><a href="modules/track-c-certification/module.md">📖 Guide</a><a href="modules/track-c-certification/mock-exam.md">📝 Mock exam</a></div>
+      </div>
+      <div class="trk">
+        <div class="tk">Track D</div>
+        <h3>🧰 FDE delivery toolkit</h3>
+        <p>The discovery → POC → pilot → production motion, plus reusable customer-facing one-pagers grounded in the Unity Airways build.</p>
+        <div class="links"><a href="modules/track-d-fde-delivery/module.md">📖 Guide</a><a href="modules/track-d-fde-delivery/architecture-one-pager.html">🖥️ Architecture one-pager</a><a href="modules/track-d-fde-delivery/poc-scorecard.html">🖥️ POC scorecard</a><a href="modules/track-d-fde-delivery/production-readiness-checklist.html">🖥️ Readiness checklist</a></div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><b>📖</b> written guide (.md)</span>
+      <span><b>🖥️</b> interactive page (.html)</span>
+      <span><b>★</b> cornerstone deep-dive</span>
+      <span><b>📓</b> Databricks notebook (.py)</span>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div><b style="color:var(--muted)">Sources:</b> 📘 <i>Practical MLflow for Generative AI on Databricks</i> · 📗 <i>Databricks Certified Generative AI Engineer Associate Study Guide</i> · latest <a href="https://docs.databricks.com">Databricks docs</a> + <a href="https://mlflow.org/docs/latest">MLflow docs</a>.</div>
+  <div style="margin-top:8px">Teaching order &amp; progress → <a href="ROADMAP.md">ROADMAP.md</a> · build tracker → <a href="plan.md">plan.md</a> · full index → <a href="index.md">index.md</a>.</div>
+  <div style="margin-top:8px">Product names churn fast — many features are GA, some Beta/Preview (flagged inline). Re-verify against live docs before relying on an exact API, flag, or metric name.</div>
+  <div style="margin-top:14px">Built with the <code>genai-teacher</code> → <code>genai-teacher-reviewer</code> loop · Running example: <b>Unity Airways</b> ✈️ · catalog <code>unity_airways</code> (schemas <code>rag</code> + <code>analytics</code>).</div>
+</footer>
+
+<script>
+  // scroll progress
+  const prog = document.getElementById('progress');
+  const onScroll = () => {
+    const h = document.documentElement;
+    const max = h.scrollHeight - h.clientHeight;
+    prog.style.transform = 'scaleX(' + (max > 0 ? h.scrollTop / max : 0) + ')';
+  };
+  document.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+
+  // learning-path highlight
+  const PATHS = {
+    rag:       ["00","01","02","03","04","05","06","11"],
+    agent:     ["07","08","09","10","11","13"],
+    analytics: ["00","14","15"],
+    cert:      ["01","02","03","04","05","06","07","08","09","11","12","13","16"]
+  };
+  const mods = Array.from(document.querySelectorAll('.mod'));
+  const pchips = Array.from(document.querySelectorAll('.pchip'));
+  let activePath = null;
+  function clearHighlight(){ mods.forEach(m => m.classList.remove('hit','dim')); }
+  function applyPath(name){
+    clearHighlight();
+    const set = new Set(PATHS[name] || []);
+    mods.forEach(m => {
+      if (m.classList.contains('hidden')) return;
+      if (set.has(m.dataset.mod)) m.classList.add('hit'); else m.classList.add('dim');
+    });
+  }
+  pchips.forEach(btn => btn.addEventListener('click', () => {
+    const name = btn.dataset.path;
+    if (activePath === name){ activePath = null; btn.setAttribute('aria-pressed','false'); clearHighlight(); return; }
+    activePath = name;
+    pchips.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.path === name)));
+    applyPath(name);
+  }));
+
+  // live filter
+  const q = document.getElementById('q');
+  const levels = Array.from(document.querySelectorAll('.level'));
+  const noresult = document.getElementById('noresult');
+  q.addEventListener('input', () => {
+    const term = q.value.trim().toLowerCase();
+    let anyVisible = false;
+    mods.forEach(m => {
+      const hay = (m.dataset.mod + ' ' + m.dataset.tags + ' ' + m.querySelector('h3').textContent).toLowerCase();
+      const show = !term || hay.includes(term);
+      m.classList.toggle('hidden', !show);
+      if (show) anyVisible = true;
+    });
+    // hide empty level groups
+    levels.forEach(lv => {
+      const visible = lv.querySelectorAll('.mod:not(.hidden)').length;
+      lv.style.display = visible ? '' : 'none';
+    });
+    noresult.style.display = anyVisible ? 'none' : 'block';
+    // re-apply active path over the new visible set
+    if (activePath) applyPath(activePath);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 16 hub: Cost, performance and scaling (16.1-16.6).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cost, performance and scaling · Databricks GenAI Tutor · Module 16</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .topiclist{list-style:none;padding:0;margin:8px 0 0}
+  .topiclist li{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:15px 18px;margin:0 0 12px}
+  .topiclist .tnum{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+  .topiclist .ttitle{font-weight:600;font-size:1.06rem;margin:2px 0 5px}
+  .topiclist .star{color:var(--accent-2)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.html">Databricks GenAI</a>
+    <span class="loc">Module 16 · Cost, performance and scaling</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Module 16 · Level 7 · v1.0</span><span>Verified against docs (July 2026) · B2 Ch9 / Ch2 · naming cheat-sheet</span></div>
+    <div class="filed">Module 16 — Cost, performance and scaling · Topics 16.1–16.6 · Theory + Hands-on</div>
+    <h1>Cost, performance and scaling</h1>
+    <p class="dek">The Unity Airways agent works, is deployed, and is monitored. Then traffic triples and the bill doubles. This module puts the architect and operator lens on the stack: how Mosaic AI serves at scale, which levers move latency and cost, and how to profile before you scale. <em>Cost, latency, and quality are one three-way trade-off.</em></p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>Tune a few named levers; do not buy a bigger box</h2></div>
+      <p class="lead">Cost, latency, and quality compete. You meet a target by moving the right lever, not by scaling everything. The levers: context length, embedding dimension, batch size / concurrency, endpoint sizing, and batch-vs-real-time execution.</p>
+      <ul>
+        <li><strong>Serving at scale (16.1 ★)</strong> is stateless, horizontally scalable endpoints with an <strong>autoscaler that watches throughput</strong>. GPU plus dynamic batching for heavy inference. Full deep-dive in <a href="mosaic-ai-architecture.html">mosaic-ai-architecture.html</a>.</li>
+        <li><strong>Context length and embedding dimension (16.2)</strong> set quality against latency, storage, and cost. Bigger is not automatically better.</li>
+        <li><strong>Batch <code>ai_query()</code> (16.3)</strong> is the engine when no human is waiting — the same surface you used in 11.10.</li>
+        <li><strong>Profiling (16.4)</strong> splits end-to-end latency so you fix the real bottleneck, not the guessed one.</li>
+        <li><strong>Cost control (16.5)</strong>: right-size the model, cache and batch, scale-to-zero vs provisioned throughput, AI Gateway budgets on the <em>Foundation Model</em> endpoint.</li>
+        <li><strong>Fine-tuning and provisioned throughput (16.6)</strong> live in Mosaic AI Model Training — flagged <strong>beyond the exam blueprint</strong>.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>The architecture, the first decision, and the levers</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-arch" id="t-arch" onclick="tab(this,'p-arch')">Architecture map</button>
+        <button role="tab" aria-selected="false" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">First decision</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">Lever explorer</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Tuning walkthrough</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Levers reference</button>
+      </div>
+
+      <!-- PANE A: architecture mermaid — mirrors module.md diagram 1 -->
+      <div id="p-arch" class="pane active" role="tabpanel" aria-labelledby="t-arch">
+        <div class="plate" data-fig="Fig. 01 — Mosaic AI architecture; each layer is a cost/perf decision">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Retrieval, the agent, the served model, and the gateway are separate scalable pieces. Unity Catalog governs all of them.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: decision flow mermaid — mirrors module.md diagram 2 -->
+      <div id="p-flow" class="pane" role="tabpanel" aria-labelledby="t-flow" hidden>
+        <div class="plate" data-fig="Fig. 02 — is a human waiting? routes the workload">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">Real-time serving vs batch ai_query is the biggest cost/perf decision. After it, both share the same levers.</div>
+        </div>
+      </div>
+
+      <!-- PANE C: clickable lever explorer -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — pick a lever, see what it moves">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a lever</div><h3>The tuning levers</h3><p>Click one to see what it moves and where it bites.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE D: stepper walkthrough -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE E: levers reference table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table>
+          <thead><tr><th>Lever</th><th>Moves</th><th>Topic</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="entry" id="topics">
+      <div class="entry-head"><span class="num">03 · The six topics</span><h2>One numbered entry per topic</h2></div>
+      <ul class="topiclist">
+        <li>
+          <div class="tnum">16.1 <span class="star">★ cornerstone</span> · Theory</div>
+          <div class="ttitle">Mosaic AI architecture; model serving at scale</div>
+          Model Serving (custom / Foundation Model / external), AI Gateway, AI Search, Agent Framework, Unity Catalog. Serving at scale = <strong>stateless, horizontally scalable replicas + an autoscaler on throughput</strong>; GPU + dynamic batching for heavy inference. The agent endpoint is CPU orchestration; the LLM runs on a separate Foundation Model endpoint. Deep-dive: <a href="mosaic-ai-architecture.html">mosaic-ai-architecture.html</a>.
+        </li>
+        <li>
+          <div class="tnum">16.2 · Theory</div>
+          <div class="ttitle">Context length and embedding-dimension trade-offs</div>
+          <strong>Context length</strong> caps how many retrieved chunks fit per request (4k ≈ two docs; 16k–32k = several, at higher latency/cost; overflow truncates). <strong>Embedding dimension</strong> (384 vs 1024+) trades semantic precision against storage and search speed. Model size is the sibling lever. Start moderate; raise only when profiling proves it.
+          <div class="note gotcha" style="margin-top:10px"><span class="tag">⚠️ Gotcha</span>Changing embedding dimension forces a full <strong>re-embed and index rebuild</strong> — it is not a live config flip. Check the embedding model's max input and the LLM's context window together.</div>
+        </li>
+        <li>
+          <div class="tnum">16.3 · Theory + Hands-on</div>
+          <div class="ttitle">Batch inference workloads suitable for <code>ai_query()</code></div>
+          Suitable when three things hold: <strong>large datasets</strong>, <strong>no synchronous interaction</strong> (nightly/hourly OK), and a <strong>consistent SQL schema</strong>. Fits: embedding generation, scheduled enrichment, RAG-quality eval. Not for chatbots / live agents / dashboards. No conversational state, tool-calling, or multi-step workflow. Same surface as 11.10.
+        </li>
+        <li>
+          <div class="tnum">16.4 · Hands-on</div>
+          <div class="ttitle">Performance testing and profiling; high-throughput retrieval</div>
+          Simulate realistic traffic, then split end-to-end latency into <strong>vector-search / model-execution / queue-wait / orchestration</strong>. Match the bottleneck to a fix (Table 9-11): long context → trim; low GPU util → raise concurrency; queue wait → lower batch timeout; weak retrieval → raise embedding dim; slow index → rebuild/repartition. AI Search Standard vs Storage-optimized; hybrid search. <strong>Profile before scaling.</strong>
+        </li>
+        <li>
+          <div class="tnum">16.5 · Theory</div>
+          <div class="ttitle">Controlling LLM / GenAI costs with Databricks features</div>
+          Token-based vs compute-based pricing. Right-size the model and context; cache and batch repeated work; batch <code>ai_query()</code> over looping a real-time endpoint; <code>scale_to_zero</code> for dev, provisioned throughput for steady prod; AI Gateway usage tracking / rate limits / budgets.
+          <div class="note gotcha" style="margin-top:10px"><span class="tag">⚠️ Gotcha</span>AI Gateway on the <strong>agent</strong> endpoint (<code>ua-support-agent</code>) supports <strong>inference tables only</strong>. Put rate limits and budgets on the <strong>Foundation Model endpoint</strong> the agent calls.</div>
+        </li>
+        <li>
+          <div class="tnum">16.6 · Theory · <span class="star">beyond the exam</span></div>
+          <div class="ttitle">Fine-tuning and provisioned throughput (Mosaic AI Model Training)</div>
+          <strong>Provisioned throughput</strong> reserves tokens/second with guaranteed latency; recommended for production, required for custom/fine-tuned weights, available with compliance certs. <strong>Fine-tuning is now part of Databricks Model Training</strong> (old standalone page deprecated). Fine-tune only when volume justifies it; RAG + right-sizing ships first.
+        </li>
+      </ul>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">04 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span><strong>Cost, latency, and quality are one trade-off</strong>, and <strong>"is a human waiting?"</strong> is the biggest decision (real-time serving vs batch <code>ai_query()</code>). <strong>Profile before you scale</strong> — split end-to-end latency into vector-search, model-execution, queue-wait, and orchestration, then move the one lever the bottleneck points at.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Read real latency and token cost from the <strong>inference table (Module 13)</strong>, not a stopwatch on one request. Develop batch jobs on a <code>LIMIT</code> sample first. Keep the <strong>Foundation Model endpoint name stable</strong> so you can move budgets and provisioned throughput without touching agent code.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>AI Gateway on an <strong>agent</strong> endpoint = inference tables only (rate limits/guardrails need an FM or external endpoint). <strong>Provisioned throughput</strong> regions/certs change — live re-check. <strong>Fine-tuning is now Model Training</strong>. Served-model names churn (confirm <code>databricks-claude-sonnet-4-5</code>; DBRX retired). SDK is still <code>databricks-vectorsearch</code> despite the AI Search rename.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">05 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Your agent endpoint is slow under load. Before adding replicas, what do you do, and what four time components do you split end-to-end latency into?</li>
+          <li>Give one advantage and one disadvantage each of a long context window and large embedding dimensions. Why is changing the embedding dimension expensive?</li>
+          <li>State the three characteristics that make a workload suitable for batch <code>ai_query()</code>, and name two workloads that are not suitable.</li>
+          <li>List four Databricks tactics for controlling GenAI cost. Which endpoint type must AI Gateway rate limits sit on, and why not the agent endpoint?</li>
+          <li>What is provisioned throughput, when do you choose it over pay-per-token, and which Mosaic AI product now owns fine-tuning?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">06 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📗 <strong>B2 — Study Guide, Ch 9 "Scaling and Optimizing GenAI/RAG Systems"</strong> (primary): horizontally scalable, stateless, autoscaled serving; GPU + dynamic batching; embedding dimensionality (384 vs 1024), context length (4k vs 16k), batch size (Table 9-8/9-9); profiling and bottlenecks (Fig 9-12, Table 9-10/9-11); batch <code>ai_query()</code> suitability (Table 9-12, Example 9-7). <strong>Ch 2</strong>: embedding/LLM selection, token-based vs compute-based pricing, model sizes (Table 2-6), metadata (Table 2-7), caching + batching to reduce cost. <em>Early Release — RAW &amp; UNEDITED; verify against docs.</em></li>
+        <li>🧭 <strong>naming-conventions.md</strong> §4 (Model Serving families; pay-per-token vs provisioned throughput), §3 (AI Search Standard vs Storage-optimized; SDK <code>databricks-vectorsearch</code>), §6 (AI Gateway usage/rate limits; Unity AI Gateway budgets). Verified July 2026.</li>
+        <li>🌐 <strong>Databricks Docs</strong> (bounded live-check July 2026): Foundation Model APIs — provisioned throughput "recommended for all production workloads" <code>.../foundation-model-apis/</code>; "Fine-tuning (now part of Databricks Model Training)" <code>.../foundation-model-training/</code>; Model Serving; AI Functions <code>ai_query</code>; AI Gateway.</li>
+        <li>📎 <strong>Cross-referenced (not re-taught):</strong> 04 (AI Search), 09 (<code>ua_support_agent</code>), 11 (Model Serving / AI Gateway / batch <code>ai_query</code> 11.10), 12 (guardrails), 13 (monitoring + inference tables).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 16 hub</span>
+  <span>Next → Module 17 · Reference architectures</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"Design-time levers",spine:false,comps:[
+   ["Context length","tokens per request","Caps how many retrieved chunks and how much history fit per prompt. Longer = more complete answers but higher latency and per-token cost; overflow truncates and causes hallucinations. Start moderate.","16.2 · quality vs latency/cost"],
+   ["Embedding dimension","semantic precision","384-dim captures basic similarity; 1024+ distinguishes subtler meanings. Higher = better recall but more storage and slower search. Changing it forces a full re-embed + index rebuild.","16.2 · recall vs storage/speed"],
+   ["Model size","reasoning vs speed","Small (<7B) is cheap/fast for classification/intent; mid (7B-13B) balances; large (13B+) reasons better but costs more and adds latency. Match size to task, route by query complexity.","16.2 / 16.5 · quality vs cost"],
+ ]},
+ {name:"Run-time levers",spine:true,comps:[
+   ["Batch size / concurrency","GPU efficiency vs queue-wait","Dynamic batching groups requests into one forward pass for GPU efficiency; larger batches raise throughput but add queue-wait. Tuned by max batch size, queue timeout, concurrency limit.","16.4 · throughput vs latency"],
+   ["Endpoint sizing","idle cost vs cold start","scale_to_zero: cheap idle but cold-start delay (dev). Provisioned throughput: reserved tokens/sec, guaranteed latency (steady prod, custom weights).","16.5 / 16.6 · cost vs latency"],
+   ["Batch vs real-time","the first decision","Human waiting -> Model Serving endpoint (autoscaling). Bulk / scheduled -> batch ai_query() on SQL compute, cheaper and off the endpoint.","16.3 · cost + throughput"],
+   ["AI Gateway budgets","meter and cap spend","Rate limits, usage tracking, budgets on a Foundation-Model / external endpoint (NOT the agent endpoint, which supports inference tables only).","16.5 · cost governance"],
+ ]},
+];
+const STEPS=[
+  ["Profile first","Read the inference table (13) and run a quick load test. Split end-to-end latency into vector-search, model-execution, queue-wait, and orchestration. Do NOT scale replicas blindly."],
+  ["Find the bottleneck","Match the symptom to a cause: model-execution dominates (context too long), low GPU util (concurrency too low), queue wait (batch timeout too long), weak retrieval (embedding dim too small), slow index under load."],
+  ["Move ONE lever","Trim context + top-k, or raise concurrency, or lower batch timeout, or raise embedding dim (then re-embed), or rebuild the index. Change one thing and re-measure."],
+  ["Re-check quality","Run mlflow.genai.evaluate (Module 08). Confirm the speed/cost win did not regress answer quality. Quality is the gate you never trade away."],
+  ["Move bulk off the hot path","Convert overnight scoring and embedding refresh to batch ai_query() on a SQL warehouse (16.3) so they stop competing with live traffic."],
+  ["Control cost","Right-size the model, cache repeated queries, set scale_to_zero for dev, and put rate limits + a budget on the Foundation Model endpoint the agent calls (16.5)."],
+  ["Consider provisioned throughput","For steady, high, latency-bound load, switch the Foundation Model endpoint to provisioned throughput for predictable latency and cost (16.6)."],
+];
+const ROWS=[
+  ["Context length","Answer completeness vs latency + token cost","16.2"],
+  ["Embedding dimension","Retrieval precision vs storage + search speed","16.2"],
+  ["Model size","Reasoning quality vs cost + latency","16.2 / 16.5"],
+  ["Batch size / concurrency","GPU throughput vs queue-wait latency","16.4"],
+  ["scale_to_zero","Idle cost vs cold-start latency","16.5"],
+  ["Provisioned throughput","Reserved capacity + SLA vs pay-per-token","16.6"],
+  ["Batch vs real-time","Cost + throughput vs interactivity","16.3"],
+];
+const MERMAID_SRC=`flowchart TB
+  subgraph MOSAIC["Mosaic AI on Databricks (Unity Catalog governs every layer)"]
+    direction TB
+    DATA["Delta tables and Volumes<br/>ua_rag_chunks (04)"]
+    SEARCH["AI Search index<br/>ua_rag_chunks_index (04)<br/>embedding dimension + endpoint type"]
+    AGENT["Agent Framework<br/>ua_support_agent ResponsesAgent (09)"]
+    FM["Foundation Model APIs<br/>pay-per-token or provisioned throughput"]
+    subgraph SERVE["Model Serving endpoint ua-support-agent (11)"]
+      GW["AI Gateway<br/>rate limits, usage, payload logging"]
+      REP["Stateless replicas<br/>autoscaler + dynamic batching"]
+    end
+    IT["Inference tables + monitoring (13)<br/>real latency, throughput, cost"]
+  end
+  CLIENTS["Clients<br/>app, REST, ai_query batch (16.3)"]
+  DATA --> SEARCH --> AGENT
+  FM --> AGENT
+  AGENT --> REP
+  CLIENTS --> GW --> REP
+  REP --> IT`;
+const MERMAID_SRC2=`flowchart LR
+  W["GenAI workload"] --> Q{"Is a human waiting<br/>on this answer?"}
+  Q -->|"Yes real-time"| RT["Model Serving endpoint (11)<br/>autoscaling, concurrency,<br/>provisioned throughput for SLA"]
+  Q -->|"No bulk / scheduled"| BT["Batch ai_query() in SQL (16.3)<br/>cheaper, higher throughput,<br/>no endpoint traffic"]
+  RT --> LEV["Shared design levers:<br/>context length, embedding dim,<br/>model size, batch size"]
+  BT --> LEV
+  LEV --> PROF["Profile (16.4) then tune<br/>the ONE lever the bottleneck points at"]
+  PROF --> COST["Control cost (16.5):<br/>right-size, cache,<br/>scale-to-zero, gateway budgets"]`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td class="k">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

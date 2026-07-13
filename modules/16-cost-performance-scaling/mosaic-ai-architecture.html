@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Topic 16.1 (cornerstone): Mosaic AI architecture; model serving at scale.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mosaic AI architecture · Databricks GenAI Tutor 16.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI</a>
+    <span class="loc">Module 16 · Topic 16.1 ★</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_16.1 · Cornerstone · v1.0</span><span>Verified against docs (July 2026) · naming cheat-sheet · B2 Ch9 / Ch5</span></div>
+    <div class="filed">Module 16 — Cost, performance and scaling · Topic 16.1 · Theory ★</div>
+    <h1>Mosaic AI architecture</h1>
+    <p class="dek">You cannot size or price a system you cannot decompose. Mosaic AI is <strong>layered and independently scalable</strong> — retrieval, orchestration, model, and serving, all governed by Unity Catalog. The agent endpoint is CPU orchestration; the LLM runs on a separate GPU Foundation Model endpoint. <em>Serving at scale means stateless replicas plus an autoscaler.</em></p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>A layered factory, not one box</h2></div>
+      <p class="lead">Think of the deployed agent as "one box that runs the model" and every scaling decision is wrong. Mosaic AI is really a set of separately governed, separately scalable services — so you can point at the exact layer a bottleneck lives in and move exactly one lever.</p>
+      <ul>
+        <li><strong>Five layers, one governance model.</strong> Unity Catalog (governance) under AI Search (retrieval), the Agent Framework (orchestration), Foundation Model APIs (model), and Model Serving + AI Gateway (serving + edge).</li>
+        <li><strong>Independently scalable.</strong> Retrieval scales separately from the agent, which scales separately from the served LLM. One slow layer does not force you to overpay for the others.</li>
+        <li><strong>Serving at scale = stateless + autoscaling.</strong> Replicas hold no session state, so any request hits any replica; the autoscaler watches throughput and adds/removes replicas.</li>
+        <li><strong>The CPU/GPU split is the money fact.</strong> The <code>ua_support_agent</code> endpoint orchestrates on CPU and calls a separate Foundation Model endpoint (GPU) for the heavy inference.</li>
+        <li><strong>Provisioned throughput</strong> reserves capacity for guaranteed latency and for custom/fine-tuned weights (16.6).</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>The layers, the scaling mechanism, the endpoint choices</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-arch" id="t-arch" onclick="tab(this,'p-arch')">Architecture map</button>
+        <button role="tab" aria-selected="false" aria-controls="p-scale" id="t-scale" onclick="tab(this,'p-scale')">How one endpoint scales</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">Layer explorer</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Scale walkthrough</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Endpoint families</button>
+      </div>
+
+      <!-- PANE A: architecture mermaid — mirrors mosaic-ai-architecture.md diagram 1 -->
+      <div id="p-arch" class="pane active" role="tabpanel" aria-labelledby="t-arch">
+        <div class="plate" data-fig="Fig. 01 — five layers, all governed by Unity Catalog">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">A request enters through the gateway to the serving endpoint, which runs the agent (CPU); the agent calls AI Search for context and the Foundation Model endpoint for generation.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: how one endpoint scales mermaid — mirrors md diagram 2 -->
+      <div id="p-scale" class="pane" role="tabpanel" aria-labelledby="t-scale" hidden>
+        <div class="plate" data-fig="Fig. 02 — stateless replicas behind an autoscaler">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">Stateless replicas let the router spread load across as many as the autoscaler provisions. The GPU-heavy generation is pooled on a separate Foundation Model endpoint with dynamic batching.</div>
+        </div>
+      </div>
+
+      <!-- PANE C: clickable layer explorer -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — click a layer, see its cost/latency lever">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a layer</div><h3>The five layers</h3><p>Click one to see what it does and the lever that lives there.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE D: stepper -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE E: endpoint families table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table>
+          <thead><tr><th>Family / mode</th><th>What it serves</th><th>When</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">The agent endpoint is a custom-model endpoint (CPU); the LLM it calls is a Foundation Model endpoint (GPU). Sizing them separately is the whole point.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="how">
+      <div class="entry-head"><span class="num">03 · How it works</span><h2>Serving at scale — the mechanism</h2></div>
+      <p>Scaling is not "a bigger machine." It is more <strong>stateless replicas</strong>, an <strong>autoscaler</strong> that reacts to throughput, and <strong>dynamic batching</strong> on the model layer.</p>
+      <ul>
+        <li><strong>Stateless + horizontal.</strong> Every replica is interchangeable; the router sends each request to any free replica. Adding capacity = adding replicas, not enlarging one box.</li>
+        <li><strong>Autoscaling on throughput.</strong> The autoscaler grows the replica pool under load and shrinks it when idle. It reacts with a short delay — the <strong>autoscaler-delay</strong> bottleneck.</li>
+        <li><strong>Cold start vs warm.</strong> With <code>scale_to_zero</code> an idle endpoint drops to zero replicas (cheap) but the next request pays a cold start. Latency-critical paths turn it off or use provisioned throughput.</li>
+        <li><strong>Dynamic batching on the model layer.</strong> The Foundation Model endpoint groups concurrent requests into batches for GPU efficiency; larger batches raise throughput but add queue-wait.</li>
+        <li><strong>Independent scaling.</strong> Retriever and model endpoints scale separately, so a retrieval-bound spike and a generation-bound spike get different fixes.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Important</span>When a customer asks "how many GPUs?", answer at the <strong>model layer</strong> (the Foundation Model endpoint), sized from token throughput — not at the agent endpoint, which is CPU orchestration.</div>
+    </section>
+
+    <section class="entry" id="dothis">
+      <div class="entry-head"><span class="num">04 · Run this</span><h2>Read the endpoint config to reason about scale</h2></div>
+      <p><strong>Prereqs:</strong> the deployed agent endpoint <code>ua-support-agent</code> (Module 11), <code>databricks-sdk</code>, and <code>CAN_VIEW</code> on the endpoint. Confirm class/attribute names against your installed SDK version.</p>
+      <pre><code>from databricks.sdk import WorkspaceClient
+
+w = WorkspaceClient()
+ep = w.serving_endpoints.get("ua-support-agent")   # the deployed agent endpoint (11)
+print(ep.state)                                    # READY when serving
+
+# Inspect sizing per served entity: the agent should be CPU-appropriate.
+for se in ep.config.served_entities:
+    print(se.entity_name, se.entity_version,
+          se.workload_size, se.scale_to_zero_enabled)</code></pre>
+      <p><strong>Verify:</strong> the agent endpoint shows CPU-appropriate sizing and is <code>READY</code>; the GPU-heavy generation lives on a separate Foundation Model endpoint you size independently by observed token throughput (read it from the inference table, Module 13).</p>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Mosaic AI is <strong>layered and independently scalable</strong> under one Unity Catalog governance model. The <strong>agent endpoint is CPU orchestration; the LLM is a separate GPU Foundation Model endpoint</strong>. Serving at scale = <strong>stateless replicas + autoscaler</strong> (plus dynamic batching / provisioned throughput). Scale out, not up.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Keep the Foundation Model endpoint name stable so you can switch it to <strong>provisioned throughput</strong> without touching agent code. Size <code>workload_size</code> and top-k from the inference table's observed peak, not a single test request.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>The broad trend is <strong>away from the "Mosaic AI" brand</strong> toward "Databricks …" / "Unity …" naming; page titles vary (inferred — live re-check pending). <strong>Provisioned throughput</strong> regions/certs change — confirm on the FM APIs docs. Rate limits/guardrails on an <strong>agent</strong> endpoint are not supported (FM / external endpoints only; agent endpoints = inference tables).</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Name the five layers of the Mosaic AI architecture and one cost/latency lever in each.</li>
+          <li>Why does the Unity Airways agent endpoint run on CPU, and where does the GPU-heavy LLM work actually happen?</li>
+          <li>What does "stateless, horizontally scalable" mean for how the endpoint router distributes load?</li>
+          <li>What is the autoscaler-delay bottleneck, and what two options smooth it during a sudden spike?</li>
+          <li>When would you choose provisioned throughput over pay-per-token for the Foundation Model layer?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📗 <strong>B2 — Study Guide, Ch 9 "Scaling and Optimizing GenAI/RAG Systems"</strong>: Mosaic AI serving is horizontally scalable, stateless, autoscaled on throughput; retriever and model endpoints scale independently; GPU + dynamic batching for high throughput. <strong>Ch 5</strong>: Model Serving families and endpoint optimization; interactive serving vs batch inference. <em>Early Release — RAW &amp; UNEDITED; verify against docs.</em></li>
+        <li>🧭 <strong>naming-conventions.md</strong> §4 (three Model Serving families; pay-per-token vs provisioned throughput), §3 (AI Search Standard vs Storage-optimized; SDK <code>databricks-vectorsearch</code>), §6 (AI Gateway), §8 (Mosaic AI branding trend — inferred).</li>
+        <li>🌐 <strong>Databricks Docs</strong> (bounded live-check, July 2026): Model Serving <code>docs.databricks.com/aws/en/machine-learning/model-serving/</code>; Foundation Model APIs — provisioned throughput "recommended for all production workloads" <code>.../foundation-model-apis/</code>; AI Gateway <code>.../ai-gateway/</code>.</li>
+        <li>📎 <strong>Cross-referenced (not re-taught):</strong> Module 11 (Model Serving / AI Gateway / <code>agents.deploy()</code>), Module 04 (AI Search), Module 09 (<code>ua_support_agent</code>), Module 13 (inference tables + monitoring).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Topic 16.1 ★</span>
+  <span>Back to hub → module.html · Next → Module 17</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"Governed layers (bottom to top)",spine:false,comps:[
+   ["Governance — Unity Catalog","who can call what","Permissions, lineage, and audit across models, functions, indexes, and data. Not a perf layer, but it decides access and is where usage system tables land.","cross-cutting · all layers"],
+   ["Retrieval — AI Search","turn query into top-k chunks","Embeds the query and returns relevant chunks. Levers: embedding dimension, endpoint type (Standard vs Storage-optimized), hybrid search, index partitioning.","16.2 / 16.4 · retrieval cost/latency"],
+   ["Orchestration — Agent Framework","assemble prompt, call tools + LLM","The ResponsesAgent (ua_support_agent). Runs on CPU. Lever: how much context it stuffs into each prompt.","16.2 · context length"],
+ ]},
+ {name:"Compute + edge",spine:true,comps:[
+   ["Model — Foundation Model APIs","the LLM inference","The actual generation, on GPU. Levers: model size, pay-per-token vs provisioned throughput, dynamic batching. This is where GPU spend belongs.","16.5 / 16.6 · model cost"],
+   ["Serving + edge — Model Serving + AI Gateway","host the agent, meter the traffic","The endpoint (replicas + autoscaler) and the gateway (rate limits, usage, logging on FM/external endpoints). Levers: workload_size, scale_to_zero, concurrency, budgets.","16.5 · endpoint sizing + cost caps"],
+ ]},
+];
+const STEPS=[
+  ["A request arrives at the gateway","AI Gateway is the metered edge in front of the serving endpoint. On FM/external endpoints it adds rate limits, usage tracking, and payload logging; on the agent endpoint it logs to inference tables."],
+  ["The router picks a replica","Replicas are stateless, so the router sends the request to any free one. No session state means the endpoint scales out horizontally."],
+  ["The autoscaler reacts to throughput","Under load it adds replicas; idle, it removes them (down to zero if scale_to_zero is on). A sudden spike outruns it for a short window — the autoscaler-delay bottleneck."],
+  ["The agent orchestrates on CPU","The ResponsesAgent assembles the prompt, calls AI Search for context, and calls the Foundation Model endpoint. This work is CPU, not GPU."],
+  ["The LLM runs on a separate FM endpoint","The GPU-heavy generation is pooled on a Foundation Model endpoint with dynamic batching, sized independently from the agent endpoint."],
+  ["Everything lands in inference tables","Requests, responses, latency, and cost are logged (Module 13) — the real profile you size workload_size and provisioned throughput from."],
+];
+const ROWS=[
+  ["Custom model (CPU)","Your MLflow-packaged agent — ua_support_agent","Orchestration, tools, RAG chains"],
+  ["Foundation Model — pay-per-token","Databricks-hosted LLM, billed per token","Prototyping, bursty / low volume"],
+  ["Foundation Model — provisioned throughput","Reserved tokens/sec, guaranteed latency","Steady prod, custom / fine-tuned weights (16.6)"],
+  ["External model","Governed proxy to OpenAI / Anthropic / Google","Centralize keys, spend, rate limits"],
+  ["Routing / traffic split","Multiple served versions on one endpoint","Canary rollout (Module 11.6 / 11.8)"],
+];
+const MERMAID_SRC=`flowchart TB
+  subgraph UC["Unity Catalog — governance, lineage, access control (every layer)"]
+    direction TB
+    subgraph RET["Retrieval layer"]
+      SEARCH["AI Search index<br/>ua_rag_chunks_index (04)<br/>Standard or Storage-optimized"]
+    end
+    subgraph ORCH["Orchestration layer"]
+      AGENT["Agent Framework<br/>ua_support_agent ResponsesAgent (09)<br/>CPU orchestration"]
+    end
+    subgraph MODEL["Model layer"]
+      FM["Foundation Model APIs<br/>databricks-claude-sonnet-4-5<br/>GPU inference"]
+    end
+    subgraph SERVING["Serving + edge"]
+      GW["AI Gateway<br/>rate limits, usage, logging"]
+      EP["Model Serving endpoint ua-support-agent (11)<br/>stateless replicas + autoscaler"]
+    end
+    OBS["Inference tables + monitoring (13)"]
+  end
+  CLIENT["Clients: app, REST, ai_query batch"]
+  CLIENT --> GW --> EP
+  EP --> AGENT
+  AGENT --> SEARCH
+  AGENT --> FM
+  EP --> OBS`;
+const MERMAID_SRC2=`flowchart LR
+  REQ["Incoming requests<br/>(spiking during a storm)"] --> RT["Endpoint router<br/>no session state"]
+  RT --> R1["Replica 1"]
+  RT --> R2["Replica 2"]
+  RT --> R3["Replica N (added under load)"]
+  MON["Autoscaler<br/>watches throughput"] -. "add / remove replicas" .-> RT
+  R1 --> FM["Foundation Model endpoint<br/>GPU + dynamic batching"]
+  R2 --> FM
+  R3 --> FM`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td class="k">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

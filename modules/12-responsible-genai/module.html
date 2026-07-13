@@ -169,7 +169,7 @@
       <p class="lead">Module 11 served and metered the agent. <strong>Module 12 makes it safe and accountable.</strong> No one control catches everything, so you place cheap, overlapping controls at every stage and let them back each other up — a castle with concentric walls, not one locked door.</p>
       <ul>
         <li><strong>Layer 1 — app-side, before the model</strong> — input validation, prompt filtering, and pre-invocation <strong>masking</strong> on the question and the retrieved context (12.1, 12.3).</li>
-        <li><strong>Layer 2 — server-side AI Guardrails on the endpoint</strong> — safety filtering, <strong>PII BLOCK/MASK/NONE</strong> (Preview), keyword and topic limits, and <strong>rate limits</strong>, one config for every caller (12.2 ★, 12.4).</li>
+        <li><strong>Layer 2 — server-side AI Guardrails on <code>ua-support-llm</code></strong> (the FM endpoint the agent calls) — safety filtering, <strong>PII BLOCK/MASK/NONE</strong> (Preview), keyword and topic limits, and <strong>rate limits</strong>, one config for every caller; the agent endpoint gets inference tables only (12.2 ★, 12.4).</li>
         <li><strong>Layer 3 — Unity Catalog governance and privacy</strong> — grants and least-privilege identities, masked views, and <strong>license metadata + lineage</strong> (12.5, 12.6, 12.8).</li>
         <li><strong>Layer 4 — audit trails and monitoring</strong> — inference tables, UC audit logs, MLflow version tags, and abuse/quality monitoring (12.4, 12.7 → Module 13).</li>
       </ul>
@@ -249,7 +249,7 @@
       <p>Full deep-dive — enabling each guardrail on the endpoint, the exact <code>put_ai_gateway</code> config, input vs output behavior, PII modes, keyword/topic limits, and validation — in the <a href="ai-guardrails.html">AI Guardrails deep-dive</a> (<code>ai-guardrails.md</code> / <code>ai-guardrails.html</code>).</p>
       <h3 class="tk">12.2 AI Guardrails <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span> <span class="tag-pill ga">GA</span> <span class="tag-pill beta">PII Preview</span></h3>
       <ul>
-        <li><strong>The server-side layer</strong> — a property of the <code>ua-support-agent</code> endpoint, configured once and applied to <strong>every</strong> caller (app UI and batch <code>ai_query</code> alike).</li>
+        <li><strong>The server-side layer</strong> — a property of <code>ua-support-llm</code>, the FM/external endpoint the <code>ua-support-agent</code> agent calls, configured once and applied to <strong>every</strong> caller of it (the agent, app UI, and batch <code>ai_query</code> alike). The agent endpoint itself gets <strong>inference tables only</strong> via AI Gateway.</li>
         <li><code>AiGatewayGuardrailParameters</code> carries <strong><code>safety</code></strong>, <strong><code>pii</code></strong> (BLOCK/MASK/NONE — <em>Preview</em>), <strong><code>invalid_keywords</code></strong>, and <strong><code>valid_topics</code></strong>, on <code>input</code> and <code>output</code>.</li>
       </ul>
       <pre><code># one call configures the server-side guardrail layer (names match the 11.3 sibling)
@@ -260,7 +260,7 @@ from databricks.sdk.service.serving import (
 
 w = WorkspaceClient()
 w.serving_endpoints.put_ai_gateway(
-    name="ua-support-agent",
+    name="ua-support-llm",   # the FM/external endpoint the agent calls
     guardrails=AiGatewayGuardrails(
         input=AiGatewayGuardrailParameters(
             safety=True,
@@ -389,7 +389,7 @@ GRANT EXECUTE ON MODEL   unity_airways.rag.ua_support_agent TO `ua-agent-sp`;
 /* ---------- content data ---------- */
 const ITEMS=[
  {name:"Layer 2 — the cornerstone (12.2)",spine:true,comps:[
-   ["12.2 AI Guardrails ★","Hands-on · GA · PII Preview","Server-side guardrail layer on the ua-support-agent endpoint, configured once with w.serving_endpoints.put_ai_gateway(...). AiGatewayGuardrailParameters carries safety, pii (BLOCK/MASK/NONE — Preview), invalid_keywords, valid_topics, on input and output. One policy governs every caller.","ai-guardrails.html"],
+   ["12.2 AI Guardrails ★","Hands-on · GA · PII Preview","Server-side guardrail layer on ua-support-llm — the FM/external endpoint the ua-support-agent agent calls — configured once with w.serving_endpoints.put_ai_gateway(...). AiGatewayGuardrailParameters carries safety, pii (BLOCK/MASK/NONE — Preview), invalid_keywords, valid_topics, on input and output. One policy governs every caller; the agent endpoint gets inference tables only.","ai-guardrails.html"],
  ]},
  {name:"Layer 1 — app-side, before the model (12.1, 12.3)",spine:false,comps:[
    ["12.1 Guardrail techniques","Theory + Hands-on","Preventive techniques before the model: input validation (syntax/length, forbidden-pattern, context policy — Fig 7-2), prompt filtering (injection markers, strict templates), redaction. Centralize rules so security updates them without a redeploy. Prevent early beats filter late.","module.md 12.1"],
@@ -418,7 +418,7 @@ const STEPS=[
 const ROWS=[
   ["Layer 1 · Input validation + prompt filter","Block injection markers, syntax/length, context policy before the model","GA (app-side)"],
   ["Layer 1 · Masking (ai_mask)","Redact PII on input + retrieved context before invocation","GA"],
-  ["Layer 2 · AI Guardrails","safety, PII, invalid_keywords, valid_topics on the endpoint","GA (PII Preview)"],
+  ["Layer 2 · AI Guardrails","safety, PII, invalid_keywords, valid_topics on ua-support-llm (the FM endpoint the agent calls)","GA (PII Preview)"],
   ["Layer 2 · Rate limits","Cap calls/tokens per USER / SP / ENDPOINT; abuse + availability","GA"],
   ["Layer 3 · Unity Catalog grants","Least-privilege access to models, functions, data","GA"],
   ["Layer 3 · Masked views / column masks","Governance-layer PII masking","GA"],
@@ -435,7 +435,7 @@ const MERMAID_SRC=`flowchart TB
     PF["Prompt filtering<br/>injection markers, strict templates"]
     MK["Pre-invocation masking<br/>ai_mask on input and retrieved context"]
   end
-  subgraph L2["Layer 2 - Server-side AI Guardrails on the endpoint (12.2, 12.4)"]
+  subgraph L2["Layer 2 - AI Guardrails on ua-support-llm - the FM endpoint the agent calls (12.2, 12.4)"]
     direction TB
     SF["Safety filtering"]
     PII["PII BLOCK / MASK / NONE (Preview)"]
@@ -444,7 +444,7 @@ const MERMAID_SRC=`flowchart TB
   end
   subgraph L4["Layer 4 - Audit trails and monitoring (12.4, 12.7)"]
     direction TB
-    IT["Inference tables (payload log)"]
+    IT["Inference tables (payload log)<br/>on ua-support-llm AND ua-support-agent"]
     AU["UC audit logs + MLflow version tags"]
     MO["Abuse + quality monitoring (Module 13)"]
   end

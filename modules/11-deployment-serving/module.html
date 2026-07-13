@@ -201,7 +201,7 @@
       <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
         <div class="plate" data-fig="Fig. 01 — Production serving topology">
           <div class="mermaid" id="mermaidGraph"></div>
-          <div class="plate-cap">Package once to Unity Catalog, serve on one governed endpoint; AI Gateway meters and logs, inference tables capture, monitoring scores, the next eval winner becomes Champion.</div>
+          <div class="plate-cap">Package once to Unity Catalog; every caller reaches the agent endpoint, which calls ua-support-llm where AI Gateway meters and screens each LLM request; the agent endpoint's inference tables capture payloads for monitoring; the next eval winner becomes Champion.</div>
         </div>
       </div>
 
@@ -271,7 +271,7 @@ agents.deploy("unity_airways.rag.ua_support_agent", version)
       <h3 class="tk">11.3 AI Gateway <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span> <span class="tag-pill ga">GA</span></h3>
       <p>The control plane in front of a serving endpoint — added with no change to agent code:</p>
       <ul>
-        <li><strong>Rate limiting</strong> (per user / endpoint), <strong>AI guardrails</strong> (safety filtering + PII detection/redaction, <em>Preview</em>), <strong>provider fallbacks</strong>, <strong>usage tracking</strong> (system tables), and <strong>payload logging → inference tables</strong>. Providers include OpenAI, Anthropic, Google, and others.</li>
+        <li><strong>The governed agent pattern:</strong> put <strong>rate limiting</strong> (per user / endpoint), <strong>AI guardrails</strong> (safety filtering + PII detection/redaction, <em>Preview</em>), <strong>provider fallbacks</strong>, and <strong>usage tracking</strong> (system tables) on the <strong>FM / external endpoint the agent calls</strong> (<code>ua-support-llm</code>); enable <strong>payload logging → inference tables</strong> on the <strong>agent endpoint</strong> (<code>ua-support-agent</code>), which supports only inference tables via AI Gateway. No agent code changes. Providers include OpenAI, Anthropic, Google, and others.</li>
         <li><strong>Unity AI Gateway</strong> <span class="tag-pill beta">Beta</span> — the recommended go-forward: richer observability, <strong>MCP-service governance</strong>, and <strong>budget management</strong> (spend thresholds / hard cost caps).</li>
       </ul>
       <div class="note tip"><span class="tag">💡 Tip · field</span>This is the answer to "keep it from leaking PII or blowing the budget." Turn on rate limits + payload logging the moment the endpoint exists — they cost nothing and save you during the first spike.</div>
@@ -362,7 +362,7 @@ agents.deploy("unity_airways.rag.ua_support_agent", version)
       <ol>
         <li><strong>Package (11.4 / 11.13):</strong> log <code>ua_support_agent</code> with Models-from-Code, register to <code>unity_airways.rag.ua_support_agent</code>; log a small OSS ticket-classifier with the <code>transformers</code> flavor.</li>
         <li><strong>Serve (11.1 ★):</strong> <code>agents.deploy(...)</code> provisions the endpoint, Review App, feedback model + tracing/inference tables/monitoring.</li>
-        <li><strong>Govern the edge (11.3 ★):</strong> enable AI Gateway — rate limits, PII guardrails (Preview), a provider fallback, payload logging to an inference table.</li>
+        <li><strong>Govern the edge (11.3 ★):</strong> enable AI Gateway — rate limits, PII guardrails (Preview), a provider fallback, and usage tracking on <code>ua-support-llm</code> (the endpoint the agent calls); payload logging on the agent endpoint <code>ua-support-agent</code>.</li>
         <li><strong>External provider (11.12):</strong> the OpenAI key lives in a Databricks secret behind an external-model endpoint, so a GPT fallback is a config change.</li>
         <li><strong>Feedback (11.2):</strong> support leads use the Review App; labels flow into the Module 08 eval set.</li>
         <li><strong>Batch + scale (11.5 / 11.10 ★):</strong> a nightly <code>ai_query</code> scores each ticket (category / sentiment / summary); <code>ai_mask</code> redacts PII first.</li>
@@ -416,7 +416,7 @@ const ITEMS=[
    ["11.1 Model Serving ★","Theory + Hands-on · GA","Home for every GenAI endpoint. Three families, all GA: custom models (your MLflow-packaged ua_support_agent), foundation models (databricks-claude-sonnet-4-5, pay-per-token or provisioned throughput), external models (governed proxy to OpenAI/Anthropic/Google). agents.deploy() is the easy button. Scale-to-zero vs provisioned throughput.","model-serving.html"],
  ]},
  {name:"Govern the edge — the cornerstone (11.3)",spine:true,comps:[
-   ["11.3 AI Gateway ★","Theory + Hands-on · GA","Control plane in front of the endpoint, no code change: rate limits, AI guardrails (safety + PII redaction, Preview), provider fallbacks, usage tracking (system tables), payload logging to inference tables. Unity AI Gateway (Beta) adds budgets/cost caps + MCP-service governance.","ai-gateway.html"],
+   ["11.3 AI Gateway ★","Theory + Hands-on · GA","Governed agent pattern: rate limits, guardrails (safety + PII redaction, Preview), fallbacks, and usage tracking on the FM/external endpoint the agent calls (ua-support-llm); payload logging to inference tables on the agent endpoint (ua-support-agent), its only AI Gateway lever. No code change. Unity AI Gateway (Beta) adds budgets/cost caps + MCP-service governance.","ai-gateway.html"],
  ]},
  {name:"Scale in SQL — the cornerstone (11.10)",spine:true,comps:[
    ["11.10 AI Functions at scale ★","Theory + Hands-on · GA","GenAI in SQL at Spark scale, UC-governed. ai_query (general) + ai_classify, ai_analyze_sentiment, ai_extract, ai_gen, ai_mask, ai_summarize, ai_translate, ai_fix_grammar, vector_search. All GA. Unity Airways: classify/route tickets, flag angry passengers, mask PII, summarize queue.","ai-functions-at-scale.html"],
@@ -443,7 +443,7 @@ const ITEMS=[
 const STEPS=[
   ["1 · Package","Log ua_support_agent with Models-from-Code, register to unity_airways.rag.ua_support_agent; log a small OSS ticket-classifier with the transformers flavor (11.4, 11.13)."],
   ["2 · Serve","agents.deploy('unity_airways.rag.ua_support_agent', version) -> endpoint + Review App + feedback model + tracing/inference tables/monitoring (11.1 ★)."],
-  ["3 · Govern the edge","Enable AI Gateway: rate limits, PII guardrails (Preview), a provider fallback, payload logging to an inference table (11.3 ★)."],
+  ["3 · Govern the edge","AI Gateway: rate limits, PII guardrails (Preview), fallbacks + usage on ua-support-llm (the endpoint the agent calls); payload logging (inference tables) on the agent endpoint ua-support-agent (11.3 ★)."],
   ["4 · External provider","OpenAI key in a Databricks secret behind an external-model endpoint, so a GPT fallback is a config change (11.12)."],
   ["5 · Feedback","Support leads use the Review App to try the agent and label answers; labels flow into the Module 08 eval set (11.2)."],
   ["6 · Batch & scale","Nightly ai_query scores each ticket (category/sentiment/summary); ai_mask redacts PII first (11.5, 11.10 ★)."],
@@ -464,17 +464,16 @@ const MERMAID_SRC=`flowchart LR
   DEV["Agent code<br/>ua_support_agent (ResponsesAgent)<br/>MLflow 3.1 log_model"]
   UC["Unity Catalog model<br/>unity_airways.rag.ua_support_agent<br/>versions + @champion / @challenger"]
   DEP["agents.deploy(model, version)<br/>or endpoint config"]
-  subgraph SERVE["Model Serving endpoint"]
-    GW["AI Gateway<br/>rate limits, guardrails,<br/>fallbacks, payload logging"]
-    EP["Served models<br/>Champion vs Challenger traffic split"]
+  subgraph SERVE["Model Serving"]
+    AGENT["ua-support-agent (agent endpoint)<br/>Champion vs Challenger split<br/>AI Gateway: inference tables only"]
+    LLM["ua-support-llm (FM / external endpoint)<br/>AI Gateway: rate limits, guardrails,<br/>fallbacks, usage tracking"]
   end
   CLIENTS["Clients<br/>Databricks App - Review App<br/>ai_query batch - REST / SDK"]
   IT["Inference tables (UC)<br/>request and response logs"]
   MON["MLflow monitoring + scorers<br/>(Module 13)"]
-  DEV --> UC --> DEP --> EP
-  CLIENTS --> GW --> EP
-  EP --> GW
-  GW --> IT --> MON
+  DEV --> UC --> DEP --> AGENT
+  CLIENTS --> AGENT --> LLM --> MODEL["databricks-claude-sonnet-4-5<br/>plus fallback model"]
+  AGENT --> IT --> MON
   MON -. "promote next Challenger" .-> UC`;
 const MERMAID_SRC2=`flowchart TD
   A["New agent version<br/>logged to MLflow, evaluated (Module 08)"]

@@ -73,21 +73,20 @@ flowchart LR
   DEV["Agent code<br/>ua_support_agent (ResponsesAgent)<br/>MLflow 3.1 log_model"]
   UC["Unity Catalog model<br/>unity_airways.rag.ua_support_agent<br/>versions + @champion / @challenger"]
   DEP["agents.deploy(model, version)<br/>or endpoint config"]
-  subgraph SERVE["Model Serving endpoint"]
-    GW["AI Gateway<br/>rate limits, guardrails,<br/>fallbacks, payload logging"]
-    EP["Served models<br/>Champion vs Challenger traffic split"]
+  subgraph SERVE["Model Serving"]
+    AGENT["ua-support-agent (agent endpoint)<br/>Champion vs Challenger split<br/>AI Gateway: inference tables only"]
+    LLM["ua-support-llm (FM / external endpoint)<br/>AI Gateway: rate limits, guardrails,<br/>fallbacks, usage tracking"]
   end
   CLIENTS["Clients<br/>Databricks App · Review App<br/>ai_query batch · REST / SDK"]
   IT["Inference tables (UC)<br/>request and response logs"]
   MON["MLflow monitoring + scorers<br/>(Module 13)"]
-  DEV --> UC --> DEP --> EP
-  CLIENTS --> GW --> EP
-  EP --> GW
-  GW --> IT --> MON
+  DEV --> UC --> DEP --> AGENT
+  CLIENTS --> AGENT --> LLM --> MODEL["databricks-claude-sonnet-4-5<br/>plus fallback model"]
+  AGENT --> IT --> MON
   MON -. "promote next Challenger" .-> UC
 ```
 
-*Takeaway: the model is packaged once and registered to Unity Catalog, then every caller reaches it through the same governed endpoint. AI Gateway meters and logs the traffic, inference tables capture it, monitoring scores it, and the winner of the next eval becomes the new Champion.*
+*Takeaway: the model is packaged once and registered to Unity Catalog; every caller reaches the agent endpoint, which calls `ua-support-llm` where AI Gateway meters and screens each LLM request, while the agent endpoint's inference tables capture payloads for monitoring. The winner of the next eval becomes the new Champion.*
 
 **The rollout loop — how a new Unity Airways agent version goes live safely (LLMOps / AgentOps):**
 
@@ -128,7 +127,7 @@ flowchart TD
 
 > **Cornerstone.** Full deep-dive — enabling each feature on an endpoint, guardrail/PII config, provider fallbacks, usage system tables, payload logging, and Unity AI Gateway budgets — lives in `ai-gateway.md` / `ai-gateway.html`. Summary here.
 
-- **AI Gateway on a serving endpoint** adds, without touching agent code: **rate limiting** (per user/endpoint), **AI guardrails** (safety filtering + PII detection/redaction, *Preview*), **provider fallbacks**, **usage tracking** (system tables), and **payload logging → inference tables**. Supported providers include OpenAI, Anthropic, Google, and others.
+- **AI Gateway, split across two endpoints (the governed agent pattern).** Put **rate limiting** (per user/endpoint), **AI guardrails** (safety filtering + PII detection/redaction, *Preview*), **provider fallbacks**, and **usage tracking** (system tables) on the **Foundation Model / external endpoint the agent calls** (`ua-support-llm`) — an FM/external endpoint supports every lever. Enable **payload logging → inference tables** on the **agent endpoint** (`ua-support-agent`, a deployed `ResponsesAgent`), which supports only inference tables via AI Gateway. No agent code changes. Supported providers include OpenAI, Anthropic, Google, and others.
 - **Unity AI Gateway** *(Beta)* is the newer, recommended go-forward: richer observability, **MCP-service governance**, and **budget management** (spend thresholds / hard cost caps).
 - **Why it matters:** this is the answer to "keep it from leaking PII or blowing the budget" — configured at the edge, governed centrally.
 - **Key APIs/names:** AI Gateway, guardrails, rate limits, fallbacks, payload logging, Unity AI Gateway (Beta), budgets/cost caps.
@@ -214,7 +213,7 @@ Taking `ua_support_agent` from a logged model to a governed, monitored, schedule
 
 1. **Package (11.4 / 11.13):** the agent is logged with **Models-from-Code** and registered to `unity_airways.rag.ua_support_agent`; a small open-source ticket-classifier is logged with the `transformers` flavor for the batch path.
 2. **Serve (11.1 ★):** `agents.deploy("unity_airways.rag.ua_support_agent", version)` provisions the endpoint, Review App, and feedback model, and turns on tracing + inference tables + monitoring.
-3. **Govern the edge (11.3 ★):** enable **AI Gateway** — rate limits, guardrails (PII redaction, *Preview*), a provider fallback, and payload logging into an inference table.
+3. **Govern the edge (11.3 ★):** enable **AI Gateway** — rate limits, guardrails (PII redaction, *Preview*), a provider fallback, and usage tracking on `ua-support-llm` (the FM/external endpoint the agent calls), plus payload logging into an inference table on the agent endpoint `ua-support-agent`.
 4. **External provider (11.12):** the OpenAI key lives in a Databricks secret behind an external-model endpoint, so a fallback to GPT is a config change, not a code change.
 5. **Feedback (11.2):** support leads use the **Review App** to try the agent and label answers; labels flow into the Module 08 eval set.
 6. **Batch + scale (11.5 / 11.10 ★):** a nightly `ai_query` scores every new ticket for category, sentiment, and summary; `ai_mask` redacts PII first.

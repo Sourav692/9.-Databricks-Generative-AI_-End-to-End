@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Track C hub: Certification prep (C.1-C.10).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+  Centerpieces: interactive exam-section -> module map, and a clickable readiness checklist.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Certification prep · Databricks GenAI Tutor · Track C</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s;display:inline-flex;align-items:center;gap:8px}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip[aria-pressed="true"] .w{color:var(--paper)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .chip .w{font-family:var(--mono);font-size:11px;color:var(--accent-2)}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  /* weight bars */
+  .weights{margin-top:8px}
+  .wbar{display:grid;grid-template-columns:210px 1fr 46px;align-items:center;gap:12px;margin:9px 0}
+  @media(max-width:600px){.wbar{grid-template-columns:1fr;gap:3px}}
+  .wbar .wname{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}
+  .wbar .track{height:16px;background:var(--panel);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+  .wbar .fill{height:100%;background:var(--accent);opacity:.85}
+  .wbar .wpct{font-family:var(--mono);font-size:12px;color:var(--accent-2);text-align:right}
+  /* spec chips */
+  .spec{display:flex;flex-wrap:wrap;gap:10px;margin:2px 0 4px}
+  .spec .s{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:10px 14px;min-width:120px}
+  .spec .s .lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);display:block;margin-bottom:3px}
+  .spec .s .val{font-family:var(--mono);font-size:.95rem;font-weight:600;color:var(--ink)}
+  .spec .s.hedge .val{color:var(--danger)}
+  /* checklist */
+  .clbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:2px 0 16px;
+    font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+  .clbar .prog{flex:1;min-width:160px;height:12px;background:var(--panel);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+  .clbar .prog i{display:block;height:100%;width:0;background:var(--ok);transition:width .35s ease}
+  .clbtns button{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid var(--rule);border-radius:4px;padding:5px 9px;cursor:pointer;color:var(--ink-soft)}
+  .clbtns button:hover{border-color:var(--ink);color:var(--ink)}
+  .clgroup{margin:0 0 18px}
+  .clgroup h3{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 8px;display:flex;justify-content:space-between;gap:10px}
+  .clgroup h3 .gw{color:var(--faint)}
+  .cl{list-style:none;padding:0;margin:0}
+  .cl li{border:1px solid var(--line);border-radius:8px;background:var(--card);padding:0;margin:0 0 8px}
+  .cl button{width:100%;text-align:left;background:transparent;border:0;cursor:pointer;display:flex;gap:12px;align-items:flex-start;
+    padding:12px 15px;font-family:var(--serif-body);font-size:15px;color:var(--ink);line-height:1.5}
+  .cl button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .cl .box{flex:none;width:18px;height:18px;border:1.5px solid var(--rule);border-radius:4px;margin-top:2px;font-family:var(--mono);font-size:12px;
+    display:flex;align-items:center;justify-content:center;color:#fff;transition:.15s}
+  .cl .mtag{font-family:var(--mono);font-size:10px;color:var(--accent-2);white-space:nowrap}
+  .cl li.done button{color:var(--muted)}
+  .cl li.done .box{background:var(--ok);border-color:var(--ok)}
+  .cl li.done .txt{text-decoration:line-through;text-decoration-color:var(--faint)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.html">Databricks GenAI</a>
+    <span class="loc">Track C · Certification prep</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Track C · Cross-cutting · v1.0</span><span>Format &amp; weights: B2 Ch1 · verify live blueprint</span></div>
+    <div class="filed">Track C — Certification prep · Topics C.1–C.10 · Theory + practice bank</div>
+    <h1>Certification prep</h1>
+    <p class="dek">The exam for the <strong>Databricks Certified Generative AI Engineer Associate</strong>. This hub maps the 18 modules you built onto the official 6-section blueprint, weights your study time, and hands you a clickable readiness checklist. <em>The exam tests applied judgment on the Databricks stack, not trivia.</em></p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>Study to the weights, not to the module numbers</h2></div>
+      <p class="lead">45 scenario questions in 90 minutes, no documentation. You pass by picking the best approach under a constraint — and by studying the high-weight sections hardest.</p>
+      <ul>
+        <li><strong>C.1 — Format + blueprint.</strong> 45 questions, 90 minutes, $200 USD, online-proctored, 2-year validity. Six official sections; more than half the exam is build + deploy.</li>
+        <li><strong>C.2–C.9 — Section → module map.</strong> Every official section routes to the exact modules you already built. Explore it below.</li>
+        <li><strong>C.10 — Practice.</strong> The companion <a href="mock-exam.md">mock-exam.md</a> has ~32 original, exam-style questions distributed by weight, each with an answer, rationale, and mapped module.</li>
+        <li><strong>The finish line is the exam + the C4 capstone.</strong> The certificate proves you know it; the Module-17 capstone proves you can build it.</li>
+      </ul>
+      <div class="note gotcha" style="margin-top:6px"><span class="tag">⚠️ Gotcha · verify live</span>Format and weights below are grounded in <strong>B2 Ch1</strong>. The <strong>passing score is not stated in the book</strong> (commonly reported ~70% for Databricks Associate exams, but unconfirmed). Section names, weights, fee, and passing score can change between exam versions — <strong>confirm on the live exam guide</strong> at <code>databricks.com/learn/certification/generative-ai-engineer-associate</code>. <em>Live re-check pending.</em></div>
+    </section>
+
+    <section class="entry" id="format">
+      <div class="entry-head"><span class="num">02 · Exam format</span><h2>What sitting the exam looks like</h2></div>
+      <div class="spec" id="specChips"></div>
+      <p style="font-family:var(--mono);font-size:.72rem;color:var(--faint);letter-spacing:.02em;margin-top:14px">Source: 📗 B2 Ch1, Table 1-1. Some questions are unscored (indistinguishable from scored) — answer all 45 with care.</p>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">03 · Blueprint → modules</span><h2>The map from exam section to what you built</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-map" id="t-map" onclick="tab(this,'p-map')">Blueprint map</button>
+        <button role="tab" aria-selected="false" aria-controls="p-sections" id="t-sections" onclick="tab(this,'p-sections')">Section explorer</button>
+        <button role="tab" aria-selected="false" aria-controls="p-weights" id="t-weights" onclick="tab(this,'p-weights')">Weights</button>
+        <button role="tab" aria-selected="false" aria-controls="p-path" id="t-path" onclick="tab(this,'p-path')">Study path</button>
+      </div>
+
+      <!-- PANE A: blueprint mermaid — mirrors module.md diagram 1 -->
+      <div id="p-map" class="pane active" role="tabpanel" aria-labelledby="t-map">
+        <div class="plate" data-fig="Fig. 01 — each of the 6 exam sections routes to your modules">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">The exam is your curriculum, re-weighted. Study time should follow the percentages.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: interactive section -> module explorer (centerpiece) -->
+      <div id="p-sections" class="pane" role="tabpanel" aria-labelledby="t-sections" hidden>
+        <div class="plate" data-fig="Plate I — click a section to see its weight, objectives, and modules">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a section</div><h3>The 6 official sections</h3><p>Click one to see its weight, what it tests, and the exact modules that cover it.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: weight bars -->
+      <div id="p-weights" class="pane" role="tabpanel" aria-labelledby="t-weights" hidden>
+        <div class="plate" data-fig="Fig. 02 — weights are a study budget (B2 Ch1, Table 1-2)">
+          <div class="weights" id="weights"></div>
+          <div class="plate-cap">Application Development (30%) + Assembling and Deploying (22%) = 52% of the exam.</div>
+        </div>
+      </div>
+
+      <!-- PANE D: study-path mermaid — mirrors module.md diagram 2 -->
+      <div id="p-path" class="pane" role="tabpanel" aria-labelledby="t-path" hidden>
+        <div class="plate" data-fig="Fig. 03 — the study loop, then a final live-blueprint check">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">Audit, fill gaps by weight, drill scenarios under a timer, re-audit — then verify the live blueprint and register.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="entry" id="checklist">
+      <div class="entry-head"><span class="num">04 · Readiness checklist</span><h2>Can you do this yet? (no docs on exam day)</h2></div>
+      <p>Tick each item you can do from memory. Anything you cannot is a gap — take it to the module in brackets. Progress saves in your browser.</p>
+      <div class="clbar">
+        <span id="clcount">0 / 0 ready</span>
+        <span class="prog" aria-hidden="true"><i id="clfill"></i></span>
+        <span class="clbtns"><button type="button" onclick="clReset()">Reset</button></span>
+      </div>
+      <div id="checklist"></div>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span><strong>Study to the weights.</strong> More than half the exam is Application Development (30%) and Assembling and Deploying (22%). Governance is only 8%. The exam is <strong>applied</strong> — practice picking the best approach under a constraint in ~2 minutes, with no documentation.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Take one full timed mock <strong>early</strong> to find weak sections, then spend hours where the weights and your gaps overlap. Keep a "current-vs-legacy names" flashcard — most trap distractors are old names. Finish the <strong>C4 capstone</strong>: it is revision and the portfolio artifact you show after you pass.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span><strong>Passing score is not in B2</strong> — do not state 70% as fact (live re-check pending). <strong>6 official sections, not 8</strong> — the ROADMAP's 8-domain view is a reading order, not the exam structure. Answer with <strong>current names</strong>: <code>mlflow.genai.evaluate</code> (not <code>mlflow.evaluate(model_type=...)</code>), <code>ResponsesAgent</code> (not <code>ChatModel</code>), AI Search with SDK <code>databricks-vectorsearch</code> (no <code>databricks-ai-search</code>), <code>databricks-langchain</code>.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>How many questions, how long, and how many official sections? Which two sections together make up more than half the exam?</li>
+          <li>Name the six official sections and their weights. Which is largest, and which modules cover it?</li>
+          <li>Is the passing score stated in the study guide? What should you do about it before you register?</li>
+          <li>Give two legacy names that would be wrong answers today, and the current name for each.</li>
+          <li>Which built-in evaluation scorer requires ground truth, and which blueprint section tests that?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📗 <strong>B2 — Study Guide, Ch 1 "Exam Details and Resources"</strong> (primary): <strong>Table 1-1</strong> exam format (45 questions, 90 min, $200 USD, online-proctored at webassessor.com/databricks, no aids, EN/JA/PT-BR/KO, no prereqs / 6+ months hands-on recommended, 2-year validity), scored vs unscored questions, <strong>Table 1-2</strong> domains and weightings (Design 14%, Data Prep 14%, Application Development 30%, Assembling and Deploying 22%, Governance 8%, Evaluation and Monitoring 12%), and the per-section objective breakdowns. <em>Early Release — RAW &amp; UNEDITED; passing score not stated; weights may change.</em></li>
+        <li>🌐 <strong>Official exam guide (verify here):</strong> <code>databricks.com/learn/certification/generative-ai-engineer-associate</code> — JavaScript-rendered, not reliably fetchable by a simple request; confirm sections, weights, passing score, and fee in the browser. <strong>⚠️ Live re-check pending.</strong></li>
+        <li>🧭 <strong>naming-conventions.md</strong> (verified July 2026): current names the exam and your answers must use — <code>mlflow.genai.evaluate</code>, <code>ResponsesAgent</code>, Databricks AI Search (SDK <code>databricks-vectorsearch</code>), <code>databricks-langchain</code>, <code>ai_query</code>, AI Gateway guardrails, Genie Agents.</li>
+        <li>📎 <strong>Cross-referenced (not re-taught):</strong> Modules 00–09, 11, 12, 13, 16, 17. Practice bank: <a href="mock-exam.md">mock-exam.md</a>. Portfolio proof: the C4 / Module-17 capstone.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Track C hub</span>
+  <span>Next → verify the live blueprint, register, show the C4 capstone</span>
+</footer>
+
+<script>
+// ---- Exam format spec chips (B2 Ch1, Table 1-1) ----
+const SPECS=[
+  ["Questions","45"],["Time","90 min"],["Fee","$200 USD"],
+  ["Delivery","Online proctored"],["Aids","None"],["Validity","2 years"],
+  ["Languages","EN · JA · PT-BR · KO"],["Passing score","Not in B2 · verify",true],
+];
+const sc=document.getElementById("specChips");
+if(sc)sc.innerHTML=SPECS.map(s=>`<div class="s${s[2]?' hedge':''}"><span class="lab">${s[0]}</span><span class="val">${s[1]}</span></div>`).join("");
+
+// ---- Section explorer data (official 6 sections -> modules) ----
+const SECTIONS=[
+ {n:"Sec 1 · Design Applications",w:"14%",spine:false,
+  role:"14% · design before you build",
+  what:"Design a prompt for a target output format; select model tasks for a business need; choose chain components for required I/O; translate business goals into pipeline inputs/outputs; define and order tools for multi-stage reasoning.",
+  mods:"Modules 01 · 02 · 09  (also 05, 00)"},
+ {n:"Sec 2 · Data Preparation",w:"14%",spine:false,
+  role:"14% · make retrieval accurate + cheap",
+  what:"Pick a chunking strategy for a document structure and model limits; filter noise; choose the right extraction package (ai_parse_document / ai_extract); write chunked text to Delta/UC; build prompt/response pairs; use retrieval-eval metrics; explain reranking.",
+  mods:"Modules 03 · 04"},
+ {n:"Sec 3 · Application Development",w:"30%",spine:true,
+  role:"30% · the largest section",
+  what:"Build with databricks-langchain, MLflow, and AI Search; create tools; prompt formats and metaprompts; guardrails; augment prompts with user context; agent prompt templates; select the best LLM / embedding context length by attributes and metrics; use the Agent Framework (ResponsesAgent) to build agentic systems.",
+  mods:"Modules 05 · 09 · 02 · 04 · 12  (also 01, 08, 10)"},
+ {n:"Sec 4 · Assembling and Deploying",w:"22%",spine:true,
+  role:"22% · package and serve",
+  what:"Code a chain as a PyFunc with pre/post-processing; control resource access from serving endpoints; RAG basic elements (flavor, embedding, retriever, dependencies, input examples, signature); register to UC via MLflow; sequence an endpoint deploy; create and query a Vector Search index; serve with Foundation Model APIs; batch ai_query().",
+  mods:"Modules 05 · 06 · 11 · 04 · 16  (also 17)"},
+ {n:"Sec 5 · Governance",w:"8%",spine:false,
+  role:"8% · mitigate risk",
+  what:"Use masking as a guardrail; select guardrail techniques against malicious input; apply legal/licensing constraints on data sources; recommend alternatives to problematic source text.",
+  mods:"Module 12  (also 03, 00)"},
+ {n:"Sec 6 · Evaluation and Monitoring",w:"12%",spine:false,
+  role:"12% · measure + operate",
+  what:"Choose an LLM from quantitative metrics; pick monitoring metrics; evaluate RAG with mlflow.genai.evaluate; inference logging; control cost; inference tables + agent monitoring; identify judges that require ground truth; compare the eval vs monitoring phases.",
+  mods:"Modules 08 · 13 · 16  (also 06, 07)"},
+];
+const stack=document.getElementById("stack");
+if(stack){
+  const grp=document.createElement("div");grp.className="layer spine";grp.innerHTML=`<h3>The 6 official sections — click one</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  SECTIONS.forEach(s=>{const b=document.createElement("button");b.className="chip";b.type="button";
+    b.innerHTML=`${s.n.split(' · ')[1]||s.n} <span class="w">${s.w}</span>`;b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll("#stack .chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${s.role}</div><h3>${s.n}</h3><p>${s.what}</p><div class="mod">→ ${s.mods}</div><div class="layerof">Weight ${s.w} of the exam · study time should follow it</div>`;};
+    chips.appendChild(b);});
+  grp.appendChild(chips);stack.appendChild(grp);
+}
+
+// ---- Weight bars ----
+const WEIGHTS=[["Design Applications",14],["Data Preparation",14],["Application Development",30],["Assembling and Deploying",22],["Governance",8],["Evaluation and Monitoring",12]];
+const wEl=document.getElementById("weights");
+if(wEl)wEl.innerHTML=WEIGHTS.map(w=>`<div class="wbar"><span class="wname">${w[0]}</span><span class="track"><span class="fill" style="width:${(w[1]/30*100).toFixed(0)}%"></span></span><span class="wpct">${w[1]}%</span></div>`).join("");
+
+// ---- Readiness checklist (grouped by section) ----
+const CHECK=[
+ ["Section 1 · Design Applications","14%",[
+   ["Write a prompt that forces a specific output format (JSON / table) and say why format control matters.","02"],
+   ["Given a business need, pick the right model task (classify / summarize / generate / extract).","01·03"],
+   ["Choose the components of a chain for a required input/output.","05"],
+   ["Define and order tools for a multi-step agent (retrieve → compute → respond).","09"],
+ ]],
+ ["Section 2 · Data Preparation","14%",[
+   ["Pick a chunking strategy for a document structure and model context limit; justify size + overlap.","03"],
+   ["Choose the extraction path (ai_parse_document / ai_extract vs a Python parser) for a source format.","03"],
+   ["Write curated chunks to a Delta table in Unity Catalog and prepare it for indexing.","03"],
+   ["Build an AI Search index, pick an embedding model + dimension, and explain hybrid search and reranking.","04"],
+   ["Use retrieval-evaluation metrics to decide if retrieval is good enough.","04·08"],
+ ]],
+ ["Section 3 · Application Development","30% · hardest",[
+   ["Build a RAG chain with databricks-langchain and log it with Model-as-Code (mlflow.models.set_model).","05"],
+   ["Author an agent as a ResponsesAgent and attach tools (UCFunctionToolkit, a vector-search retriever tool).","09"],
+   ["Write metaprompts that reduce hallucination and prevent leakage; version prompts in the MLflow Prompt Registry.","02"],
+   ["Select an LLM / embedding context length for a task from model-card attributes and metrics.","01·04"],
+   ["Choose between a code agent (Agent Framework) and a no-code Agent Bricks path.","09·10"],
+   ["Apply in-app guardrails and qualitatively assess responses for quality and safety.","12·08"],
+ ]],
+ ["Section 4 · Assembling and Deploying","22% · hard",[
+   ["List the RAG deployment elements: flavor, embedding, retriever, dependencies, input examples, signature.","05·06"],
+   ["Register a model to Unity Catalog with MLflow (set_registry_uri('databricks-uc')) and manage aliases/tags.","06"],
+   ["Sequence the deploy of a RAG/agent endpoint and control resource access from the endpoint.","11"],
+   ["Create and query a Vector Search index and identify the resources to serve a RAG app.","04·11"],
+   ["Serve an LLM with Foundation Model APIs; distinguish pay-per-token vs provisioned throughput.","11·16"],
+   ["Decide when a workload belongs in batch ai_query() vs an interactive endpoint.","16·11"],
+ ]],
+ ["Section 5 · Governance","8%",[
+   ["Choose a guardrail for a stated risk and know where it attaches (FM/external endpoint via AI Gateway).","12"],
+   ["Apply masking to meet a data-protection objective.","12"],
+   ["Reason about legal/licensing constraints and recommend an alternative for problematic source text.","03·12"],
+ ]],
+ ["Section 6 · Evaluation and Monitoring","12%",[
+   ["Run mlflow.genai.evaluate(data=, predict_fn=, scorers=[...]) and choose the right built-in scorers.","08"],
+   ["Identify which scorers need ground truth (Correctness) vs which do not (RelevanceToQuery, Safety).","08"],
+   ["Select an LLM from quantitative metrics and pick monitoring metrics for a deployment.","08·13"],
+   ["Read inference tables, set scorers-as-monitors, and compare the evaluation vs monitoring phases.","13·07"],
+   ["Apply Databricks cost-control features (right-size, cache, batch, scale_to_zero, AI Gateway budgets).","16"],
+ ]],
+ ["Exam-day readiness","",[
+   ["Finish a full 45-question mock in under 90 minutes, scoring consistently above my target.","C.10"],
+   ["Verify the live blueprint (sections, weights, passing score, fee) on the official exam guide.","C.1"],
+   ["Fluent in current names; will not pick a legacy-named distractor.","naming"],
+ ]],
+];
+const KEY="dbx-genai-trackc-readiness";
+let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||"{}");}catch(e){saved={};}
+const clRoot=document.getElementById("checklist");
+let total=0;
+if(clRoot){
+  CHECK.forEach((g,gi)=>{
+    const box=document.createElement("div");box.className="clgroup";
+    box.innerHTML=`<h3>${g[0]}<span class="gw">${g[1]}</span></h3>`;
+    const ul=document.createElement("ul");ul.className="cl";
+    g[2].forEach((it,ii)=>{
+      total++;const id=`${gi}-${ii}`;const done=!!saved[id];
+      const li=document.createElement("li");if(done)li.className="done";
+      const btn=document.createElement("button");btn.type="button";btn.setAttribute("aria-pressed",done?"true":"false");
+      btn.innerHTML=`<span class="box">${done?'✓':''}</span><span class="txt">${it[0]}</span><span class="mtag">[${it[1]}]</span>`;
+      btn.onclick=()=>{const now=!li.classList.contains("done");li.classList.toggle("done",now);
+        btn.setAttribute("aria-pressed",now?"true":"false");btn.querySelector(".box").textContent=now?'✓':'';
+        saved[id]=now;try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}clUpdate();};
+      li.appendChild(btn);ul.appendChild(li);
+    });
+    box.appendChild(ul);clRoot.appendChild(box);
+  });
+}
+function clUpdate(){const done=Object.values(saved).filter(Boolean).length;
+  const c=document.getElementById("clcount");if(c)c.textContent=`${done} / ${total} ready`;
+  const f=document.getElementById("clfill");if(f)f.style.width=(total?done/total*100:0)+"%";}
+function clReset(){saved={};try{localStorage.removeItem(KEY);}catch(e){}
+  document.querySelectorAll(".cl li").forEach(li=>{li.classList.remove("done");const b=li.querySelector("button");b.setAttribute("aria-pressed","false");b.querySelector(".box").textContent='';});clUpdate();}
+clUpdate();
+
+// ---- Tabs ----
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+// ---- Mermaid (mirrors module.md diagrams) ----
+const MERMAID_SRC=`flowchart LR
+  EXAM["Databricks Certified<br/>GenAI Engineer Associate<br/>45 Q · 90 min · 6 sections"]
+  EXAM --> S1["Sec 1 · Design Applications<br/>14%"]
+  EXAM --> S2["Sec 2 · Data Preparation<br/>14%"]
+  EXAM --> S3["Sec 3 · Application Development<br/>30% (largest)"]
+  EXAM --> S4["Sec 4 · Assembling and Deploying<br/>22%"]
+  EXAM --> S5["Sec 5 · Governance<br/>8%"]
+  EXAM --> S6["Sec 6 · Evaluation and Monitoring<br/>12%"]
+  S1 --> M1["Modules 01 · 02 · 09<br/>(prompts, model tasks, tool ordering)"]
+  S2 --> M2["Modules 03 · 04<br/>(chunking, ai_parse_document, embeddings, reranking)"]
+  S3 --> M3["Modules 05 · 09 · 02 · 04 · 12<br/>(LangChain chain, Agent Framework, guardrails)"]
+  S4 --> M4["Modules 05 · 06 · 11 · 04 · 16<br/>(Model-as-Code, UC registry, Serving, ai_query)"]
+  S5 --> M5["Module 12 · 03<br/>(AI Guardrails, PII, licensing)"]
+  S6 --> M6["Modules 08 · 13 · 16 · 06 · 07<br/>(mlflow.genai.evaluate, monitoring, tracing)"]`;
+const MERMAID_SRC2=`flowchart TB
+  A["Read the blueprint<br/>B2 Ch1 + verify live guide"] --> B["Self-audit with the<br/>readiness checklist"]
+  B --> C{"Gaps found?"}
+  C -->|"Yes"| D["Study the mapped modules<br/>weighted by section %"]
+  D --> E["Drill mock-exam.md<br/>scenario questions"]
+  C -->|"No"| E
+  E --> F{"Scoring above target<br/>under a 90-min timer?"}
+  F -->|"No"| D
+  F -->|"Yes"| G["Confirm live blueprint,<br/>passing score, and format"]
+  G --> H["Register + sit the exam"]
+  H --> I["Show the C4 capstone<br/>as the portfolio proof"]`;
+
+const root=document.documentElement;root.dataset.theme="paper";
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+// ---- Reveal + progress ----
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

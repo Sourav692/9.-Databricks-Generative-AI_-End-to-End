@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 17 Reference Architectures (module hub).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Reference Architectures · Databricks GenAI Tutor 17</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  /* ============ DESIGN SYSTEM — tokens (do not rename) ============ */
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line);
+    --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:16ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tag-pill{display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--line);border-radius:20px;color:var(--muted);margin-left:8px;vertical-align:middle}
+  .tag-pill.h{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.t{color:var(--accent-2);border-color:var(--accent-soft)}
+  .tag-pill.star{color:var(--danger);border-color:var(--danger-soft)}
+  .tag-pill.ga{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.beta{color:var(--danger);border-color:var(--danger-soft)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.3rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  h3.tk{font-family:var(--mono);font-size:.9rem;letter-spacing:.06em;margin:24px 0 6px}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.md">Databricks GenAI</a>
+    <span class="loc">Module 17 · Topics 17.1–17.7 · Capstone</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_17 · GenAI lesson · v1.0</span><span>Grounded in B1 Ch2 + Ch10 · naming cheat-sheet · MLflow/Databricks docs (Jul 2026)</span></div>
+    <div class="filed">Module 17 — Reference architectures and unifying GenAI systems · Topics 17.1–17.7 · Theory + Hands-on</div>
+    <h1>Reference Architectures</h1>
+    <p class="dek">The <em>capstone</em> module. Modules 00–16 built the pieces of the <strong>Unity Airways</strong> stack; here they connect into <strong>one system a review board can sign off on</strong>. The one idea: <strong>MLflow is the integration plane</strong>, and the <strong>MLflow Trace is the shared artifact</strong> that keeps every part honest.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>Stop thinking in features. Start thinking in planes.</h2></div>
+      <p class="lead">By the time an agent reaches production, calling the model is the easy part. The hard part is getting the app framework, agent runtime, retrieval, tools, background services, IDE assistants, and the eval stack to <strong>operate coherently</strong>. That is what MLflow becomes: not a tracing library or an eval API in isolation, but the <strong>plane that connects them all</strong>.</p>
+      <ul>
+        <li><strong>The lifecycle is the architecture (17.1)</strong> — Develop → Evaluate → Deploy → Monitor → Improve is a <strong>loop</strong>, and every module you built slots into one phase. B1 Ch2.</li>
+        <li><strong>The trace is the system of record (17.2)</strong> — product, platform, agent, and eval teams all read the same MLflow Trace. Consistent span types + searchable tags. B1 Ch10.</li>
+        <li><strong>OTel makes it cross-stack (17.3)</strong>, <strong>Agent Server gives one serving contract (17.4)</strong>, <strong>MCP + Skills bridge assistants (17.5)</strong>, and <strong>third-party judges plug into one eval loop (17.6)</strong>.</li>
+        <li><strong>17.7 is Capstone C4</strong> — assemble and defend the whole platform.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 The rule that shapes this module</span><strong>MLflow is the integration plane.</strong> Four load-bearing surfaces: the <strong>trace</strong> (shared artifact), the <strong>serving contract</strong> (Agent Server / <code>agents.deploy</code>), the <strong>eval loop</strong> (native + third-party judges), and the <strong>MCP bridge</strong> (assistants + Skills) — with <strong>OpenTelemetry</strong> connecting it to the wider stack. Name maturity: GA — MLflow 3 Traces, Model Serving, <code>agents.deploy</code>, third-party judge integrations; <strong>experimental / newer</strong> — MLflow Agent Server, MLflow MCP server; <strong>Public Preview</strong> — managed MCP servers.</div>
+    </section>
+
+    <section class="entry" id="problem">
+      <div class="entry-head"><span class="num">02 · The problem</span><h2>The board sees three demos, not one system</h2></div>
+      <p>You shipped a capable stack: retrieval (04–05), a governed tool-using agent (09), served and guardrailed (11–12), monitored (13), with a self-serve analytics path (14–15). Each works. But the review board asks the <strong>integration</strong> questions a demo can't answer:</p>
+      <ul>
+        <li>When a request goes wrong, <strong>where do I look</strong> — app logs, agent runtime, retrieval service, gateway, or the eval report?</li>
+        <li>The support agent, the analytics Genie, and a nightly batch job each <strong>emit different signals</strong>. How do I trace one user journey across them?</li>
+        <li>A new team wants to call the agent from a mobile backend. Do they <strong>re-implement</strong> streaming, retries, and logging, or is there one contract?</li>
+        <li>Our platform team already runs <strong>OpenTelemetry</strong>. Do GenAI traces show up there, or is this a silo nobody watches?</li>
+        <li>A promising <strong>third-party evaluator</strong> looks better for one dimension. Adopt it and fragment the eval stack, or skip it?</li>
+      </ul>
+      <p>These are integration questions, not feature questions. Answering them is what turns "some AI projects" into "a platform we operate."</p>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">03 · Explore</span><h2>The lifecycle loop, the integration plane, the 7 topics, and the phase map</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-plane" id="t-plane" onclick="tab(this,'p-plane')">Integration plane ★</button>
+        <button role="tab" aria-selected="false" aria-controls="p-loop" id="t-loop" onclick="tab(this,'p-loop')">5-phase loop</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The 7 topics</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Phase → module map</button>
+      </div>
+
+      <!-- PANE A: the centerpiece integration-plane diagram — mirrors module.md Diagram 2 -->
+      <div id="p-plane" class="pane active" role="tabpanel" aria-labelledby="t-plane">
+        <div class="plate" data-fig="Fig. 01 — MLflow as the integration plane (mirrors B1 Fig 10-1)">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">Two application paths (support + analytics), one governance plane (Unity Catalog) and one integration plane (MLflow 3). The trace store is the hub every other MLflow surface reads from.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: 5-phase lifecycle loop — mirrors module.md Diagram 1 -->
+      <div id="p-loop" class="pane" role="tabpanel" aria-labelledby="t-loop" hidden>
+        <div class="plate" data-fig="Fig. 02 — The 5-phase lifecycle as a loop (B1 Ch2)">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">The lifecycle is a loop, not a line. Improve feeds production evidence back into Develop, and the same trace schema and scorers run in every phase.</div>
+        </div>
+      </div>
+
+      <!-- PANE C: clickable explorer of the 7 topics -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — Topic index">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a topic</div><h3>The 7 topics</h3><p>Click a topic to see what it covers, its Theory/Hands-on label, and status. Topics are grouped by the integration surface they belong to.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE D: phase -> module table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Lifecycle phase</th><th>What happens (Unity Airways)</th><th>Modules</th></tr></thead><tbody id="rows"></tbody></table>
+        <div class="note imp" style="margin-top:16px"><span class="tag">📌 The loop is 1:1 with the modules</span>Develop (01-05, 09-10) → Evaluate (08) → Deploy (11-12) → Monitor (13) → Improve (13.7) → back to Develop. "Instrument early, evaluate consistently, deploy deliberately, monitor reality, and improve with evidence." (B1 Ch2)</div>
+      </div>
+    </section>
+
+    <section class="entry" id="t1">
+      <div class="entry-head"><span class="num">04 · Lifecycle</span><h2>17.1 — The 5-phase GenAI lifecycle as architecture</h2></div>
+      <h3 class="tk">17.1 The 5-phase lifecycle <span class="tag-pill t">Theory</span> <span class="tag-pill">B1 Ch2</span></h3>
+      <ul>
+        <li><strong>Develop</strong> — a minimal agent that looks up a booking, answers basic policy questions, cites sources; instrumented with <strong>MLflow Traces from the first working path</strong>. Goal: a <em>minimum evaluable product</em>.</li>
+        <li><strong>Evaluate</strong> — curated scenarios (refunds, changes, baggage, disruptions) with <strong>scorers for groundedness and safety</strong> (cite official policy; never invent fee waivers). Module 08.</li>
+        <li><strong>Deploy</strong> — promote a <strong>versioned application behind a controlled serving surface</strong>. Modules 11–12.</li>
+        <li><strong>Monitor</strong> — collect real questions; reveal drift in refund answers when policy context is missing, or odd behavior when a tool times out. Module 13.</li>
+        <li><strong>Improve</strong> — targeted changes (tighten retrieval filters, clarify prompt sections), then <strong>validate against the same dataset</strong> before promoting. Module 13.7.</li>
+      </ul>
+      <div class="note tip"><span class="tag">💡 Why it's architecture</span>The phases are held together by <strong>durable artifacts and decision points</strong> (B1 Table 2-1): consistent tracing schema, versioned eval datasets, business-aligned scorers, promotion gates, versioned prompts/models/configs, lineage for rollback, and cost visibility. The architecture <em>is</em> those shared artifacts.</div>
+    </section>
+
+    <section class="entry" id="t2">
+      <div class="entry-head"><span class="num">05 · Trace</span><h2>17.2 — MLflow Traces as the shared integration artifact</h2></div>
+      <h3 class="tk">17.2 Trace as shared artifact <span class="tag-pill t">Theory</span> <span class="tag-pill">B1 Ch10</span> <span class="tag-pill ga">GA</span></h3>
+      <ul>
+        <li><strong>The trace is the system of record</strong> for what actually happened across the application — the same artifact read by product engineers (request/response), platform teams (latency/failures/paths), agent developers (tool calls, retrieval, decisions), and the eval workflow (scores it later without reconstructing context).</li>
+        <li><strong>It matters more in heterogeneous systems</strong> — a request crossing a TypeScript frontend, Python orchestration, a Java retrieval service, and a Go tool backend. A common trace format pays for itself as diversity grows.</li>
+        <li><strong>Conventions make it work:</strong> consistent <strong>span types</strong> (<code>AGENT</code>, <code>TOOL</code>, <code>RETRIEVER</code>), <strong>stable names</strong> for recurring operations, and searchable <strong>tags</strong> (<code>user_id</code>, <code>session_id</code>, <code>environment</code>, <code>app_version</code>).</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 One atom, five jobs</span>The same Unity Airways trace you instrumented in <strong>Module 07</strong> is auto-captured in production (13), scored offline and online with the <strong>Module 08</strong> scorers, and — when it fails — curated into the eval set (13.7). Signal, scorer input, dashboard row, alert trigger, next eval-set record.</div>
+    </section>
+
+    <section class="entry" id="t3">
+      <div class="entry-head"><span class="num">06 · Trace</span><h2>17.3 — OpenTelemetry for cross-stack tracing</h2></div>
+      <h3 class="tk">17.3 OpenTelemetry cross-stack <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill ga">OTel-compatible</span></h3>
+      <ul>
+        <li><strong>Many apps already run OpenTelemetry (OTel)</strong> for distributed tracing across services, gateways, and infrastructure. MLflow's OTel compatibility lets GenAI traces join those workflows instead of living on an island.</li>
+        <li><strong>Two directions:</strong> (1) export MLflow traces to an OTel collector so they flow into existing observability platforms; (2) bring OTel-instrumented app activity into Databricks tracing (upstream + downstream visibility).</li>
+        <li><strong>"Dual export"</strong> is B1's word for the goal — the <em>same</em> trace reaches <strong>both</strong> MLflow and another OTel destination. The <strong>current docs mechanism</strong> isn't a single <code>MLFLOW_ENABLE_DUAL_EXPORT</code> flag: point OTel at your collector, then combine MLflow + OTel spans into one trace via <code>MLFLOW_USE_DEFAULT_TRACER_PROVIDER="false"</code> + <code>mlflow.tracing.set_destination(...)</code>.</li>
+      </ul>
+      <pre><code># Send spans to an OTel collector AND combine with MLflow (current MLflow OTel docs)
+import os
+import mlflow
+from mlflow.entities.trace_location import MlflowExperimentLocation
+
+# 1) Export spans to your external OTel collector via OTLP
+os.environ["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"] = "&lt;collector-endpoint-url&gt;"
+os.environ["OTEL_SERVICE_NAME"] = "unity-airways-support"   # optional: groups traces
+
+# 2) Run MLflow AND OTel together so both span sets land in ONE trace
+os.environ["MLFLOW_USE_DEFAULT_TRACER_PROVIDER"] = "false"
+mlflow.set_tracking_uri("databricks")
+mlflow.tracing.set_destination(MlflowExperimentLocation(experiment_id="&lt;experiment-id&gt;"))</code></pre>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>To display OTel traces meaningfully, apps must emit the <strong>expected span types and attributes</strong>. Those field-level mappings <strong>evolve faster than the architecture</strong> — B1 deliberately does not reproduce them. Read the current MLflow/Databricks tracing docs. <strong>⚠️ live re-check pending</strong> on exact semantic-convention field names.</div>
+    </section>
+
+    <section class="entry" id="t4">
+      <div class="entry-head"><span class="num">07 · Serving</span><h2>17.4 — MLflow Agent Server as a stable serving layer</h2></div>
+      <h3 class="tk">17.4 Agent Server <span class="tag-pill t">Theory</span> <span class="tag-pill">B1 Ch10</span> <span class="tag-pill beta">Newer / verify</span></h3>
+      <ul>
+        <li><strong>The problem:</strong> a web chat, a mobile backend, and an internal tool may all call the same agent, yet each accumulates its own request handling, streaming, retry, and logging — the agent <strong>fragments</strong> and behaves differently per entry point.</li>
+        <li><strong>MLflow Agent Server</strong> is a <strong>FastAPI-based server</strong> in front of the runtime: exposes agents through an <code>/invocations</code> endpoint, supports decorator registration with <code>@invoke()</code> / <code>@stream()</code>, <strong>validates against the Responses API schema</strong>, and <strong>wires in tracing automatically</strong>.</li>
+        <li><strong>The benefit:</strong> clients integrate with <strong>one serving contract</strong>, not agent internals — you can change internal components without forcing consumers to reimplement.</li>
+      </ul>
+      <div class="note tip"><span class="tag">💡 The managed equivalent on Databricks</span><code>agents.deploy(uc_model_name, version)</code> creates a <strong>Model Serving</strong> endpoint (our <code>ua-support-agent</code>) plus a Review App, and enables tracing, inference tables, and monitoring. Same idea — one stable contract with tracing built in — managed for you. MLflow Agent Server is a newer MLflow feature; confirm exact status/API on <code>mlflow.org/docs/latest</code> before a customer build.</div>
+    </section>
+
+    <section class="entry" id="t5">
+      <div class="entry-head"><span class="num">08 · Bridge</span><h2>17.5 — MCP as the bridge to assistants and IDEs; MLflow Skills</h2></div>
+      <h3 class="tk">17.5 MCP + MLflow Skills <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill beta">MCP experimental · managed MCP Preview</span></h3>
+      <ul>
+        <li><strong>The MLflow MCP server</strong> gives assistants and IDE agents a standard, programmatic way to interact with MLflow: <strong>search/retrieve trace data, analyze performance, log feedback/assessments, manage tags/metadata</strong> — not just as a destination UI.</li>
+        <li><strong>Why it changes the workflow:</strong> instead of pasting screenshots into chat, the assistant operates on the <strong>underlying trace data directly</strong> — find recurring failure patterns, compare related traces, spot which tool call caused a regression. It becomes part of the observability workflow.</li>
+        <li><strong>MLflow Skills</strong> — described in B1 Ch10 as a newer, agent-authored playbook set (instrument tracing, analyze traces, reconstruct chat sessions, set up evaluation, query metrics, onboard, search docs), portable across <strong>Claude Code, Cursor, Codex, Gemini CLI, and OpenCode</strong>. This project bundles skills of exactly this shape (e.g. <code>instrumenting-with-mlflow-tracing</code>) — <strong>confirm current availability/naming in the MLflow docs</strong> before citing it.</li>
+        <li><strong>On Databricks:</strong> managed, UC-governed <strong>MCP servers</strong> for <strong>Genie, AI Search, UC functions, and Databricks SQL</strong> (Public Preview).</li>
+      </ul>
+      <pre><code>// Version gate first:  pip install 'mlflow[mcp]>=3.5.1'
+// MCP client config (coding-assistant settings), per current MLflow docs.
+// Points an assistant at MLflow's MCP server.
+{
+  "mcpServers": {
+    "mlflow": {
+      "command": "uv",
+      "args": ["run", "--with", "mlflow[mcp]>=3.5.1", "mlflow", "mcp", "run"],
+      "env": {
+        "MLFLOW_TRACKING_URI": "databricks",
+        "DATABRICKS_HOST": "https://&lt;your-workspace-host&gt;",
+        "DATABRICKS_TOKEN": "&lt;token&gt;"
+      }
+    }
+  }
+}</code></pre>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>B1 states plainly: <strong>at time of writing the MLflow MCP server does not support interacting with traces stored in Unity Catalog</strong> — the direction is clear but the workflow still depends on where traces are stored. MCP server is <strong>experimental</strong>; managed MCP servers are <strong>Public Preview</strong>. <strong>⚠️ live re-check pending</strong> on the exact launch command and UC-trace support.</div>
+    </section>
+
+    <section class="entry" id="t6">
+      <div class="entry-head"><span class="num">09 · Measure</span><h2>17.6 — Third-party judges and ecosystem integration</h2></div>
+      <h3 class="tk">17.6 Third-party judges <span class="tag-pill t">Theory</span> <span class="tag-pill">B1 Ch10</span> <span class="tag-pill ga">GA integrations</span></h3>
+      <ul>
+        <li><strong>Evaluation is part of the integration plane.</strong> MLflow works as a <strong>common scorer interface</strong> for evaluation methods that come from outside the core project.</li>
+        <li><strong>The eval ecosystem moves fast</strong> — different tools lead on conversational quality, retrieval quality, hallucination detection, safety, summarization, agent behavior. The challenge: adopt them <strong>without a second, disconnected eval stack</strong>.</li>
+        <li><strong>MLflow lets third-party judges run in the same workflow as native scorers</strong> — today including <strong>DeepEval, RAGAS, Arize Phoenix, and TruLens</strong>. Mix built-in and external evaluators while keeping <strong>one evaluation loop</strong>.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 In our stack</span>The Module 08 <code>mlflow.genai.evaluate(...)</code> scorecard (Correctness, RetrievalGroundedness, Safety) that gates promotion of <code>ua_support_agent</code> is the <em>same</em> loop a RAGAS retrieval judge or a DeepEval hallucination judge plugs into — no parallel pipeline, one scorecard.</div>
+    </section>
+
+    <section class="entry" id="t7">
+      <div class="entry-head"><span class="num">10 · Capstone</span><h2>17.7 — Designing an end-to-end enterprise reference architecture</h2></div>
+      <h3 class="tk">17.7 Reference architecture (Capstone C4) <span class="tag-pill t">Theory</span> <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Capstone</span></h3>
+      <p><strong>This topic is Capstone C4 — don't rebuild it here.</strong> The full spec (scenario, milestones M1–M5, acceptance criteria, grading rubric, 8-domain cert map, deliverables) lives in the <a href="../../capstones/capstone-4-genai-platform.md">Capstone C4 — GenAI Platform</a> spec.</p>
+      <ul>
+        <li><strong>In two lines:</strong> C4 stitches C1–C3 (registered <code>ua_rag_chain</code>, its <code>@champion</code> scorecard, the deployed <code>ua_support_agent</code>) into <strong>one governed platform</strong> and adds the layers the earlier capstones didn't touch — Genie analytics (14), metric views (15), a cost/scaling pass (16), and this reference architecture (17). Deliverable: a running platform plus an architecture one-pager, production-readiness checklist, cert-domain readiness map, and stakeholder demo script.</li>
+        <li><strong>How 17 shows up:</strong> milestone <strong>M4</strong> is this module — the reference architecture and single-page diagram, with the <strong>5-phase lifecycle as structure (17.1)</strong> and <strong>MLflow Traces as the shared integration artifact (17.2)</strong> across both paths.</li>
+      </ul>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>The runnable end-to-end capstone <strong>notebook is deferred</strong> — built later. This hub links the spec; it does not ship <code>17-7-capstone.py</code>.</div>
+    </section>
+
+    <section class="entry" id="worked">
+      <div class="entry-head"><span class="num">11 · Worked thread</span><h2>Unity Airways — one request, across the planes</h2></div>
+      <p>Walk one request through the integration plane and watch the components you built line up. Click through the steps.</p>
+      <div class="flowline" id="flowline"></div>
+      <div class="stepbox" id="stepbox"></div>
+      <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      <div class="plate-cap" style="margin-top:14px">One trace, followed across the app, agent, retriever, tool, OTel backend, assistant analysis, and eval score — each hop named by module and plane.</div>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">12 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span><strong>MLflow is the integration plane.</strong> Four load-bearing surfaces — the <strong>trace</strong> (17.2), the <strong>serving contract</strong> (17.4), the <strong>eval loop</strong> (17.6), and the <strong>MCP bridge</strong> (17.5) — connected to the wider stack by <strong>OTel</strong> (17.3). Two planes (Unity Catalog governance + MLflow 3 observability) turn three demos into one platform (17.7).</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>On a whiteboard, draw <strong>planes first</strong> (UC + MLflow), then hang the boxes (RAG, agent, Genie, monitoring) on them — it reframes "which product?" into "how does it stay coherent?" Standardize span types and tags in <strong>dev</strong>; they carry to prod unchanged and make cross-release comparison possible.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>B1 is an O'Reilly <strong>Early Release (RAW &amp; UNEDITED)</strong> — Agent Server, MLflow MCP (no UC-trace support yet), and OTel field mappings are current-direction but fast-moving; <strong>live re-check</strong> before a customer. And remember: <strong>AI Gateway on agent endpoints supports only inference tables</strong> — guardrails/rate-limits need an FM or external-model endpoint (Module 11/12), so don't over-claim gateway features on <code>ua-support-agent</code>.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">13 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <p style="color:var(--muted)">📝 <strong>Notes:</strong> jot your own — which of the four integration surfaces (trace / serving / eval / MCP) your customer is missing, and whether their GenAI traces reach their existing OTel backend.</p>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Name the five lifecycle phases in order and the module(s) that built each. Which phase feeds back into which, and why is it a loop, not a line?</li>
+          <li>Why is the MLflow Trace the "shared integration artifact"? Name three roles that read the same trace, and the four things you standardize (span types + one more).</li>
+          <li>What does OTel <strong>dual export</strong> do, and which two environment variables turn it on? What's the one thing B1 refuses to reproduce, and why?</li>
+          <li>What is MLflow Agent Server, what endpoint does it expose, and what schema does it validate against? What is the managed Databricks equivalent?</li>
+          <li>What can an assistant do through the MLflow MCP server, what do MLflow Skills add, and what is the current limitation about Unity-Catalog-stored traces?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">14 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📘 <strong>B1 — <em>Practical MLflow for GenAI on Databricks</em></strong> (Early Release, RAW/UNEDITED), <strong>Ch 10 — "Bringing It All Together"</strong> (primary): MLflow as an integration plane (Fig 10-1); Traces as the Shared Integration Artifact (span types <code>AGENT</code>/<code>TOOL</code>/<code>RETRIEVER</code>, stable names, tags <code>user_id</code>/<code>session_id</code>/<code>environment</code>/<code>app_version</code>); OpenTelemetry for Cross-Stack Tracing (dual export; the book's illustrative <code>MLFLOW_ENABLE_DUAL_EXPORT</code> flag is <strong>superseded by the current docs mechanism</strong> cited below); MLflow Agent Server (FastAPI, <code>/invocations</code>, <code>@invoke()</code>/<code>@stream()</code>, Responses API schema); MLflow MCP (experimental; no UC-stored-trace support yet); MLflow Skills (Claude Code, Cursor, Codex, Gemini CLI, OpenCode); Third-Party Judges (DeepEval, RAGAS, Arize Phoenix, TruLens). <strong>Ch 2 — GenAI Application Lifecycle</strong>: the five phases + "Applying the lifecycle to Unity Airways", Table 2-1 (durable-artifact do/don't), trace-first development, minimum evaluable product.</li>
+        <li>📗 <strong>B2 — <em>Databricks Certified GenAI Engineer Associate Study Guide</em></strong> — Ch 10 (exam blueprint) for the 8-domain map that C4 (17.7) demonstrates end to end.</li>
+        <li>📎 <strong>Project cheat-sheet</strong> — <code>.claude/skills/genai-teacher/references/naming-conventions.md</code>: §1 MLflow 3 Traces are OpenTelemetry-compatible (GenAI semantic conventions); §2 <code>ResponsesAgent</code> + <code>agents.deploy(...)</code> and <strong>managed MCP servers</strong> (Genie / AI Search / Databricks SQL / UC functions — Public Preview); §6 AI Gateway / Unity AI Gateway budgets (Beta). Verified Jul 2026 — re-verify Beta/Preview live.</li>
+        <li>🌐 <strong>MLflow / Databricks docs</strong> (bounded curl, Jul 2026): <code>genai/tracing/</code> confirms OpenTelemetry + Semantic Convention; <code>genai/tracing/app-instrumentation/opentelemetry.md</code> confirms the current OTel export mechanism (<code>OTEL_EXPORTER_OTLP_TRACES_ENDPOINT</code>; <code>MLFLOW_USE_DEFAULT_TRACER_PROVIDER="false"</code> + <code>mlflow.tracing.set_destination(MlflowExperimentLocation(...))</code> — no <code>MLFLOW_ENABLE_DUAL_EXPORT</code> flag in current docs); <code>genai/mcp.md</code> confirms the MCP launch (<code>pip install 'mlflow[mcp]>=3.5.1'</code>; <code>uv run --with "mlflow[mcp]>=3.5.1" mlflow mcp run</code>); <code>mlflow.org/docs/latest/llms.txt</code> confirms <strong>MLflow Agent Server</strong> ("FastAPI-based agent server … automatic tracing, validation, and streaming") and <strong>MLflow MCP Server</strong> ("connect AI assistants and coding tools … from Claude Code, Codex, Cursor, and Gemini CLI"); <code>docs.databricks.com</code> confirms Model Context Protocol on Databricks + AI Gateway MCP governance. Exact managed-MCP URLs / OTel field names are JS-rendered / evolving — <strong>live re-check pending</strong>.</li>
+        <li>🏗️ <strong>Capstone C4</strong> — <a href="../../capstones/capstone-4-genai-platform.md"><code>capstones/capstone-4-genai-platform.md</code></a>: the end-to-end enterprise reference-architecture capstone that realizes ★ 17.7. Linked, not duplicated.</li>
+      </ul>
+      <div class="note imp" style="margin-top:18px"><span class="tag">Next → Phase P7 · Tracks C &amp; D + the C4 capstone notebook</span>Module 17 is the <strong>last content module</strong>. The stack is complete — built (00–10), productionized (11–13), made conversational (14–15), right-sized (16), and now <strong>unified into one reference architecture</strong> (17). Next: <strong>Track C</strong> (certification — use the <a href="../../capstones/capstone-4-genai-platform.md">C4 cert-domain readiness map</a> as your mock exam), <strong>Track D</strong> (FDE delivery kit), and the <strong>finale — the deferred C4 capstone notebook</strong> that assembles the whole governed, observed, budgeted platform.</div>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 17</span>
+  <span>Grounded in B1 Ch2 + Ch10 · naming cheat-sheet · MLflow/Databricks docs (Jul 2026) · C4 capstone spec</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Capstone — the finale (17.7 ★)",spine:true,comps:[
+   ["17.7 Reference architecture ★","Theory + Hands-on · Capstone C4","Stitch C1-C3 into one governed platform, add Genie analytics (14), metric views (15), cost/scaling (16), and this reference architecture (17). Deliverable: running platform + architecture one-pager + production-readiness checklist + cert-domain map + demo script. Full spec in capstone-4-genai-platform.md. The runnable notebook is DEFERRED.","capstones/capstone-4-genai-platform.md"],
+ ]},
+ {name:"Lifecycle — the structure (17.1)",spine:false,comps:[
+   ["17.1 The 5-phase lifecycle","Theory · B1 Ch2","Develop -> Evaluate -> Deploy -> Monitor -> Improve, then back to Develop. A loop, not a line, held together by durable artifacts (tracing schema, eval datasets, scorers, promotion gates, versioning, lineage, cost). Maps 1:1 to the modules: Develop (01-05, 09-10), Evaluate (08), Deploy (11-12), Monitor (13), Improve (13.7).","module.md 17.1"],
+ ]},
+ {name:"Trace — the shared artifact (17.2, 17.3)",spine:false,comps:[
+   ["17.2 Trace as shared artifact","Theory · B1 Ch10 · GA","The trace is the system of record read by product, platform, agent, and eval teams. Conventions: span types (AGENT/TOOL/RETRIEVER), stable names, tags (user_id, session_id, environment, app_version). Pays off most in heterogeneous stacks.","module.md 17.2"],
+   ["17.3 OpenTelemetry cross-stack","Theory + Hands-on · OTel-compatible","MLflow 3 Traces speak OTel (GenAI semantic conventions). Two directions: export MLflow traces to an OTel collector; bring OTel activity into Databricks. 'Dual export' = same trace to both. Current docs mechanism: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT for OTLP, plus MLFLOW_USE_DEFAULT_TRACER_PROVIDER='false' + mlflow.tracing.set_destination(...) to combine spans into one trace (no MLFLOW_ENABLE_DUAL_EXPORT flag in current docs). Field mappings evolve - read current docs.","module.md 17.3"],
+ ]},
+ {name:"Serving — the stable contract (17.4)",spine:false,comps:[
+   ["17.4 MLflow Agent Server","Theory · B1 Ch10 · Newer/verify","FastAPI server in front of the runtime: /invocations endpoint, @invoke()/@stream() registration, validates the Responses API schema, auto-tracing. Clients couple to one contract, not agent internals. Managed Databricks equivalent: agents.deploy() -> Model Serving endpoint (ua-support-agent) with tracing + inference tables + monitoring.","module.md 17.4"],
+ ]},
+ {name:"Bridge — assistants + IDEs (17.5)",spine:false,comps:[
+   ["17.5 MCP + MLflow Skills","Theory + Hands-on · MCP experimental / managed MCP Preview","MLflow MCP server: assistants search/analyze traces, log feedback, manage tags - operating on trace data directly, not screenshots. MLflow Skills: repeatable playbooks portable across Claude Code, Cursor, Codex, Gemini CLI, OpenCode. Managed MCP servers on Databricks: Genie, AI Search, UC functions, SQL (Public Preview). Caveat: MCP server does not reach UC-stored traces yet.","module.md 17.5"],
+ ]},
+ {name:"Measure — one eval loop (17.6)",spine:false,comps:[
+   ["17.6 Third-party judges","Theory · B1 Ch10 · GA integrations","MLflow as a common scorer interface: DeepEval, RAGAS, Arize Phoenix, TruLens run in the SAME evaluation workflow as native scorers. Mix built-in and external evaluators while keeping one loop, one results surface, one path to production quality control.","module.md 17.6"],
+ ]},
+];
+const STEPS=[
+  ["1 · One request enters (17.4)","A traveler asks the Databricks App 'Can I change my flight tomorrow, and what's the fee?' The app calls ONE contract - the ua-support-agent Model Serving endpoint (managed equivalent of Agent Server). The app doesn't know about retrieval or tools internally."],
+  ["2 · Agent runs on the governance plane (04-05-09)","ua_support_agent (a ResponsesAgent) retrieves policy chunks from ua_rag_chunks_index, calls a UC-function tool to look up the booking, and answers with citations - all governed by Unity Catalog."],
+  ["3 · One trace records everything (17.2)","The whole path is a single MLflow Trace with AGENT / TOOL / RETRIEVER spans and tags (session_id, app_version). Product, platform, and agent developers all read this one artifact."],
+  ["4 · The trace goes cross-stack (17.3)","Dual export sends the same trace to the org's OTel collector, so the platform team sees the GenAI request alongside their other services - no silo."],
+  ["5 · Assistants operate on it (17.5)","Next morning an on-call engineer asks their IDE assistant, through the MLflow MCP server and an MLflow Skill, to find low-groundedness traces from last night. It surfaces a new-route question the FAQ never covered."],
+  ["6 · One eval loop scores it (17.6, 08)","The failing traces are scored by the Module 08 scorecard - and a specialized RAGAS retrieval judge would plug into the SAME loop, not a new one."],
+  ["7 · The loop closes (17.1, 13.7)","Failing traces are curated into the eval set, the FAQ is updated, the new build clears the scorecard, and promotion moves the alias - back to Develop. Same trace, whole lifecycle."],
+];
+const ROWS=[
+  ["1 · Develop","Minimal agent: booking lookup, basic policy Q&A, cites sources; traced from the first working path. Minimum evaluable product.","01-05, 09-10"],
+  ["2 · Evaluate","Curated scenarios (refunds, changes, baggage, disruptions) with scorers for groundedness + safety.","08"],
+  ["3 · Deploy","Promote a versioned app behind a controlled serving surface + AI Gateway.","11-12"],
+  ["4 · Monitor","Real questions reveal drift (missing policy context) or odd behavior (tool timeout); traces + inference tables + online scorers.","13"],
+  ["5 · Improve","Targeted changes (tighten retrieval, clarify prompts); validate against the same dataset; curate prod failures into the eval set.","13.7"],
+];
+const MERMAID_SRC=`flowchart LR
+  DEV["1 - Develop<br/>Modules 01-05, 09-10<br/>trace-first, minimum evaluable product"]
+  EVAL["2 - Evaluate<br/>Module 08<br/>scorers: groundedness, safety"]
+  DEP["3 - Deploy<br/>Modules 11-12<br/>versioned app behind serving + AI Gateway"]
+  MON["4 - Monitor<br/>Module 13<br/>traces + inference tables + online scorers"]
+  IMP["5 - Improve<br/>Module 13.7<br/>curate prod failures into the eval set"]
+  DEV --> EVAL --> DEP --> MON --> IMP
+  IMP -->|"re-evaluate, then redeploy"| DEV`;
+const MERMAID_SRC2=`flowchart TB
+  subgraph SURF["Client surfaces - Modules 10-11 + Genie One"]
+    app["Databricks App - chat UI"]
+    one["Genie One - business users"]
+  end
+  subgraph GOV["Governance plane - Unity Catalog (02.5, 12)"]
+    direction TB
+    subgraph SUPPORT["Support path - Modules 04-05-09"]
+      idx["Databricks AI Search<br/>ua_rag_chunks_index (04)"]
+      chain["ua_rag_chain - retriever + LLM (05)"]
+      agent["ua_support_agent<br/>ResponsesAgent + UC tools (09)"]
+      idx --> chain --> agent
+    end
+    subgraph ANALYTICS["Analytics path - Modules 14-15"]
+      mv["Metric views - semantic layer (15)"]
+      genie["Genie Agent - analytics (14)"]
+      mv --> genie
+    end
+  end
+  subgraph PLANE["MLflow 3 integration plane - Modules 06-07-08-13"]
+    direction TB
+    aserv["Agent Server / Model Serving<br/>stable /invocations contract (17.4)"]
+    otel["OpenTelemetry ingest + dual export (17.3)"]
+    mcp["MLflow MCP server (17.5)"]
+    trace["MLflow Traces - shared store and UI (17.2)<br/>the system of record"]
+    evalwf["Evaluation workflow (08)<br/>native scorers + third-party judges (17.6)"]
+    otel --> trace
+    mcp --> trace
+    trace --> evalwf
+  end
+  subgraph DEV["Development workflows - 17.5"]
+    ide["Assistants and IDEs"]
+    coder["Coding agents + MLflow Skills"]
+  end
+  app --> aserv
+  aserv --> agent
+  one --> genie
+  agent -.emits.-> otel
+  genie -.emits.-> otel
+  agent -.payload log.-> trace
+  ide --> mcp
+  coder --> mcp
+  evalwf -.gates promotion.-> agent`;
+
+/* ---------- light tutor front ---------- */
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");
+  drawMermaid();}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0].split(" · ")[1];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline) ---------- */
+let mermaidReady=false;
+function drawMermaid(){if(!window.mermaid){return;}
+  if(!mermaidReady){mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});mermaidReady=true;}
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el||el.dataset.done==="1")return;
+    // only render when visible (inside the active pane) to avoid zero-width layout
+    if(el.offsetParent===null)return;
+    el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});el.dataset.done="1";}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph2")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

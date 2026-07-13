@@ -152,7 +152,7 @@
     <div class="kicker"><span>Fig_11.3 · Cornerstone · v1.0</span><span>Verified against databricks-sdk put_ai_gateway · books B1 Ch7/8 · docs</span></div>
     <div class="filed">Module 11 — Deployment and Serving · Topic 11.3 · Theory + Hands-on ★</div>
     <h1>AI Gateway</h1>
-    <p class="dek">A serving endpoint with no controls in front of it is a liability. AI Gateway is the governance layer you attach <em>to</em> the Unity Airways endpoint: rate limits, safety and PII guardrails, usage tracking, payload logging, and provider fallbacks. <em>One config, every caller, no app changes.</em></p>
+    <p class="dek">A serving endpoint with no controls in front of it is a liability. AI Gateway is the governance layer you attach to the Unity Airways serving endpoints: rate limits, safety and PII guardrails, usage tracking, and fallbacks on the model endpoint the agent calls, plus payload logging on the agent endpoint. <em>Configured once, every caller, no app changes.</em></p>
   </div>
 </header>
 
@@ -162,9 +162,10 @@
       <div class="entry-head"><span class="num">01 · The big idea</span><h2>Governance is a property of the endpoint, not new code</h2></div>
       <p class="lead">Your Module 11.1 agent (<code>unity_airways.rag.ua_support_agent</code>) is live behind a Model Serving endpoint. AI Gateway is the layer that makes it safe for real traffic — configured once on the endpoint, enforced for every caller, whether that is the chat app from Module 10 or a batch <code>ai_query</code> job.</p>
       <ul>
-        <li><strong>AI Gateway sits in front of a serving endpoint.</strong> Requests flow through it; it enforces policy, logs, and can fail over before the response comes back.</li>
-        <li><strong>Five levers:</strong> <strong>rate limiting</strong>, <strong>AI guardrails</strong> (safety + PII, keywords, topics), <strong>usage tracking</strong>, <strong>payload logging</strong> to a UC inference table, and provider <strong>fallbacks</strong>.</li>
-        <li><strong>One SDK call.</strong> <code>w.serving_endpoints.put_ai_gateway(name, ...)</code> — signature verified against the current <code>databricks-sdk</code>. Or use the endpoint's <strong>AI Gateway</strong> tab in the UI.</li>
+        <li><strong>Two endpoints, two roles.</strong> The agent (<code>ua-support-agent</code>, a deployed <code>ResponsesAgent</code>) calls a Foundation Model / external endpoint the team owns (<code>ua-support-llm</code>) for completions. Put the levers on <code>ua-support-llm</code>; the <strong>agent endpoint supports inference tables only</strong> via AI Gateway.</li>
+        <li><strong>Four levers on <code>ua-support-llm</code>:</strong> <strong>rate limiting</strong>, <strong>AI guardrails</strong> (safety + PII, keywords, topics), <strong>usage tracking</strong>, and provider <strong>fallbacks</strong>. Every LLM request the agent makes flows through it; it enforces policy and can fail over before the response comes back.</li>
+        <li><strong>Payload logging on <code>ua-support-agent</code>.</strong> The agent endpoint's one AI Gateway lever is the <strong>inference table</strong> — the raw request/response log in UC.</li>
+        <li><strong>Same SDK call, two endpoints.</strong> <code>w.serving_endpoints.put_ai_gateway(name, ...)</code> — signature verified against the current <code>databricks-sdk</code>. Or use each endpoint's <strong>AI Gateway</strong> tab in the UI.</li>
         <li><strong>Works for hosted and external models.</strong> Foundation Models and External Models (OpenAI, Anthropic, Bedrock, Vertex AI, Cohere) are governed the same way; the gateway holds the provider key.</li>
         <li><strong>PII redaction is Preview.</strong> Everything else here is the established feature set. <strong>Unity AI Gateway</strong> is the newer Beta umbrella (MCP governance, budgets).</li>
       </ul>
@@ -182,17 +183,17 @@
 
       <!-- PANE A: architecture mermaid — mirrors ai-gateway.md Diagram 1 -->
       <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
-        <div class="plate" data-fig="Fig. 01 — callers → AI Gateway (5 levers) → hosted + external models">
+        <div class="plate" data-fig="Fig. 01 — callers → ua-support-agent (inference tables) → ua-support-llm (levers) → model">
           <div class="mermaid" id="mermaidGraph"></div>
-          <div class="plate-cap">Callers hit the gateway, not the model directly. The same five levers govern the app and any batch caller, and route to hosted or external models.</div>
+          <div class="plate-cap">Callers hit the agent endpoint (which logs payloads); the agent calls ua-support-llm, where the gateway levers screen and meter every LLM request before the model.</div>
         </div>
       </div>
 
       <!-- PANE B: request lifecycle sequence — mirrors ai-gateway.md Diagram 2 -->
       <div id="p-life" class="pane" role="tabpanel" aria-labelledby="t-life" hidden>
-        <div class="plate" data-fig="Fig. 02 — one request through the gateway (with fallback)">
+        <div class="plate" data-fig="Fig. 02 — one agent request: agent logs, ua-support-llm screens (with fallback)">
           <div class="mermaid" id="mermaidGraph2"></div>
-          <div class="plate-cap">Rate-limit → input guardrails → forward → (fallback on error) → output guardrails + usage + payload log → response.</div>
+          <div class="plate-cap">Agent logs payload → calls ua-support-llm → rate-limit → input guardrails → forward → (fallback on error) → output guardrails + usage → response.</div>
         </div>
       </div>
 
@@ -248,7 +249,7 @@
       <ul>
         <li><strong>Rate limiting</strong> protects budget and fairness; a blocked call returns a rate-limit error, so start permissive and tighten with Module 13 data.</li>
         <li><strong>Guardrails</strong> are coarse safety + filtering; domain rules ("cite the policy before quoting a refund") still live in the agent. Full pattern is <strong>12.2</strong>.</li>
-        <li><strong>Usage + payload logging</strong> feed monitoring (<strong>Module 13</strong>) and eval-set building (<strong>Module 08</strong>). Pair payload logs with the PII guardrail and UC grants.</li>
+        <li><strong>Usage tracking (on <code>ua-support-llm</code>) + payload logging (the agent endpoint's inference table)</strong> feed monitoring (<strong>Module 13</strong>) and eval-set building (<strong>Module 08</strong>). Pair payload logs with the PII guardrail and UC grants.</li>
         <li><strong>Fallbacks</strong> turn provider outages into non-events; keep the fallback list short and put a comparable model second.</li>
         <li><strong>External Models</strong> let you swap providers by config, not code — the gateway stores the key and exposes one OpenAI-compatible surface.</li>
       </ul>
@@ -256,8 +257,9 @@
 
     <section class="entry" id="dothis">
       <div class="entry-head"><span class="num">04 · Run this</span><h2>Configure the gateway with one SDK call</h2></div>
-      <p><strong>Prereqs:</strong> the endpoint from 11.1 (<code>ua-support-agent</code>), rights to edit it, a UC catalog/schema for the inference table (<code>unity_airways.rag</code>), and <code>databricks-sdk</code> installed.</p>
-      <p><strong>UI path (fastest demo):</strong> Serving → select <code>ua-support-agent</code> → <strong>AI Gateway</strong> tab → toggle Rate limits, Guardrails (safety on; keywords; PII Block/Mask — Preview), Usage tracking, and Inference tables → Save. The endpoint updates in place; the URL and callers never change.</p>
+      <p><strong>Prereqs:</strong> the agent endpoint from 11.1 (<code>ua-support-agent</code>) and the Foundation Model / external endpoint it calls (<code>ua-support-llm</code>, serving <code>databricks-claude-sonnet-4-5</code>), rights to edit both, a UC catalog/schema for the inference table (<code>unity_airways.rag</code>), and <code>databricks-sdk</code> installed.</p>
+      <div class="note imp"><span class="tag">📌 The governed agent pattern</span>Configure the four levers — rate limits, guardrails, usage tracking, fallbacks — on <strong><code>ua-support-llm</code></strong> (the FM/external endpoint the agent calls; it supports them all). Enable <strong>inference tables</strong> on <strong><code>ua-support-agent</code></strong> (the agent endpoint's only AI Gateway lever). Every LLM request the agent makes is then screened on <code>ua-support-llm</code>; the agent's own payloads are captured on its inference table. Rate limits on <code>ua-support-llm</code> bound the agent's LLM traffic — per-end-user limits at the agent tier aren't available via AI Gateway today.</div>
+      <p><strong>UI path (fastest demo):</strong> Serving → select <code>ua-support-llm</code> → <strong>AI Gateway</strong> tab → toggle Rate limits, Guardrails (safety on; keywords; PII Block/Mask — Preview), Usage tracking, and add a second served model for a fallback → Save. Then select <code>ua-support-agent</code> → its <strong>AI Gateway</strong> tab exposes only <strong>Inference tables</strong> → turn payload logging on. Both endpoints update in place; URLs and callers never change.</p>
       <p><strong>SDK path (reproducible)</strong> — signature verified against current <code>databricks-sdk</code>:</p>
       <pre><code>from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.serving import (
@@ -269,10 +271,12 @@ from databricks.sdk.service.serving import (
 
 w = WorkspaceClient()
 
+# 1) The four levers on the FM/external endpoint the agent calls. Because
+#    ua-support-llm is an FM/external endpoint, every lever is supported.
 w.serving_endpoints.put_ai_gateway(
-    name="ua-support-agent",  # the endpoint deployed in 11.1
+    name="ua-support-llm",  # FM/external endpoint serving databricks-claude-sonnet-4-5
 
-    # 1) Rate limiting: 100 calls/min per USER
+    # a) Rate limiting: 100 calls/min per USER
     rate_limits=[
         AiGatewayRateLimit(
             calls=100,
@@ -282,7 +286,7 @@ w.serving_endpoints.put_ai_gateway(
         ),
     ],
 
-    # 2) Guardrails: safety both ways; block PII in, mask PII out (PII = Preview); block keywords
+    # b) Guardrails: safety both ways; block PII in, mask PII out (PII = Preview); block keywords
     guardrails=AiGatewayGuardrails(
         input=AiGatewayGuardrailParameters(
             safety=True,
@@ -299,49 +303,55 @@ w.serving_endpoints.put_ai_gateway(
         ),
     ),
 
-    # 3) Usage tracking -> system tables
+    # c) Usage tracking -> system tables
     usage_tracking_config=AiGatewayUsageTrackingConfig(enabled=True),
 
-    # 4) Payload logging -> a Delta inference table in Unity Catalog
+    # d) Fallbacks: retry the next served model on THIS endpoint if the primary errors
+    fallback_config=FallbackConfig(enabled=True),
+)
+
+# 2) Payload logging on the AGENT endpoint — agent endpoints support ONLY inference
+#    tables via AI Gateway, so this is the one lever that belongs on ua-support-agent.
+w.serving_endpoints.put_ai_gateway(
+    name="ua-support-agent",  # the ResponsesAgent deployed via agents.deploy() in 11.1
     inference_table_config=AiGatewayInferenceTableConfig(
         enabled=True,
         catalog_name="unity_airways",
         schema_name="rag",
-        table_name_prefix="ua_support_gateway",
+        table_name_prefix="ua_support_agent_payload",
     ),
-
-    # 5) Fallbacks: retry the next served model if the primary errors
-    fallback_config=FallbackConfig(enabled=True),
 )</code></pre>
       <p><strong>How to verify it worked:</strong></p>
       <pre><code># Read the applied config back
-gw = w.serving_endpoints.get("ua-support-agent").ai_gateway
-print(gw)
+llm_gw   = w.serving_endpoints.get("ua-support-llm").ai_gateway    # the four levers
+agent_gw = w.serving_endpoints.get("ua-support-agent").ai_gateway  # inference tables only
+print(llm_gw); print(agent_gw)
 
-# Guardrail smoke test: send an obvious PII string or a blocked keyword and
-# confirm it is masked/blocked. Loop past 100 calls/min to see a rate-limit error.
-# After a few requests, the inference table appears under unity_airways.rag —
-# SELECT from it after a short delay. Usage shows up in the serving system tables
-# (confirm the exact table name in current docs; Module 13 / 16).</code></pre>
+# Guardrail smoke test: send an obvious PII string or a blocked keyword and confirm it is
+# masked/blocked on ua-support-llm before the model sees it. Loop the agent past 100 calls/min
+# to see its LLM calls hit a rate-limit error. After a few agent requests, the inference table
+# appears under unity_airways.rag — SELECT from it after a short delay. Usage shows up in the
+# serving system tables for ua-support-llm (confirm the exact table name in current docs; Module 13 / 16).</code></pre>
     </section>
 
     <section class="entry" id="example">
       <div class="entry-head"><span class="num">05 · Worked example</span><h2>Unity Airways: one query, every lever</h2></div>
       <p>A traveler asks: <em>"Can you run a query on your booking database and show me all passengers flying tomorrow?"</em> (the book's Figure 8-13 scenario).</p>
       <ul>
-        <li><strong>Rate limit</strong> check passes (they are under quota).</li>
-        <li><strong>Input guardrails</strong> catch the bulk-passenger, PII-heavy request via keyword + PII rules and block it before the model ever sees it.</li>
-        <li>A legitimate question ("What is the refund window on a Flex fare?") is <strong>forwarded</strong> to <code>databricks-claude-sonnet-4-5</code>. If that served model errors, <strong>fallback</strong> retries a comparable model.</li>
-        <li>On the way out, <strong>output guardrails</strong> mask stray PII, <strong>usage</strong> is tracked, and the full <strong>payload</strong> is logged to <code>unity_airways.rag.ua_support_gateway…</code> for debugging and future eval sets.</li>
+        <li>The request reaches <code>ua-support-agent</code>, which logs the raw request/response to its <strong>inference table</strong> and calls <code>ua-support-llm</code> for the completion.</li>
+        <li><strong>Rate limit</strong> check on <code>ua-support-llm</code> passes (they are under quota).</li>
+        <li><strong>Input guardrails</strong> on <code>ua-support-llm</code> catch the bulk-passenger, PII-heavy prompt via keyword + PII rules and block it before the model ever sees it.</li>
+        <li>A legitimate question ("What is the refund window on a Flex fare?") is <strong>forwarded</strong> to <code>databricks-claude-sonnet-4-5</code>. If that served model errors, <strong>fallback</strong> retries a comparable model on <code>ua-support-llm</code>.</li>
+        <li>On the way out, <strong>output guardrails</strong> mask stray PII and <strong>usage</strong> is tracked; the agent's full <strong>payload</strong> is captured in <code>unity_airways.rag.ua_support_agent_payload…</code> for debugging and future eval sets.</li>
       </ul>
-      <p>One config governs the Module 10 chat app and any batch <code>ai_query</code> caller identically.</p>
+      <p>Configured once across the two endpoints, this governs the Module 10 chat app and any other caller of the agent identically — the guardrails and limits bite on <code>ua-support-llm</code>, the payloads land from <code>ua-support-agent</code>.</p>
     </section>
 
     <section class="entry" id="markers">
       <div class="entry-head"><span class="num">06 · Field notes</span><h2>What to remember</h2></div>
-      <div class="note imp"><span class="tag">📌 Important</span>AI Gateway is a <strong>property of a serving endpoint</strong>, not a separate deployment. Configure it once (UI tab or <code>w.serving_endpoints.put_ai_gateway(name, ...)</code>) and it governs <strong>every</strong> caller. The five levers: <strong>rate limiting, guardrails, usage tracking, payload logging, fallbacks</strong>.</div>
+      <div class="note imp"><span class="tag">📌 Important</span>AI Gateway is a <strong>property of a serving endpoint</strong>, not a separate deployment — and the levers depend on the endpoint type. For a governed agent, put <strong>rate limiting, guardrails, usage tracking, fallbacks</strong> on the <strong>FM/external endpoint the agent calls</strong> (<code>ua-support-llm</code>), and enable <strong>payload logging (inference tables)</strong> on the <strong>agent endpoint</strong> (<code>ua-support-agent</code>) — its only AI Gateway lever. Configure each with <code>w.serving_endpoints.put_ai_gateway(name, ...)</code>; together they govern <strong>every</strong> caller of the agent.</div>
       <div class="note tip"><span class="tag">💡 Tip · field</span>Add a gateway <strong>the moment the agent leaves your personal notebook for a shared environment</strong>. Start limits and guardrails permissive, turn on <strong>payload logging day one</strong> so you have data, then tighten using Module 13. Reuse one centrally governed gateway across agents for a single control point on cost and safety.</div>
-      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>The book (B1 Ch7/8) says "MLflow AI Gateway / Databricks AI Gateway" and shows a standalone gateway URL. The current term is <strong>AI Gateway</strong> configured on a serving endpoint, with <strong>Unity AI Gateway (Beta)</strong> as the newer umbrella (MCP governance, budgets). <strong>PII detection/redaction is Preview.</strong> Exact <strong>system table</strong> and <strong>inference table</strong> names are doc details — read them back from the endpoint config rather than quoting from memory; treat live UI strings as <strong>re-check pending</strong>. <strong>Endpoint-type support:</strong> the <code>databricks-sdk</code> <code>put_ai_gateway</code> docstring notes AI Gateway is fully supported on <strong>Foundation Model, external-model, provisioned-throughput and pay-per-token</strong> endpoints, while <strong>agent endpoints</strong> (a <code>ResponsesAgent</code> deployed via <code>agents.deploy</code>) <strong>currently support only inference tables</strong> via AI Gateway — so to guardrail/rate-limit an agent, configure the <strong>Foundation Model endpoint it calls</strong>. Evolving; verify for your workspace.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>The book (B1 Ch7/8) says "MLflow AI Gateway / Databricks AI Gateway" and shows a standalone gateway URL. The current term is <strong>AI Gateway</strong> configured on a serving endpoint, with <strong>Unity AI Gateway (Beta)</strong> as the newer umbrella (MCP governance, budgets). <strong>PII detection/redaction is Preview.</strong> Exact <strong>system table</strong> and <strong>inference table</strong> names are doc details — read them back from the endpoint config rather than quoting from memory; treat live UI strings as <strong>re-check pending</strong>. <strong>Endpoint-type support is by design here, not a workaround:</strong> the <code>databricks-sdk</code> <code>put_ai_gateway</code> docstring states AI Gateway is fully supported on <strong>external-model, provisioned-throughput and pay-per-token</strong> endpoints (the Foundation Model API modes), while <strong>agent endpoints</strong> (a <code>ResponsesAgent</code> deployed via <code>agents.deploy</code>) <strong>currently support only inference tables</strong> — which is exactly why the four levers sit on <code>ua-support-llm</code> and payload logging sits on <code>ua-support-agent</code>. Per-end-user rate limits at the agent tier aren't available via AI Gateway today. Evolving; verify for your workspace.</div>
     </section>
 
     <section class="entry" id="check">
@@ -362,7 +372,7 @@ print(gw)
       <ul>
         <li>📘 <strong>B1 — <em>Practical MLflow for GenAI on Databricks</em> (O'Reilly Early Release), Ch 7</strong> (pp. 260–262): "MLflow AI Gateway transitioning to Databricks AI Gateway" — centralized secure interface, provider abstraction, swap by config, UC integration, usage rate limits on user groups, guardrails, usage/payload tracking to tables. Figure 7-2.</li>
         <li>📘 <strong>B1 — Ch 8</strong> (pp. 312–324): "MLflow AI Gateway," "Using MLflow AI Gateway," "Capabilities," "Fallbacks," "Custom Guardrails," "AI Guardrails" — gateway as governed proxy, unified endpoint + OpenAI-compatible client, fallback chains, guardrails on input/output. Figures 8-9 through 8-13 (Unity Airways flow).</li>
-        <li>🧰 <strong>databricks-sdk (live introspection, July 2026):</strong> <code>ServingEndpointsAPI.put_ai_gateway(name, *, fallback_config, guardrails, inference_table_config, rate_limits, usage_tracking_config)</code>; dataclasses <code>AiGatewayGuardrails/GuardrailParameters/GuardrailPiiBehavior</code>, <code>AiGatewayRateLimit</code> (keys USER/USER_GROUP/SERVICE_PRINCIPAL/ENDPOINT, renewal MINUTE, calls/tokens), <code>AiGatewayUsageTrackingConfig</code>, <code>AiGatewayInferenceTableConfig</code>, <code>FallbackConfig</code>. Verified signature for the code above.</li>
+        <li>🧰 <strong>databricks-sdk (live introspection, July 2026):</strong> <code>ServingEndpointsAPI.put_ai_gateway(name, *, fallback_config, guardrails, inference_table_config, rate_limits, usage_tracking_config)</code>; dataclasses <code>AiGatewayGuardrails/GuardrailParameters/GuardrailPiiBehavior</code>, <code>AiGatewayRateLimit</code> (keys USER/USER_GROUP/SERVICE_PRINCIPAL/ENDPOINT, renewal MINUTE, calls/tokens), <code>AiGatewayUsageTrackingConfig</code>, <code>AiGatewayInferenceTableConfig</code>, <code>FallbackConfig</code>. The same docstring notes full support on external-model / provisioned-throughput / pay-per-token endpoints and <strong>inference-tables-only</strong> on agent endpoints — the basis for the two-endpoint pattern. Verified signature for the code above.</li>
         <li>🧭 <strong>Naming cheat-sheet §6</strong> (<code>references/naming-conventions.md</code>): AI Gateway feature set on Model Serving (rate limiting, guardrails incl. <strong>PII Preview</strong>, usage tracking, payload logging → inference tables, fallbacks, external providers) and <strong>Unity AI Gateway = Beta</strong> (MCP-service governance, budget management).</li>
         <li>🌐 <strong>Docs — AI Gateway</strong> (<code>docs.databricks.com/ai-gateway/</code>): confirmed live via <code>llms.txt</code> (July 2026): "AI Gateway governs and monitors agents deployed to Apps, LLM endpoints, MCP servers, coding tools, and model serving endpoints." Endpoint-config and External Models pages are JS-rendered; precise UI strings and table names are <strong>live re-check pending</strong>.</li>
         <li>🔗 Cross-refs: guardrails deep-dive <strong>12.2</strong>; monitoring / inference tables <strong>Module 13</strong>; cost control / budgets <strong>Module 16</strong>; the endpoint itself <strong>11.1</strong>.</li>
@@ -379,47 +389,52 @@ print(gw)
 <script>
 const ITEMS=[
  {name:"Protect and filter",spine:false,comps:[
-   ["rate_limits","cap each caller","A list of AiGatewayRateLimit. Each sets calls (and/or tokens) over a renewal_period (MINUTE) keyed by USER, USER_GROUP, SERVICE_PRINCIPAL, or ENDPOINT. Stops one caller from draining budget or throughput.","key = USER / USER_GROUP / SERVICE_PRINCIPAL / ENDPOINT"],
-   ["guardrails","safety on both sides","AiGatewayGuardrails holds input and output AiGatewayGuardrailParameters: safety (bool), invalid_keywords, valid_topics, and pii. Same policy for every caller, in and out. Domain rules still live in the agent (12.2).","safety + keywords + topics = GA"],
-   ["guardrails.pii","detect and redact PII","AiGatewayGuardrailPiiBehavior.behavior = BLOCK, MASK, or NONE. Block a passport number on input; mask it on output. Preview — verify before promising it.","BLOCK / MASK / NONE · Preview"],
+   ["rate_limits","cap each caller","A list of AiGatewayRateLimit. Each sets calls (and/or tokens) over a renewal_period (MINUTE) keyed by USER, USER_GROUP, SERVICE_PRINCIPAL, or ENDPOINT. Stops one caller from draining budget or throughput.","on ua-support-llm · key = USER / USER_GROUP / SERVICE_PRINCIPAL / ENDPOINT"],
+   ["guardrails","safety on both sides","AiGatewayGuardrails holds input and output AiGatewayGuardrailParameters: safety (bool), invalid_keywords, valid_topics, and pii. Same policy for every caller, in and out. Domain rules still live in the agent (12.2).","on ua-support-llm · safety + keywords + topics = GA"],
+   ["guardrails.pii","detect and redact PII","AiGatewayGuardrailPiiBehavior.behavior = BLOCK, MASK, or NONE. Block a passport number on input; mask it on output. Preview — verify before promising it.","on ua-support-llm · BLOCK / MASK / NONE · Preview"],
  ]},
  {name:"Observe and survive",spine:true,comps:[
-   ["usage_tracking_config","attribute spend","enabled=True writes per-request consumption (tokens, counts) to system tables. Finance-grade attribution per endpoint, no app instrumentation. Deep dive: Module 13 / 16.","system tables · enable at account level"],
-   ["inference_table_config","keep the payloads","catalog_name + schema_name + table_name_prefix land each request/response as Delta rows in UC. Your debug trail and eval-set seed (Module 08). Pair with PII guardrail + UC grants.","Delta table in Unity Catalog"],
-   ["fallback_config","survive outages","enabled=True retries the next served model on the endpoint when the primary errors. Travelers always get a response. Keep the list short; second model should be comparable.","retry next model on error"],
+   ["usage_tracking_config","attribute spend","enabled=True writes per-request consumption (tokens, counts) to system tables. Finance-grade attribution per endpoint, no app instrumentation. Deep dive: Module 13 / 16.","on ua-support-llm · system tables"],
+   ["inference_table_config","keep the payloads","catalog_name + schema_name + table_name_prefix land each request/response as Delta rows in UC. This is the ONE AI Gateway lever an agent endpoint supports, so it goes on ua-support-agent. Debug trail + eval-set seed (Module 08); pair with PII guardrail + UC grants.","on ua-support-agent · Delta table in UC"],
+   ["fallback_config","survive outages","enabled=True retries the next served model on the endpoint when the primary errors. Travelers always get a response. Keep the list short; second model should be comparable.","on ua-support-llm · retry next model on error"],
  ]},
 ];
 const STEPS=[
-  ["Pick the endpoint","Target the 11.1 endpoint: name='ua-support-agent'. AI Gateway is a property of it, not a new deploy. UI: Serving → endpoint → AI Gateway tab."],
-  ["Set rate limits","rate_limits=[AiGatewayRateLimit(calls=100, renewal_period=MINUTE, key=USER)]. Add tokens=... for a token budget; use USER_GROUP for per-team quotas."],
-  ["Add guardrails","guardrails=AiGatewayGuardrails(input=..., output=...). safety=True both ways; invalid_keywords to block; pii=BLOCK on input, MASK on output (PII = Preview)."],
-  ["Turn on usage tracking","usage_tracking_config=AiGatewayUsageTrackingConfig(enabled=True). Consumption flows to system tables for spend attribution."],
-  ["Turn on payload logging","inference_table_config=AiGatewayInferenceTableConfig(enabled=True, catalog_name='unity_airways', schema_name='rag', table_name_prefix='ua_support_gateway')."],
-  ["Enable fallbacks","fallback_config=FallbackConfig(enabled=True). Add a second served model to the endpoint so there is something to fail over to."],
-  ["Apply and verify","Call put_ai_gateway(...). Read back w.serving_endpoints.get(name).ai_gateway. Smoke-test a blocked keyword / PII string and check the inference table appears in UC."],
+  ["Pick the two endpoints","Levers go on ua-support-llm (the FM/external endpoint the agent calls); inference tables go on ua-support-agent (the agent endpoint). AI Gateway is a property of each — UI: Serving → endpoint → AI Gateway tab."],
+  ["Rate limits (on ua-support-llm)","rate_limits=[AiGatewayRateLimit(calls=100, renewal_period=MINUTE, key=USER)]. Add tokens=... for a token budget; use USER_GROUP for per-team quotas."],
+  ["Guardrails (on ua-support-llm)","guardrails=AiGatewayGuardrails(input=..., output=...). safety=True both ways; invalid_keywords to block; pii=BLOCK on input, MASK on output (PII = Preview)."],
+  ["Usage tracking (on ua-support-llm)","usage_tracking_config=AiGatewayUsageTrackingConfig(enabled=True). Consumption flows to system tables for spend attribution."],
+  ["Fallbacks (on ua-support-llm)","fallback_config=FallbackConfig(enabled=True). Add a second served model to this endpoint so there is something to fail over to."],
+  ["Payload logging (on ua-support-agent)","inference_table_config=AiGatewayInferenceTableConfig(enabled=True, catalog_name='unity_airways', schema_name='rag', table_name_prefix='ua_support_agent_payload'). The agent endpoint's only AI Gateway lever."],
+  ["Apply and verify","Call put_ai_gateway(...) once per endpoint. Read back w.serving_endpoints.get(name).ai_gateway on each. Smoke-test a blocked keyword / PII string on ua-support-llm and check the inference table appears in UC."],
 ];
 const MERMAID_SRC=`flowchart TB
   subgraph CALLERS["Callers"]
-    app["Unity Airways app / agent"]
+    app["Unity Airways app / client"]
     batch["Batch ai_query jobs"]
   end
-  app --> GW
-  batch --> GW
-  subgraph GW["AI Gateway ON the serving endpoint"]
+  app --> AGENT
+  batch --> AGENT
+  subgraph AGENT["ua-support-agent (agent endpoint)"]
+    it["AI Gateway: inference tables only<br/>payload logging to UC Delta table"]
+  end
+  subgraph LLM["ua-support-llm (Foundation Model / external endpoint)"]
     rl["Rate limiting<br/>per user / group / endpoint"]
     gr["AI guardrails<br/>safety plus PII (Preview) plus keywords"]
     ut["Usage tracking<br/>system tables"]
-    pl["Payload logging<br/>UC inference table"]
     fb["Fallbacks<br/>retry next model on error"]
   end
-  GW --> FM["Databricks-hosted<br/>Foundation Models"]
-  GW --> EXT["External Models<br/>OpenAI, Anthropic, Bedrock, Vertex AI, Cohere"]`;
+  AGENT -->|"LLM completion request"| LLM
+  LLM --> MODEL["databricks-claude-sonnet-4-5<br/>plus fallback model"]`;
 const MERMAID_SRC2=`sequenceDiagram
   participant U as Traveler
-  participant GW as AI Gateway
+  participant AG as ua-support-agent (agent endpoint)
+  participant GW as ua-support-llm (AI Gateway)
   participant M as Model (primary)
   participant F as Model (fallback)
-  U->>GW: request
+  U->>AG: request
+  AG->>AG: log payload to inference table
+  AG->>GW: LLM completion request
   GW->>GW: rate-limit check (per caller)
   GW->>GW: input guardrails (safety, PII, keywords)
   GW->>M: forward if allowed
@@ -429,8 +444,9 @@ const MERMAID_SRC2=`sequenceDiagram
     GW->>F: retry via fallback
     F-->>GW: completion
   end
-  GW->>GW: output guardrails plus usage plus payload log
-  GW-->>U: safe response`;
+  GW->>GW: output guardrails plus usage tracking
+  GW-->>AG: screened completion
+  AG-->>U: response`;
 
 const root=document.documentElement;
 root.dataset.theme = "paper";

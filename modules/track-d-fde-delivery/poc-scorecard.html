@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POC Scorecard — Unity Airways GenAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Spline+Sans+Mono:wght@400;500;600&family=Spline+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f4f1ea; --paper-2:#efe9dd; --card:#fbf9f4; --line:#e0d8c8;
+    --ink:#26211c; --muted:#6b6155; --faint:#9c9183;
+    --flame:#ff3621; --flame-deep:#d6260f; --violet:#7b4bd6; --frost:#1a7f78;
+    --amber:#c07b1e; --code-bg:#221d18; --code-ink:#efe7da; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Spline Sans",sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:34px 22px 80px}
+  a{color:var(--flame-deep);text-decoration:none}a:hover{text-decoration:underline}
+  code,.mono{font-family:"Spline Sans Mono",monospace}
+  code{background:rgba(0,0,0,.05);padding:.06em .35em;border-radius:5px;font-size:.9em}
+
+  .crumb{font-family:"Spline Sans Mono",monospace;font-size:.74rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted)}
+  .eyebrow{font-family:"Spline Sans Mono",monospace;font-size:.74rem;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--flame);margin:22px 0 10px}
+  h1{font-family:"Fraunces",serif;font-weight:900;font-size:clamp(2rem,5vw,3rem);
+    line-height:1.03;margin:0 0 14px;letter-spacing:-.02em}
+  h1 .drip{font-style:italic;background:linear-gradient(105deg,var(--flame),var(--violet));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .lede{font-size:1.1rem;color:var(--muted);max-width:70ch;margin:0 0 16px}
+  .pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+  .pill{font-family:"Spline Sans Mono",monospace;font-size:.68rem;letter-spacing:.06em;
+    text-transform:uppercase;padding:5px 11px;border-radius:999px;border:1px solid var(--line);
+    background:var(--card);color:var(--muted)}
+  .pill.flame{border-color:var(--flame);color:var(--flame-deep)}
+  .pill.violet{border-color:var(--violet);color:var(--violet)}
+
+  section{border-top:1px solid var(--line);margin-top:30px;padding-top:24px}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:1.5rem;margin:0 0 12px}
+  h3{font-size:1rem;margin:0 0 6px}
+  p{margin:0 0 12px}
+  .oneliner{font-size:1.16rem;font-weight:600;border-left:3px solid var(--flame);
+    padding:4px 0 4px 16px;margin:4px 0 12px}
+  .reuse{background:var(--paper-2);border:1px dashed var(--faint);border-radius:12px;
+    padding:12px 16px;font-size:.9rem;color:var(--muted);margin-top:14px}
+  .reuse b{color:var(--ink)}
+
+  /* scorecard */
+  .row{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:12px}
+  .row.crit{border-left:4px solid var(--flame)}
+  .rowhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .crit-tag{font-family:"Spline Sans Mono",monospace;font-size:.6rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--flame-deep);border:1px solid var(--flame);
+    border-radius:999px;padding:1px 7px}
+  .rowname{font-weight:700;font-size:1.02rem}
+  .rowmeta{font-size:.86rem;color:var(--muted);margin:6px 0 10px}
+  .rowmeta .m{font-family:"Spline Sans Mono",monospace;color:var(--flame-deep)}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;
+    background:var(--paper)}
+  .seg button{font-family:"Spline Sans Mono",monospace;font-size:.72rem;cursor:pointer;border:0;
+    background:transparent;color:var(--muted);padding:7px 14px;transition:all .12s}
+  .seg button+button{border-left:1px solid var(--line)}
+  .seg button:focus-visible{outline:2px solid var(--violet);outline-offset:-2px}
+  .seg button.on[data-v="0"]{background:var(--flame);color:#fff}
+  .seg button.on[data-v="1"]{background:var(--frost);color:#fff}
+  .seg button.on[data-v="2"]{background:var(--violet);color:#fff}
+
+  /* verdict panel */
+  .verdict{position:sticky;top:10px;z-index:5;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);padding:16px 18px;margin-bottom:18px;display:flex;
+    align-items:center;gap:18px;flex-wrap:wrap}
+  .vbadge{font-family:"Spline Sans Mono",monospace;font-weight:600;font-size:1.05rem;
+    padding:8px 16px;border-radius:10px;letter-spacing:.04em;white-space:nowrap}
+  .vbadge.go{background:var(--frost);color:#fff}
+  .vbadge.cond{background:var(--amber);color:#fff}
+  .vbadge.nogo{background:var(--flame);color:#fff}
+  .meter{flex:1;min-width:180px}
+  .meter .bar{height:12px;border-radius:999px;background:var(--paper-2);overflow:hidden;
+    border:1px solid var(--line)}
+  .meter .fill{height:100%;width:0;background:linear-gradient(90deg,var(--flame),var(--frost));
+    transition:width .3s}
+  .meter .lbl{font-family:"Spline Sans Mono",monospace;font-size:.72rem;color:var(--muted);
+    margin-top:6px}
+  .vwhy{font-size:.9rem;color:var(--muted);flex-basis:100%;margin:0}
+
+  .callout{background:var(--paper-2);border:1px solid var(--line);border-left:4px solid var(--violet);
+    border-radius:var(--radius);padding:16px 18px}
+  .callout .lbl{font-family:"Spline Sans Mono",monospace;font-size:.68rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--violet);display:block;margin-bottom:8px}
+  .callout ul{margin:0;padding-left:18px}.callout li{margin:5px 0}
+  .callout.flame{border-left-color:var(--flame)}.callout.flame .lbl{color:var(--flame-deep)}
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{position:relative;padding:6px 0 6px 24px}
+  ul.clean li::before{content:"→";position:absolute;left:0;color:var(--flame);
+    font-family:"Spline Sans Mono",monospace}
+  .doclinks{list-style:none;padding:0;margin:0}.doclinks li{padding:4px 0;font-size:.92rem}
+  .verified{font-family:"Spline Sans Mono",monospace;font-size:.7rem;color:var(--faint);
+    margin-top:14px;letter-spacing:.06em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <span class="crumb">Track D · FDE Delivery Toolkit · Reusable Template</span>
+  <div class="eyebrow">Databricks · Delivery Asset · POC Scorecard</div>
+  <h1>POC Scorecard <span class="drip">define good first</span></h1>
+  <p class="lede">The success criteria you agree with the customer <b>before</b> you build, each scored Not-yet / Meets / Exceeds, with a live Go / Conditional / No-go verdict. Worked here for the <b>Unity Airways</b> support agent POC.</p>
+  <div class="pills">
+    <span class="pill flame">Reusable template</span>
+    <span class="pill">Interactive — click to score</span>
+    <span class="pill violet">POC exit gate</span>
+    <span class="pill">Verified July 2026 docs</span>
+  </div>
+  <div class="reuse"><b>How to reuse:</b> fill this in <i>with</i> the customer during the shaping workshop, one target per criterion. Click each score to see the verdict move. The example scores below are Unity Airways' — click to change them.</div>
+
+  <!-- IN ONE LINE -->
+  <section>
+    <h2>What it is for</h2>
+    <p class="oneliner">A POC scorecard turns "was the demo good?" into a small set of measurable, pre-agreed criteria with a single Go / No-go decision.</p>
+    <p>Two criteria are <b>critical</b> (safety and governance): if either is Not-yet, the verdict is No-go regardless of the rest. The others can be Conditional — ship the pilot with a named fix and a date.</p>
+  </section>
+
+  <!-- LIVE VERDICT + SCORECARD -->
+  <section>
+    <h2>Score the POC</h2>
+
+    <div class="verdict" role="status" aria-live="polite">
+      <span class="vbadge" id="vbadge">—</span>
+      <div class="meter">
+        <div class="bar"><div class="fill" id="fill"></div></div>
+        <div class="lbl" id="mlbl">0 / 0 criteria at Meets or better</div>
+      </div>
+      <p class="vwhy" id="vwhy"></p>
+    </div>
+
+    <div id="cards"></div>
+  </section>
+
+  <!-- DECISION GATE -->
+  <section>
+    <h2>The decision gate</h2>
+    <ul class="clean">
+      <li><b>Go</b> — every criterion is Meets or better. Promote the pilot to production planning; run the production-readiness checklist next.</li>
+      <li><b>Conditional</b> — a non-critical criterion is Not-yet. Ship the pilot with that gap named, owned, and dated.</li>
+      <li><b>No-go</b> — a critical criterion (safety or governance) is Not-yet. Do not expose real users until it clears.</li>
+    </ul>
+  </section>
+
+  <!-- HOW MEASURED -->
+  <section>
+    <h2>How each criterion is measured</h2>
+    <ul class="clean">
+      <li><b>Correctness &amp; helpfulness</b> — <code>mlflow.genai.evaluate</code> with the <code>Correctness</code> and <code>Guidelines</code> scorers against a small labeled set (Module 08).</li>
+      <li><b>Retrieval groundedness</b> — <code>RetrievalGroundedness</code> and <code>RetrievalRelevance</code> scorers: is the answer supported by the retrieved chunks (Module 08).</li>
+      <li><b>Safety</b> — the <code>Safety</code> scorer in eval plus AI Gateway guardrails on the FM endpoint the agent calls (<code>ua-support-llm</code>) (Modules 08, 12).</li>
+      <li><b>Latency</b> — measured p50/p95 against a target (Module 16).</li>
+      <li><b>Cost</b> — measured cost per 1k requests against a target (Module 16).</li>
+      <li><b>Governance</b> — Unity Catalog grants are least-privilege and demonstrable on the model, tools, and data (Modules 00, 12).</li>
+      <li><b>User acceptance</b> — pilot users would keep using it; qualitative feedback from the Review App.</li>
+    </ul>
+  </section>
+
+  <!-- TALKING POINTS -->
+  <section>
+    <h2>How to use it in the room</h2>
+    <div class="callout flame">
+      <span class="lbl">Say this out loud</span>
+      <ul>
+        <li>"We agreed these targets before we built anything, so the POC has an objective pass bar, not a vibe."</li>
+        <li>"Safety and governance are hard gates. Everything else can go Conditional with an owner and a date."</li>
+        <li>"The scores map straight to eval scorers and monitoring, so the same numbers follow us into production."</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- REFERENCES -->
+  <section>
+    <h2>References</h2>
+    <ul class="doclinks">
+      <li><a href="https://docs.databricks.com/aws/en/mlflow3/genai/eval-monitor/">MLflow 3 — evaluate agents, scorers and LLM judges</a></li>
+      <li><a href="https://docs.databricks.com/aws/en/ai-gateway/">AI Gateway — guardrails and rate limits on the FM endpoint (ua-support-llm)</a></li>
+      <li>Capstone C4 grading rubric — <code>capstones/capstone-4-genai-platform.md</code></li>
+    </ul>
+    <p class="verified">Verified against docs.databricks.com · July 2026 · scorer names per Module 08</p>
+  </section>
+
+</div>
+
+<script>
+  // Criteria: name, meta (target · how measured), critical flag, example default score (0=Not yet,1=Meets,2=Exceeds)
+  var CRIT = [
+    {n:"Answer correctness",  meta:"Target <span class='m'>Correctness &ge; 0.85</span> · genai.evaluate (Mod 08)", crit:false, def:1},
+    {n:"Retrieval groundedness", meta:"Target <span class='m'>RetrievalGroundedness &ge; 0.90</span> · genai.evaluate (Mod 08)", crit:false, def:2},
+    {n:"Safety",              meta:"Target <span class='m'>Safety scorer pass</span> + AI Gateway guardrails (Mod 08/12)", crit:true, def:1},
+    {n:"Latency",             meta:"Target <span class='m'>p95 &le; 3s</span> · measured (Mod 16)", crit:false, def:1},
+    {n:"Cost",                meta:"Target <span class='m'>&le; target / 1k req</span> · measured (Mod 16)", crit:false, def:0},
+    {n:"Governance",          meta:"Target <span class='m'>least-privilege UC grants, demonstrable</span> (Mod 00/12)", crit:true, def:1},
+    {n:"User acceptance",     meta:"Target <span class='m'>pilot users would keep using it</span> · Review App", crit:false, def:2}
+  ];
+  var LBLS = ["Not yet","Meets","Exceeds"];
+  var scores = CRIT.map(function(c){ return c.def; });
+
+  var cards = document.getElementById('cards');
+  CRIT.forEach(function(c, i){
+    var row = document.createElement('div');
+    row.className = 'row' + (c.crit ? ' crit' : '');
+    var crit = c.crit ? '<span class="crit-tag">critical gate</span>' : '';
+    var seg = '<div class="seg" role="group" aria-label="'+c.n+' score">' +
+      LBLS.map(function(l,v){ return '<button data-i="'+i+'" data-v="'+v+'">'+l+'</button>'; }).join('') +
+      '</div>';
+    row.innerHTML =
+      '<div class="rowhead"><span class="rowname">'+c.n+'</span>'+crit+'</div>' +
+      '<div class="rowmeta">'+c.meta+'</div>' + seg;
+    cards.appendChild(row);
+  });
+
+  function paint(){
+    document.querySelectorAll('.seg button').forEach(function(b){
+      var i=+b.dataset.i, v=+b.dataset.v;
+      b.classList.toggle('on', scores[i]===v);
+    });
+    var meets = scores.filter(function(s){ return s>=1; }).length;
+    var total = scores.length;
+    var pct = Math.round(meets/total*100);
+    document.getElementById('fill').style.width = pct+'%';
+    document.getElementById('mlbl').textContent = meets+' / '+total+' criteria at Meets or better';
+
+    // verdict logic
+    var critFail = CRIT.some(function(c,i){ return c.crit && scores[i]===0; });
+    var anyFail  = scores.some(function(s){ return s===0; });
+    var badge = document.getElementById('vbadge');
+    var why = document.getElementById('vwhy');
+    badge.className = 'vbadge';
+    if(critFail){
+      badge.classList.add('nogo'); badge.textContent = 'NO-GO';
+      var names = CRIT.filter(function(c,i){ return c.crit && scores[i]===0; }).map(function(c){return c.n;});
+      why.innerHTML = 'A critical gate is Not-yet: <b>'+names.join(', ')+'</b>. Do not expose real users until it clears.';
+    } else if(anyFail){
+      badge.classList.add('cond'); badge.textContent = 'CONDITIONAL';
+      var g = CRIT.filter(function(c,i){ return scores[i]===0; }).map(function(c){return c.n;});
+      why.innerHTML = 'Ship the pilot, but <b>'+g.join(', ')+'</b> needs a named owner and a date before production.';
+    } else {
+      badge.classList.add('go'); badge.textContent = 'GO';
+      why.innerHTML = 'Every criterion is Meets or better. Move to production planning and run the readiness checklist.';
+    }
+  }
+  cards.addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    scores[+b.dataset.i] = +b.dataset.v; paint();
+  });
+  paint();
+</script>
+</body>
+</html>

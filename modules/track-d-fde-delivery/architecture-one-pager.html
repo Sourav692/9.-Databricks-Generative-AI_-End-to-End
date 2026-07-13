@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architecture One-Pager — Unity Airways GenAI Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Spline+Sans+Mono:wght@400;500;600&family=Spline+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f4f1ea; --paper-2:#efe9dd; --card:#fbf9f4; --line:#e0d8c8;
+    --ink:#26211c; --muted:#6b6155; --faint:#9c9183;
+    --flame:#ff3621; --flame-deep:#d6260f; --violet:#7b4bd6; --frost:#1a7f78;
+    --code-bg:#221d18; --code-ink:#efe7da;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Spline Sans",sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:34px 22px 80px}
+  a{color:var(--flame-deep);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,.mono{font-family:"Spline Sans Mono",monospace}
+  code{background:rgba(0,0,0,.05);padding:.06em .35em;border-radius:5px;font-size:.9em}
+
+  .crumb{font-family:"Spline Sans Mono",monospace;font-size:.74rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted)}
+  .eyebrow{font-family:"Spline Sans Mono",monospace;font-size:.74rem;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--flame);margin:22px 0 10px}
+  h1{font-family:"Fraunces",serif;font-weight:900;font-size:clamp(2rem,5vw,3rem);
+    line-height:1.03;margin:0 0 14px;letter-spacing:-.02em}
+  h1 .drip{font-style:italic;background:linear-gradient(105deg,var(--flame),var(--violet));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .lede{font-size:1.1rem;color:var(--muted);max-width:70ch;margin:0 0 16px}
+  .pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+  .pill{font-family:"Spline Sans Mono",monospace;font-size:.68rem;letter-spacing:.06em;
+    text-transform:uppercase;padding:5px 11px;border-radius:999px;border:1px solid var(--line);
+    background:var(--card);color:var(--muted)}
+  .pill.ga{border-color:var(--frost);color:var(--frost)}
+  .pill.flame{border-color:var(--flame);color:var(--flame-deep)}
+  .pill.violet{border-color:var(--violet);color:var(--violet)}
+
+  section{border-top:1px solid var(--line);margin-top:30px;padding-top:24px}
+  h2{font-family:"Fraunces",serif;font-weight:600;font-size:1.5rem;margin:0 0 12px}
+  h3{font-size:1rem;margin:0 0 6px}
+  p{margin:0 0 12px}
+  .oneliner{font-size:1.16rem;font-weight:600;border-left:3px solid var(--flame);
+    padding:4px 0 4px 16px;margin:4px 0 12px}
+
+  .reuse{background:var(--paper-2);border:1px dashed var(--faint);border-radius:12px;
+    padding:12px 16px;font-size:.9rem;color:var(--muted);margin-top:14px}
+  .reuse b{color:var(--ink)}
+
+  /* tables */
+  table{width:100%;border-collapse:collapse;font-size:.92rem;margin:2px 0 8px}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:"Spline Sans Mono",monospace;font-size:.68rem;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted);font-weight:600}
+  tbody tr:hover{background:var(--card)}
+  td .m{font-family:"Spline Sans Mono",monospace;font-size:.86rem;color:var(--flame-deep)}
+  .modtag{display:inline-block;font-family:"Spline Sans Mono",monospace;font-size:.66rem;
+    padding:2px 7px;border-radius:999px;border:1px solid var(--line);background:var(--card);
+    color:var(--muted);white-space:nowrap}
+
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{position:relative;padding:6px 0 6px 24px;color:var(--ink)}
+  ul.clean li::before{content:"→";position:absolute;left:0;color:var(--flame);
+    font-family:"Spline Sans Mono",monospace}
+
+  .callout{background:var(--paper-2);border:1px solid var(--line);border-left:4px solid var(--violet);
+    border-radius:var(--radius);padding:16px 18px}
+  .callout .lbl{font-family:"Spline Sans Mono",monospace;font-size:.68rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--violet);display:block;margin-bottom:8px}
+  .callout ul{margin:0;padding-left:18px}
+  .callout li{margin:5px 0}
+  .callout.flame{border-left-color:var(--flame)}
+  .callout.flame .lbl{color:var(--flame-deep)}
+
+  /* diagram */
+  .diagram{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px;margin-top:6px}
+  .diagram-title{font-family:"Spline Sans Mono",monospace;font-size:.7rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+  .tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .tab{font-family:"Spline Sans Mono",monospace;font-size:.72rem;cursor:pointer;
+    padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper);
+    color:var(--muted);transition:all .15s}
+  .tab.active{background:var(--flame);color:#fff;border-color:var(--flame)}
+  .tab:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+  svg .grp{transition:opacity .2s}
+  svg .grp.dim{opacity:.22}
+  .nb{fill:var(--card);stroke:var(--line);stroke-width:1.4}
+  .nb.data{fill:#eef3ef;stroke:var(--frost)}
+  .nb.support{fill:#fdeee9;stroke:var(--flame)}
+  .nb.analytics{fill:#f1ecfa;stroke:var(--violet)}
+  .nb.obs{fill:var(--paper-2);stroke:var(--faint)}
+  .nlab{font-family:"Spline Sans",sans-serif;font-size:11.5px;fill:var(--ink)}
+  .nlab.sm{font-size:10px;fill:var(--muted);font-family:"Spline Sans Mono",monospace}
+  .plane{fill:none;stroke:var(--faint);stroke-width:1.4;stroke-dasharray:5 4}
+  .planelab{font-family:"Spline Sans Mono",monospace;font-size:10.5px;letter-spacing:.08em;
+    text-transform:uppercase;fill:var(--muted)}
+  .fl{stroke:var(--faint);stroke-width:1.5;fill:none;marker-end:url(#arw)}
+  .diagram-info{margin-top:12px;background:var(--paper-2);border-radius:10px;padding:12px 14px;
+    font-size:.92rem;color:var(--muted);min-height:38px}
+  .diagram-info strong{color:var(--flame-deep)}
+
+  .doclinks{list-style:none;padding:0;margin:0}
+  .doclinks li{padding:4px 0;font-size:.92rem}
+  .verified{font-family:"Spline Sans Mono",monospace;font-size:.7rem;color:var(--faint);
+    margin-top:14px;letter-spacing:.06em}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:680px){.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <span class="crumb">Track D · FDE Delivery Toolkit · Reusable Template</span>
+  <div class="eyebrow">Databricks · Delivery Asset · Architecture One-Pager</div>
+  <h1>Reference Architecture <span class="drip">on one page</span></h1>
+  <p class="lede">The single page a review board reads first: two governance and observability planes wrapping a support agent and a Genie analytics experience. Worked here with the <b>Unity Airways</b> GenAI platform.</p>
+  <div class="pills">
+    <span class="pill flame">Reusable template</span>
+    <span class="pill">Worked example: Unity Airways</span>
+    <span class="pill violet">Maps to Capstone C4</span>
+    <span class="pill">Verified July 2026 docs</span>
+  </div>
+  <div class="reuse"><b>How to reuse:</b> keep the two planes and the two application paths; swap the node labels, the catalog/endpoint names, and the module tags for the customer's build. Everything below is filled in for Unity Airways as the example.</div>
+
+  <!-- IN ONE LINE -->
+  <section>
+    <h2>The platform in one line</h2>
+    <p class="oneliner">One Unity Catalog governance plane and one MLflow 3 observability plane wrap two front doors: a tool-using support agent and a self-serve Genie analytics experience.</p>
+  </section>
+
+  <!-- THE ASK -->
+  <section>
+    <h2>The business ask</h2>
+    <p>Unity Airways had three disconnected proofs-of-concept and a board that would not sign off on demos. The platform delivers one governed system: a support agent (RAG + tools) that is evaluated, deployed, monitored, and cost-managed, plus a self-serve analytics door for ops and finance that returns the same numbers the finance dashboard shows.</p>
+  </section>
+
+  <!-- INTERACTIVE DIAGRAM -->
+  <section>
+    <h2>Architecture at a glance</h2>
+    <div class="diagram">
+      <div class="diagram-title">Click a layer to trace it</div>
+      <div class="tabs" id="tabs" role="tablist" aria-label="Architecture layers">
+        <span class="tab active" role="tab" tabindex="0" data-l="data">Data + retrieval</span>
+        <span class="tab" role="tab" tabindex="0" data-l="support">Support path</span>
+        <span class="tab" role="tab" tabindex="0" data-l="analytics">Analytics path</span>
+        <span class="tab" role="tab" tabindex="0" data-l="gov">Governance plane</span>
+        <span class="tab" role="tab" tabindex="0" data-l="obs">Observability plane</span>
+      </div>
+      <svg viewBox="0 0 880 560" width="100%" role="img" aria-label="Unity Airways GenAI platform reference architecture">
+        <defs>
+          <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#9c9183"/>
+          </marker>
+        </defs>
+
+        <!-- governance plane wrapper -->
+        <g class="grp" data-l="gov">
+          <rect class="plane" x="12" y="34" width="856" height="426" rx="16"/>
+          <text class="planelab" x="26" y="52">Unity Catalog · governance plane — grants · lineage · model + prompt registry</text>
+        </g>
+
+        <!-- DATA + RETRIEVAL -->
+        <g class="grp" data-l="data">
+          <rect class="nb data" x="30"  y="72" width="150" height="52" rx="10"/>
+          <text class="nlab" x="105" y="94" text-anchor="middle">Policy PDFs +</text>
+          <text class="nlab" x="105" y="110" text-anchor="middle">ops data</text>
+
+          <rect class="nb data" x="212" y="72" width="176" height="52" rx="10"/>
+          <text class="nlab" x="300" y="94" text-anchor="middle">Ingest — parse ·</text>
+          <text class="nlab" x="300" y="110" text-anchor="middle">chunk · embed</text>
+          <text class="nlab sm" x="300" y="123" text-anchor="middle">Mod 03</text>
+
+          <rect class="nb data" x="420" y="72" width="150" height="52" rx="10"/>
+          <text class="nlab" x="495" y="94" text-anchor="middle">AI Search index</text>
+          <text class="nlab sm" x="495" y="110" text-anchor="middle">ua_rag_chunks_index · Mod 04</text>
+
+          <rect class="nb data" x="620" y="72" width="228" height="52" rx="10"/>
+          <text class="nlab" x="734" y="94" text-anchor="middle">Metric views (semantic layer)</text>
+          <text class="nlab sm" x="734" y="110" text-anchor="middle">bookings_metrics · Mod 15</text>
+
+          <path class="fl" d="M180,98 H210"/>
+          <path class="fl" d="M388,98 H418"/>
+        </g>
+
+        <!-- SUPPORT PATH -->
+        <g class="grp" data-l="support">
+          <rect class="nb support" x="30"  y="176" width="200" height="54" rx="10"/>
+          <text class="nlab" x="130" y="198" text-anchor="middle">RAG chain</text>
+          <text class="nlab sm" x="130" y="214" text-anchor="middle">ua_rag_chain @champion · Mod 05</text>
+
+          <rect class="nb support" x="262" y="176" width="252" height="54" rx="10"/>
+          <text class="nlab" x="388" y="198" text-anchor="middle">ua-support-agent</text>
+          <text class="nlab sm" x="388" y="214" text-anchor="middle">ResponsesAgent + UC tools · Mod 09</text>
+
+          <rect class="nb support" x="548" y="176" width="300" height="54" rx="10"/>
+          <text class="nlab" x="698" y="196" text-anchor="middle">FM endpoint ua-support-llm</text>
+          <text class="nlab sm" x="698" y="212" text-anchor="middle">AI Gateway: guardrails · limits · fallbacks · Mod 11-12</text>
+
+          <rect class="nb support" x="262" y="264" width="252" height="52" rx="10"/>
+          <text class="nlab" x="388" y="285" text-anchor="middle">Agent endpoint (agents.deploy)</text>
+          <text class="nlab sm" x="388" y="301" text-anchor="middle">inference tables only · Mod 11/13</text>
+
+          <rect class="nb support" x="548" y="264" width="300" height="52" rx="10"/>
+          <text class="nlab" x="698" y="285" text-anchor="middle">Databricks App — chat UI</text>
+          <text class="nlab sm" x="698" y="301" text-anchor="middle">Mod 10</text>
+
+          <path class="fl" d="M230,203 H260"/>
+          <path class="fl" d="M514,203 H546"/>
+          <path class="fl" d="M388,230 V262"/>
+          <path class="fl" d="M514,290 H546"/>
+        </g>
+
+        <!-- ANALYTICS PATH -->
+        <g class="grp" data-l="analytics">
+          <rect class="nb analytics" x="30"  y="360" width="220" height="54" rx="10"/>
+          <text class="nlab" x="140" y="382" text-anchor="middle">Genie Agent</text>
+          <text class="nlab sm" x="140" y="398" text-anchor="middle">Conversation API · Mod 14</text>
+
+          <rect class="nb analytics" x="282" y="360" width="232" height="54" rx="10"/>
+          <text class="nlab" x="398" y="382" text-anchor="middle">Genie One</text>
+          <text class="nlab sm" x="398" y="398" text-anchor="middle">business users · Mod 14</text>
+
+          <rect class="nb analytics" x="548" y="360" width="300" height="54" rx="10"/>
+          <text class="nlab" x="698" y="382" text-anchor="middle">Optional: Multi-Agent Supervisor</text>
+          <text class="nlab sm" x="698" y="398" text-anchor="middle">routes support + analytics · Mod 10</text>
+
+          <path class="fl" d="M734,124 V150 H140 V358"/>
+          <path class="fl" d="M250,387 H280"/>
+        </g>
+
+        <!-- OBSERVABILITY plane -->
+        <g class="grp" data-l="obs">
+          <rect class="plane" x="12" y="474" width="856" height="72" rx="14"/>
+          <text class="planelab" x="26" y="492">MLflow 3 · observability plane</text>
+          <rect class="nb obs" x="30"  y="500" width="240" height="38" rx="9"/>
+          <text class="nlab" x="150" y="524" text-anchor="middle">Tracing — every call · Mod 07</text>
+          <rect class="nb obs" x="300" y="500" width="256" height="38" rx="9"/>
+          <text class="nlab" x="428" y="524" text-anchor="middle">Eval scorecard — genai.evaluate · Mod 08</text>
+          <rect class="nb obs" x="586" y="500" width="262" height="38" rx="9"/>
+          <text class="nlab" x="717" y="524" text-anchor="middle">Prod monitoring + alerts · Mod 13</text>
+        </g>
+      </svg>
+      <div class="diagram-info" id="info"><strong>Data + retrieval</strong> — policy PDFs and ops data are parsed, chunked, and embedded into the <code>ua_rag_chunks_index</code> on Databricks AI Search; operational tables become governed <code>bookings_metrics</code> metric views.</div>
+    </div>
+  </section>
+
+  <!-- COMPONENT INVENTORY -->
+  <section>
+    <h2>Component inventory</h2>
+    <table>
+      <thead><tr><th>Layer</th><th>Component</th><th>Databricks product</th><th>Module</th></tr></thead>
+      <tbody>
+        <tr><td>Data</td><td>Parse / chunk / embed pipeline</td><td>AI Functions (<span class="m">ai_parse_document</span>), Lakeflow SDP</td><td><span class="modtag">03</span></td></tr>
+        <tr><td>Retrieval</td><td><span class="m">ua_rag_chunks_index</span></td><td>Databricks AI Search (Delta Sync index)</td><td><span class="modtag">04</span></td></tr>
+        <tr><td>Reasoning</td><td><span class="m">ua_rag_chain</span> → <span class="m">ua-support-agent</span></td><td>databricks-langchain, ResponsesAgent + UC-function tools</td><td><span class="modtag">05</span> <span class="modtag">09</span></td></tr>
+        <tr><td>Serving</td><td>Agent endpoint (inference tables)</td><td>Model Serving via <span class="m">agents.deploy()</span></td><td><span class="modtag">11</span></td></tr>
+        <tr><td>Serving</td><td>FM endpoint <span class="m">ua-support-llm</span> + gateway</td><td>Model Serving + AI Gateway (guardrails, limits, fallbacks)</td><td><span class="modtag">11</span> <span class="modtag">12</span></td></tr>
+        <tr><td>Analytics</td><td><span class="m">bookings_metrics</span> semantic layer</td><td>Unity Catalog metric views</td><td><span class="modtag">15</span></td></tr>
+        <tr><td>Analytics</td><td>Genie Agent + Genie One</td><td>AI/BI Genie (Conversation API)</td><td><span class="modtag">14</span></td></tr>
+        <tr><td>Observability</td><td>Traces · eval scorecard · monitoring</td><td>MLflow 3 tracing, <span class="m">mlflow.genai.evaluate</span>, prod monitoring (Beta)</td><td><span class="modtag">07</span> <span class="modtag">08</span> <span class="modtag">13</span></td></tr>
+        <tr><td>Governance</td><td>Grants · lineage · registries</td><td>Unity Catalog (models, functions, data, metric views)</td><td><span class="modtag">00</span> <span class="modtag">06</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- DECISIONS + NON-FUNCTIONALS -->
+  <section>
+    <h2>Key decisions and non-functionals</h2>
+    <div class="grid2">
+      <div>
+        <h3>Decisions on the record</h3>
+        <ul class="clean">
+          <li>RAG over fine-tune — answers stay grounded in current, governed policy docs with citations.</li>
+          <li>Custom <code>ResponsesAgent</code> over Knowledge Assistant — we also call booking and flight-status tools.</li>
+          <li>Genie answers off metric views, never raw tables — one source of truth for numbers.</li>
+          <li>Real-time serving for support; <code>ai_query</code> batch for bulk enrichment.</li>
+          <li>Rollback = repoint the <code>@champion</code> alias to the prior version.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Non-functional targets</h3>
+        <table>
+          <tbody>
+            <tr><td>Latency</td><td class="m">p95 &le; 3s</td></tr>
+            <tr><td>Correctness</td><td class="m">&ge; 0.85</td></tr>
+            <tr><td>Groundedness</td><td class="m">&ge; 0.90</td></tr>
+            <tr><td>Cost</td><td class="m">&le; target / 1k req</td></tr>
+            <tr><td>Spend cap</td><td class="m">Unity AI Gateway budget (Beta)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- TALKING POINTS -->
+  <section>
+    <h2>Board talking points</h2>
+    <div class="callout flame">
+      <span class="lbl">Say this out loud</span>
+      <ul>
+        <li>"One governance plane — Unity Catalog governs the data, the model, the tools, the metric views, and the runtime traffic through Unity AI Gateway."</li>
+        <li>"Guardrails, rate limits, and budgets sit on the foundation-model endpoint the agent calls; the agent endpoint carries inference tables for observability. Two endpoints, two jobs."</li>
+        <li>"Every claim on this page is a component you can click into — traces, an eval scorecard, and monitoring prove quality end to end."</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- REFERENCES -->
+  <section>
+    <h2>References</h2>
+    <ul class="doclinks">
+      <li><a href="https://docs.databricks.com/aws/en/generative-ai/agent-framework/deploy-agent">Deploy an agent — agents.deploy(), endpoints, inference tables</a></li>
+      <li><a href="https://docs.databricks.com/aws/en/ai-gateway/">AI Gateway — guardrails, rate limits, fallbacks, budgets, payload logging</a></li>
+      <li><a href="https://docs.databricks.com/aws/en/mlflow3/genai/eval-monitor/">MLflow 3 — evaluate and monitor agents (production monitoring, Beta)</a></li>
+      <li><a href="https://docs.databricks.com/aws/en/genie/">AI/BI Genie — Genie Agents and Conversation API</a></li>
+      <li>Capstone C4 — <code>capstones/capstone-4-genai-platform.md</code> (Unity Airways target architecture)</li>
+    </ul>
+    <p class="verified">Verified against docs.databricks.com · July 2026 · Beta/Preview items (prod monitoring, Unity AI Gateway budgets, PII redaction) — live re-check pending</p>
+  </section>
+
+</div>
+
+<script>
+  var INFO = {
+    data:      ["Data + retrieval", "policy PDFs and ops data are parsed, chunked, and embedded into the <code>ua_rag_chunks_index</code> on Databricks AI Search; operational tables become governed <code>bookings_metrics</code> metric views"],
+    support:   ["Support path", "the RAG chain and <code>ua-support-agent</code> (a ResponsesAgent with UC-function tools) call the FM endpoint <code>ua-support-llm</code>, which carries the AI Gateway guardrails, rate limits, and fallbacks; the deployed agent endpoint carries inference tables and feeds the chat app"],
+    analytics: ["Analytics path", "a Genie Agent answers ops and finance questions off the metric views and surfaces to business users through Genie One; a Multi-Agent Supervisor can route support and analytics from one entry point"],
+    gov:       ["Governance plane", "Unity Catalog governs the data, the model, the UC-function tools, and the metric views with least-privilege grants, lineage, and the model + prompt registries — one plane for everything"],
+    obs:       ["Observability plane", "MLflow 3 traces every call, the <code>mlflow.genai.evaluate</code> scorecard gates promotion, and production monitoring (Beta) reuses the same scorers on live traffic with alerts"]
+  };
+  var ORDER = ["data","support","analytics","gov","obs"];
+  var tabs = document.querySelectorAll('#tabs .tab');
+  var grps = document.querySelectorAll('svg .grp');
+  var info = document.getElementById('info');
+  function select(l){
+    tabs.forEach(function(t){ t.classList.toggle('active', t.dataset.l===l); });
+    grps.forEach(function(g){
+      // highlight the active layer, dim the rest for a clear read path
+      g.classList.toggle('dim', g.dataset.l!==l);
+    });
+    info.innerHTML = '<strong>'+INFO[l][0]+'</strong> — '+INFO[l][1]+'.';
+  }
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(){ select(t.dataset.l); });
+    t.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); select(t.dataset.l); } });
+  });
+  grps.forEach(function(g){
+    if(!g.dataset.l) return;
+    g.style.cursor='pointer';
+    g.addEventListener('click', function(){ select(g.dataset.l); });
+  });
+  select('data');
+</script>
+</body>
+</html>
