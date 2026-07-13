@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Cornerstone 03.8 (mirrors ai-parse-extract.md).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Document Parsing and Extraction with AI Functions · Databricks GenAI Tutor 03.8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(1.8rem,4.6vw,2.9rem);
+    line-height:1.08;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:22ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  .tag-hint{font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:2px 7px;margin-left:8px}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.4rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px;min-height:40px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:12px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI</a>
+    <span class="loc">Module 03 · Topic 03.8 · ★ Cornerstone</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_03.8 · GenAI lesson · v1.0</span><span>Verified against docs · July 2026 · requirements churn</span></div>
+    <div class="filed">Module 03 — Data prep and chunking for RAG · Entry 03.8 · Theory + Hands-on</div>
+    <h1>Document Parsing and Extraction with AI Functions</h1>
+    <p class="dek">Turn messy PDFs and scans in a Unity Catalog volume into clean, chunkable text and structured fields with <em>two SQL functions</em> — no OCR stack, no prompt wrangling, everything stays in Delta.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01</span><h2>The big idea</h2></div>
+      <p class="lead">Two built-in SQL functions do the document data-prep that used to need a Python OCR project. <code>ai_parse_document</code> reads bytes into text and layout; <code>ai_extract</code> pulls named fields out of that text.</p>
+      <ul>
+        <li><strong>Pipeline:</strong> volume PDF → <code>ai_parse_document</code> → text and layout → <code>ai_extract</code> → Delta table ready to chunk.</li>
+        <li><strong>Task-specific first:</strong> use these before the general <code>ai_query</code>; escape to <code>ai_query</code> only for deeply nested JSON or image reasoning.</li>
+        <li><strong>Governed and in-platform:</strong> source bytes in a UC volume, output in a UC Delta table, no data leaving to an external OCR API.</li>
+        <li><strong>Both GA</strong>, billed under the <code>AI_FUNCTIONS</code> product, and run on <strong>serverless</strong> compute only.</li>
+        <li><strong>Requirements churn</strong> — treat runtime/region notes here as a dated snapshot and re-verify before a demo.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02</span><h2>Explore</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Pipeline</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">Two functions</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Reference</button>
+      </div>
+
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <div class="plate" data-fig="Fig. 01 — bytes in a volume to fields in Delta" style="margin-top:18px">
+          <div class="mermaid" id="m-pipeline"></div>
+          <div class="plate-cap">Parse, flatten, extract, land. Source: ai-parse-extract.md · AI Functions docs.</div>
+        </div>
+      </div>
+
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — which function does what">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select an option</div><h3>Two functions, one fallback</h3><p>Click a chip to see what each does, its inputs and outputs, and when to reach for it.</p>
+            </div>
+          </div>
+        </div>
+        <div class="plate" data-fig="Fig. 02 — decision: parse, extract, or escape to ai_query" style="margin-top:18px">
+          <div class="mermaid" id="m-decide"></div>
+          <div class="plate-cap">Binary file → parse. Text → extract. Beyond the limits → ai_query. Source: ai-parse-extract.md.</div>
+        </div>
+      </div>
+
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <p>Signatures, output, and the numbers you get asked about:</p>
+        <table><thead><tr><th>Function / fact</th><th>Detail (verified July 2026)</th></tr></thead><tbody id="rows"></tbody></table>
+      </div>
+    </section>
+
+    <section class="entry" id="parse">
+      <div class="entry-head"><span class="num">03</span><h2>ai_parse_document — bytes to structured text</h2></div>
+      <p><strong>Signature:</strong> <code>ai_parse_document(content [, options])</code>. <code>content</code> is <code>BINARY</code>; <code>options</code> is a <code>MAP&lt;STRING, STRING&gt;</code> (<code>version</code>, <code>imageOutputPath</code>, <code>descriptionElementTypes</code>, <code>pageRange</code>). It returns a <code>VARIANT</code> describing the document.</p>
+      <pre><code>{
+  "document": {
+    "pages":    [ { "id": INT, "image_uri": STRING } ],
+    "elements": [ { "id": INT, "type": STRING, "content": STRING,
+                    "confidence": DOUBLE,
+                    "bbox": [ { "coord": [INT], "page_id": INT } ],
+                    "description": STRING } ]
+  },
+  "error_status": [ { "error_message": STRING, "page_id": INT } ],
+  "metadata": { "id": STRING, "version": STRING }
+}</code></pre>
+      <ul>
+        <li><strong>Element <code>type</code>:</strong> <code>text</code>, <code>table</code>, <code>figure</code>, <code>title</code>, <code>caption</code>, <code>section_header</code>, <code>page_header</code>, <code>page_footer</code>, <code>page_number</code>, <code>footnote</code>. Elements come back in reading order, which is what fixes scrambled multi-column pages.</li>
+        <li><strong>Formats:</strong> PDF, JPG/JPEG, PNG, TIFF/TIF, DOC/DOCX, PPT/PPTX.</li>
+        <li><strong>Limits:</strong> 100 MB max file size; 500 pages max (over 500 fails immediately).</li>
+      </ul>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · error path</span>The top-level error field is <code>error_status</code> — an <strong>array</strong> of per-page <code>{error_message, page_id}</code> objects (empty/absent on a clean parse), NOT a scalar <code>error</code>. Because it is an array, test the first element: keep clean rows with <code>WHERE parsed:error_status[0] IS NULL</code> and send failures (<code>WHERE parsed:error_status[0] IS NOT NULL</code>) to a diagnostics/quarantine table.</div>
+    </section>
+
+    <section class="entry" id="extract">
+      <div class="entry-head"><span class="num">04</span><h2>ai_extract — text to named fields</h2></div>
+      <p>Two versions, and the difference changes how you read the output:</p>
+      <ul>
+        <li><strong>v2.1 (current):</strong> <code>ai_extract(content, schema [, options])</code>. <code>schema</code> is a JSON <em>string</em> — a simple array of names, or a typed object.</li>
+        <li><strong>v1 (legacy):</strong> <code>ai_extract(content, labels [, options])</code>, where <code>labels</code> is an <code>ARRAY&lt;STRING&gt;</code>; returns flat string fields.</li>
+      </ul>
+      <p><code>content</code> is text or the <code>ai_parse_document</code> <code>VARIANT</code>. Options: <code>version</code>, <code>instructions</code>, <code>enableCitations</code>, <code>enableConfidenceScores</code>. The v2.1 output wraps each field as an object:</p>
+      <pre><code>{
+  "response": {
+    "effective_date": { "value": "2026-01-01",
+                        "citation_ids": [ ... ],
+                        "confidence_score": 0.98 }
+  },
+  "error_message": null,
+  "metadata": { ... }
+}</code></pre>
+      <p><strong>Schema limits:</strong> types <code>string</code> / <code>integer</code> / <code>number</code> / <code>boolean</code> / <code>enum</code>; up to 500 enum values; 128 fields; 7 nesting levels; 150-char field names; 128,000-token input.</p>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · value path</span>Because v2.1 wraps each field in an object, the value path is <code>result:response:effective_date:value::STRING</code> — not a bare scalar. Inspect the <code>VARIANT</code> once and confirm the path before hardcoding it.</div>
+    </section>
+
+    <section class="entry" id="handson">
+      <div class="entry-head"><span class="num">05</span><h2>Do it on Databricks<span class="tag-hint">Hands-on</span></h2></div>
+      <p><strong>Step 1 — parse every document in the volume:</strong></p>
+      <pre><code>CREATE OR REPLACE TABLE unity_airways.rag.policy_parsed AS
+SELECT path, ai_parse_document(content) AS parsed   -- BINARY in, VARIANT out
+FROM read_files('/Volumes/unity_airways/rag/policy_docs/', format => 'binaryFile');</code></pre>
+      <p><strong>Verify:</strong> <code>error_status</code> is empty (its first element is null) and the first element has real text.</p>
+      <pre><code>SELECT path,
+       parsed:error_status                          AS errors,
+       parsed:document:elements[0]:content::STRING  AS first_text_block
+FROM unity_airways.rag.policy_parsed LIMIT 10;</code></pre>
+      <p><strong>Step 2 — flatten elements to text</strong> (cast to <code>ARRAY&lt;VARIANT&gt;</code> before you touch it):</p>
+      <pre><code>CREATE OR REPLACE TABLE unity_airways.rag.policy_text AS
+SELECT path,
+       concat_ws('\n',
+         transform(
+           variant_get(parsed, '$.document.elements', 'ARRAY&lt;VARIANT&gt;'),
+           e -> variant_get(e, '$.content', 'STRING'))) AS doc_text
+FROM unity_airways.rag.policy_parsed
+WHERE parsed:error_status[0] IS NULL;</code></pre>
+      <p><strong>Step 3 — extract structured fields</strong> with a typed schema:</p>
+      <pre><code>CREATE OR REPLACE TABLE unity_airways.rag.policy_extracted AS
+SELECT path, doc_text,
+  ai_extract(
+    doc_text,
+    '{"policy_title":       {"type":"string"},
+      "effective_date":     {"type":"string","description":"yyyy-mm-dd"},
+      "refund_window_days": {"type":"integer"},
+      "fare_class":         {"type":"enum","labels":["Economy","Premium","Business","First"]}}',
+    map('instructions','These are Unity Airways passenger policy documents.')
+  ) AS fields
+FROM unity_airways.rag.policy_text;</code></pre>
+      <p><strong>Step 4 — land a clean Delta table</strong> (confirm the value path first):</p>
+      <pre><code>CREATE OR REPLACE TABLE unity_airways.rag.policy_structured AS
+SELECT path, doc_text,
+       fields:response:policy_title:value::STRING     AS policy_title,
+       fields:response:effective_date:value::STRING   AS effective_date,
+       fields:response:refund_window_days:value::INT  AS refund_window_days,
+       fields:response:fare_class:value::STRING       AS fare_class,
+       fields:error_message::STRING                   AS extract_error
+FROM unity_airways.rag.policy_extracted;</code></pre>
+      <p><strong>How to verify the whole thing worked:</strong> counts line up and fields look sane — <code>count(policy_title)</code> should track <code>count(*)</code>, and <code>count_if(extract_error IS NOT NULL)</code> should be near zero.</p>
+    </section>
+
+    <section class="entry" id="worked">
+      <div class="entry-head"><span class="num">06</span><h2>Worked example — Unity Airways</h2></div>
+      <ul>
+        <li><strong>Parse:</strong> 1,200 files — native PDFs, DOCX guides, ~300 scans. One <code>ai_parse_document</code> call covers all formats; the scans that <code>pypdf</code> returned empty for now come back with full OCR text.</li>
+        <li><strong>Errors:</strong> a 640-page merged archive (over the 500-page cap) and a digitally signed PDF land in <code>error_status</code> and go to a review table.</li>
+        <li><strong>Flatten:</strong> reading order fixes the two-column contract of carriage; dropping <code>page_number</code> and <code>page_footer</code> elements cuts chunk noise.</li>
+        <li><strong>Extract + land:</strong> the <code>enum</code> on <code>fare_class</code> keeps cabins clean; retrieval can later filter by <code>fare_class</code> and <code>effective_date</code>.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Important</span>Keep the parsed <code>VARIANT</code> table even after flattening to text. It is your audit trail (bounding boxes, element types) and lets you re-derive text without paying to re-parse.</div>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">07</span><h2>Field notes</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Prefer the task-specific functions (<code>ai_parse_document</code>, <code>ai_extract</code>, <code>ai_classify</code>) for document prep. <code>ai_query</code> is the fallback for what they cannot do, not the default.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>The same functions run from PySpark via <code>expr("ai_parse_document(content)")</code> inside <code>withColumn</code> — pick SQL or PySpark to match the surrounding job.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · docs vs books</span>Compute moved to <strong>serverless-only</strong> and the overview now lists <strong>DBR 18.2+</strong>, while the <code>ai_parse_document</code> page lists <strong>17.3+</strong>. The study guide predates these functions. Teach the current requirement and re-verify — minimums have been rising, and both functions are region-limited.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">08</span><h2>Notes &amp; self-check</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>What are the input and output types of <code>ai_parse_document</code>, and which top-level field flags a page that failed to parse?</li>
+          <li>Name three element <code>type</code> values you would drop before chunking, and why.</li>
+          <li>How does the v2.1 <code>schema</code> form of <code>ai_extract</code> differ from the legacy v1 <code>labels</code> form, and how does that change reading a field value?</li>
+          <li>Why must you cast with <code>variant_get(..., 'ARRAY&lt;VARIANT&gt;')</code> before calling <code>explode</code> on parsed elements?</li>
+          <li>Which compute can run these functions today, and what are the file-size and page limits for <code>ai_parse_document</code>?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">09</span><h2>Sources</h2></div>
+      <ul>
+        <li>🌐 Enrich data using AI Functions — <code>/large-language-models/ai-functions</code> (serverless-only; DBR 18.2+; <code>ai_parse_document</code>/<code>ai_extract</code>/<code>ai_classify</code> billed under <code>AI_FUNCTIONS</code>).</li>
+        <li>🌐 <code>ai_parse_document</code> reference — <code>/sql/language-manual/functions/ai_parse_document</code> (signature, options, output schema, element types, formats, 100 MB / 500-page limits, DBR 17.3+, GA).</li>
+        <li>🌐 <code>ai_extract</code> reference — <code>/sql/language-manual/functions/ai_extract</code> (v2.1 <code>schema</code> vs v1 <code>labels</code>; field objects with <code>value</code>/<code>citation_ids</code>/<code>confidence_score</code>; 128k-token context; GA).</li>
+        <li>📗 B2 Ch3 — Data prep for RAG: content extraction from PDFs/images (background; predates AI Functions).</li>
+        <li>📎 <code>references/naming-conventions.md</code> §5 (July 2026 snapshot — re-verify live).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Entry 03.8</span>
+  <span>Grounded in current docs · requirements are a snapshot</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"Parse",spine:false,comps:[
+   ["ai_parse_document","Function","BINARY in, VARIANT out: pages, ordered elements, bounding boxes, error_status. Managed OCR + layout, no model to pick.","step 1 of the pipeline"],
+ ]},
+ {name:"Extract",spine:false,comps:[
+   ["ai_extract","Function","Text or parsed VARIANT in, VARIANT of named fields out. You define a schema; v2.1 wraps each field as value + citations + confidence.","step 3 of the pipeline"],
+ ]},
+ {name:"Fallback",spine:true,comps:[
+   ["ai_query","General-purpose","Custom prompt against any served model. Use only when a task function cannot: deeply nested JSON, image-level reasoning.","last resort"],
+ ]},
+];
+const STEPS=[
+ ["Step 1 — parse","read_files(binaryFile) feeds bytes to ai_parse_document. Out comes a VARIANT of pages and elements. Keep it as an audit table."],
+ ["Step 2 — flatten","Cast elements to ARRAY of VARIANT, then concat element text in reading order into one doc_text string. Filter clean rows on error_status."],
+ ["Step 3 — extract","ai_extract with a typed schema pulls named fields (title, effective date, refund window, fare class) from doc_text."],
+ ["Step 4 — land","Cast the field values into typed columns and write a Delta table. doc_text plus metadata is now ready to chunk."],
+ ["The payoff","No OCR stack, no prompt wrangling. Scanned PDFs are searchable and fee tables survive as structured elements — all in governed Delta."],
+];
+const ROWS=[
+ ["ai_parse_document","<code>ai_parse_document(content [, options])</code>; content BINARY; VARIANT out. GA."],
+ ["Parse output","document.pages[], document.elements[] (type, content, bbox), error_status[], metadata."],
+ ["Formats","PDF, JPG/JPEG, PNG, TIFF/TIF, DOC/DOCX, PPT/PPTX. Max 100 MB, 500 pages."],
+ ["ai_extract","v2.1: <code>ai_extract(content, schema)</code>; v1: <code>ai_extract(content, labels)</code>. VARIANT out. GA."],
+ ["Extract schema","Types string / integer / number / boolean / enum; 128 fields; 7 levels; 128k-token input."],
+ ["Compute","Serverless SQL warehouse OR serverless notebook/job. NOT Pro/Classic SQL, NOT classic clusters."],
+ ["Billing","ai_parse_document, ai_extract, ai_classify → AI_FUNCTIONS product."],
+];
+const MERMAIDS={
+ "m-pipeline":`flowchart LR
+  V["UC Volume<br/>policy PDFs and scans"] --> RF["read_files<br/>format binaryFile"]
+  RF --> PARSE["ai_parse_document(content)"]
+  PARSE --> VAR["VARIANT<br/>pages + elements + error_status"]
+  VAR --> TXT["Flatten elements<br/>to doc_text"]
+  TXT --> EXT["ai_extract(text, schema)"]
+  EXT --> DELTA["Delta table<br/>text plus structured fields"]
+  DELTA --> NEXT["03.9 chunk + embed + AI Search"]`,
+ "m-decide":`flowchart TB
+  Q0(["What do you have?"]) --> Q1{"Binary file<br/>PDF, image, Office?"}
+  Q1 -->|Yes| P["ai_parse_document<br/>bytes to text and layout"]
+  Q1 -->|"No, already text"| Q2{"Need named fields?"}
+  P --> Q2
+  Q2 -->|"Flat or lightly nested"| E["ai_extract<br/>schema of fields"]
+  Q2 -->|"Deeply nested JSON<br/>or image reasoning"| AQ["ai_query<br/>last resort"]
+  E --> OUT["Delta"]
+  AQ --> OUT`,
+};
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td></tr>`).join("");
+
+function drawMermaid(){if(!window.mermaid)return;
+  try{mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+    const nodes=[];
+    Object.entries(MERMAIDS).forEach(([id,src])=>{const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");nodes.push(el);});
+    mermaid.run({nodes});}
+  catch(e){Object.keys(MERMAIDS).forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';});}}
+if(document.querySelector(".mermaid")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){document.querySelectorAll(".mermaid").forEach(el=>{el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

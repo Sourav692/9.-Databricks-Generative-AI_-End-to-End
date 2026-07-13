@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Topic 04.3 (cornerstone): Creating & querying a Databricks AI Search index.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Search Index · Databricks GenAI Tutor 04.3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbox pre{margin:8px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI</a>
+    <span class="loc">Module 04 · Topic 04.3 ★</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_04.3 · Cornerstone · v1.0</span><span>Verified against books + docs</span></div>
+    <div class="filed">Module 04 — Embeddings and AI Search · Topic 04.3 · Theory + Hands-on ★</div>
+    <h1>AI Search Index</h1>
+    <p class="dek">Turn a governed chunk table into a queryable vector store: one endpoint, one Delta Sync index with managed embeddings, kept fresh by Change Data Feed, queried three ways. The retriever you build here is the "R" in Module 05.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>One index, three front doors</h2></div>
+      <p class="lead">Unity Airways has its policy chunks sitting in one Delta table, <code>unity_airways.rag.ua_rag_chunks</code>. A table of text is not searchable by meaning — <code>LIKE '%refund%'</code> misses a chunk that says "money back within 24 hours." An AI Search index stores a vector per chunk and returns the ones nearest to the question, and you query that one index from Python, LangChain, or SQL.</p>
+      <ul>
+        <li>You build retrieval in two objects: a <strong>Vector Search endpoint</strong> (the compute that serves indexes) and an <strong>index</strong> (the searchable structure over one Delta table). One endpoint, many indexes.</li>
+        <li>The default is a <strong>Delta Sync Index with Databricks-managed embeddings</strong>: name the <code>content</code> column, and Databricks embeds every chunk with <code>databricks-gte-large-en</code> and keeps the index in sync.</li>
+        <li>The source table needs <strong>Change Data Feed</strong> so the index can re-embed only what changed. <code>pipeline_type</code> is <strong>TRIGGERED</strong> (you call sync, cheap) or <strong>CONTINUOUS</strong> (always fresh, always-on compute).</li>
+        <li>The SDK is still <code>databricks-vectorsearch</code> despite the "AI Search" rename. There is no <code>databricks-ai-search</code> package or <code>AISearchClient</code>.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>Pipeline, index types, and query paths</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Pipeline</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">Index types</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Walkthrough</button>
+        <button role="tab" aria-selected="false" aria-controls="p-query" id="t-query" onclick="tab(this,'p-query')">Query paths</button>
+        <button role="tab" aria-selected="false" aria-controls="p-sync" id="t-sync" onclick="tab(this,'p-sync')">Sync mode</button>
+      </div>
+
+      <!-- PANE A: pipeline mermaid — mirrors create-query-index.md diagram 1 -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — Create, sync, query">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">One index, three front doors. Change Data Feed keeps the index honest as the table changes.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the three index types -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — Three index types">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a type</div><h3>Three index types</h3><p>Click one to see where embeddings live, how it updates, and when to use it.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: stepper walkthrough of the build -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE D: three query paths compare -->
+      <div id="p-query" class="pane" role="tabpanel" aria-labelledby="t-query" hidden>
+        <table>
+          <thead><tr><th>Path</th><th>Call</th><th>Returns</th><th>Best for</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Python SDK</td><td>index.similarity_search(query_text, columns, num_results)</td><td>dict; score is last value per row</td><td>Notebooks, batch jobs, custom Python agents</td></tr>
+            <tr><td class="k">LangChain</td><td>DatabricksVectorSearch(...).as_retriever()</td><td>list of Documents</td><td>Assembling a RAG chain (Module 05)</td></tr>
+            <tr><td class="k">SQL</td><td>vector_search(index =&gt; ..., query_text =&gt; ..., num_results =&gt; ...)</td><td>rows: synced columns + score</td><td>Analysts, SQL pipelines, dashboards</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Three doors into one index, not three indexes. Each embeds the query with the index's own model.</p>
+      </div>
+
+      <!-- PANE E: sync-mode trade-off -->
+      <div id="p-sync" class="pane" role="tabpanel" aria-labelledby="t-sync" hidden>
+        <table>
+          <thead><tr><th>pipeline_type</th><th>Freshness</th><th>Compute cost</th><th>Use when</th></tr></thead>
+          <tbody>
+            <tr><td class="k">TRIGGERED</td><td>As fresh as your last sync() call</td><td>Lower — spins up, works, spins down</td><td>Batch updates (nightly re-chunk)</td></tr>
+            <tr><td class="k">CONTINUOUS</td><td>Seconds behind the table</td><td>Higher — sustained compute</td><td>Docs change constantly and staleness hurts</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Default to TRIGGERED for policy docs. Both read Change Data Feed to re-embed only what changed.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="how">
+      <div class="entry-head"><span class="num">03 · How it works</span><h2>Endpoint, index, and why CDF is required</h2></div>
+      <p>Pick the index type by where the vectors live and how the data updates. Start with managed Delta Sync — it is the cheapest, most governed default.</p>
+      <div class="plate" data-fig="Fig. 02 — Choosing an index type">
+        <div class="mermaid" id="mermaidGraph2"></div>
+        <div class="plate-cap">Managed is the default. Self-managed for custom models; Direct Access for real-time vector writes.</div>
+      </div>
+      <ul>
+        <li><strong>Endpoint = the server.</strong> It hosts indexes. Build one per environment or team and put several indexes on it. <em>Standard</em> for low-latency apps; <em>Storage-optimized</em> for &gt;1B vectors. Creation is async — wait for <code>ONLINE</code>.</li>
+        <li><strong>Managed embeddings guarantee one model.</strong> Databricks embeds the chunks and each query with the <em>same</em> <code>databricks-gte-large-en</code> (1024-dim, 8192-token). Mismatched embed models silently wreck relevance; managed mode removes that risk.</li>
+        <li><strong>Change Data Feed is the wire.</strong> A Delta Sync Index reads CDF to find which rows were inserted, updated, or deleted, then re-embeds only those. The source table must have <code>delta.enableChangeDataFeed = true</code> or index creation fails.</li>
+        <li><strong>Readiness matters.</strong> On creation the index runs an initial sync (read table, embed all rows, build the ANN structure). Query before it finishes and you get empty or partial results — so <code>wait_until_ready()</code>.</li>
+        <li><strong>TRIGGERED does not auto-update.</strong> After a batch write to the table you must call <code>index.sync()</code>. CONTINUOUS keeps it fresh on standing compute.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="dothis">
+      <div class="entry-head"><span class="num">04 · Run this</span><h2>Endpoint, index, sync, query</h2></div>
+      <p><strong>Prereqs:</strong> serverless or DBR ML runtime, MLflow ≥ 3.1; write access to <code>unity_airways.rag</code>; permission to create a Vector Search endpoint. The Module 03 table <code>ua_rag_chunks</code> exists with CDF on.</p>
+      <pre><code>%pip install -U databricks-vectorsearch databricks-langchain
+dbutils.library.restartPython()</code></pre>
+      <pre><code>CATALOG = "unity_airways"; SCHEMA = "rag"
+SOURCE_TABLE   = f"{CATALOG}.{SCHEMA}.ua_rag_chunks"      # chunk_id, content, source_doc, chunk_index, ingested_at
+INDEX_NAME     = f"{CATALOG}.{SCHEMA}.ua_rag_chunks_index"
+ENDPOINT_NAME  = "unity-airways-vs"
+EMBED_ENDPOINT = "databricks-gte-large-en"               # 1024-dim, 8192-token context</code></pre>
+      <p><strong>Confirm Change Data Feed</strong> (a Delta Sync Index needs it):</p>
+      <pre><code>spark.sql(f"ALTER TABLE {SOURCE_TABLE} SET TBLPROPERTIES (delta.enableChangeDataFeed = true)")
+spark.sql(f"SHOW TBLPROPERTIES {SOURCE_TABLE} (delta.enableChangeDataFeed)").show(truncate=False)</code></pre>
+      <p><strong>Create the endpoint</strong> (Standard). <code>create_endpoint</code> is async; the <code>_and_wait</code> helper blocks until <code>ONLINE</code>:</p>
+      <pre><code>from databricks.vector_search.client import VectorSearchClient   # package: databricks-vectorsearch
+
+vsc = VectorSearchClient()   # picks up notebook auth automatically
+if not vsc.endpoint_exists(ENDPOINT_NAME):
+    vsc.create_endpoint_and_wait(name=ENDPOINT_NAME, endpoint_type="STANDARD")</code></pre>
+      <p><strong>Create the Delta Sync Index with managed embeddings</strong> — name the text column and the model; Databricks embeds and syncs:</p>
+      <pre><code>index = vsc.create_delta_sync_index_and_wait(
+    endpoint_name=ENDPOINT_NAME,
+    index_name=INDEX_NAME,
+    source_table_name=SOURCE_TABLE,
+    primary_key="chunk_id",                       # id used to add/replace/delete vectors
+    embedding_source_column="content",            # THIS column gets embedded
+    embedding_model_endpoint_name=EMBED_ENDPOINT, # managed: Databricks calls gte-large-en
+    pipeline_type="TRIGGERED",                    # you call .sync(); cheaper than CONTINUOUS
+)</code></pre>
+      <p><strong>Verify online, then re-sync after table changes:</strong></p>
+      <pre><code>index = vsc.get_index(endpoint_name=ENDPOINT_NAME, index_name=INDEX_NAME)
+index.wait_until_ready()             # blocks until ONLINE
+print(index.describe()["status"])    # inspect detailed status
+# ... after a nightly re-chunk writes new rows:
+index.sync()                         # reads CDF, embeds only new/changed chunks</code></pre>
+      <p><strong>Query A — Python SDK:</strong></p>
+      <pre><code>results = index.similarity_search(
+    query_text="Can I get a refund on a Basic Economy fare?",
+    columns=["chunk_id", "source_doc", "content"],   # only requested columns come back
+    num_results=5,
+)
+for row in results["result"]["data_array"]:
+    # row = [chunk_id, source_doc, content, score] — score is always last
+    print(round(row[-1], 3), "|", row[1], "|", row[2][:120], "...")</code></pre>
+      <p><strong>Query B — LangChain retriever</strong> (the object handed to Module 05):</p>
+      <pre><code>from databricks_langchain import DatabricksVectorSearch
+
+vector_store = DatabricksVectorSearch(     # managed index: embed model auto-detected
+    endpoint=ENDPOINT_NAME,
+    index_name=INDEX_NAME,
+    columns=["chunk_id", "source_doc", "content"],
+)
+retriever = vector_store.as_retriever(search_kwargs={"k": 4})
+docs = retriever.invoke("Can I change my Basic Economy booking?")</code></pre>
+      <p><strong>Query C — SQL <code>vector_search()</code></strong> (any SQL surface):</p>
+      <pre><code>SELECT *
+FROM vector_search(
+  index =&gt; 'unity_airways.rag.ua_rag_chunks_index',
+  query_text =&gt; 'What is the checked baggage allowance on Basic Economy?',
+  num_results =&gt; 5
+);
+-- Returns synced columns plus a similarity score. DBR 15.2 and below use `query =&gt;`.</code></pre>
+      <p><strong>How to verify retrieval is good (not just working):</strong> read the top chunk. If it holds the whole answer — rule plus its condition — your chunking and index are healthy. If the top chunks are near-duplicates or off-topic, fix chunk size/overlap upstream. The index faithfully returns whatever you indexed.</p>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>An AI Search index is only as good as the chunks under it. It reliably returns the nearest vectors, so a bad answer is almost always upstream — chunking (Module 03) or the wrong index/columns — not the search. Debug retrieval by reading the top chunk before you touch the model.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Build the endpoint once per environment and reuse it. Start every index as <strong>managed embeddings, TRIGGERED</strong> — the cheapest, most governed default — and move to self-managed or CONTINUOUS only when a concrete requirement forces it. Always put <code>source_doc</code> and <code>chunk_id</code> in your query <code>columns</code> so every retrieved chunk is citable.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>The Study Guide (B2 Ch9) teaches a <strong>simplified, conceptual</strong> client — <code>client.create_index(index_type="managed", delta_table_name=…)</code> and <code>client.query(index_name=…, k=5)</code> — and admits "exact client APIs may vary." The <strong>real</strong> SDK is <code>vsc.create_delta_sync_index(source_table_name=…, embedding_source_column=…, embedding_model_endpoint_name=…, pipeline_type=…)</code> and <code>index.similarity_search(query_text=…, columns=[…], num_results=…)</code>. The book's <code>k=</code> is <code>num_results=</code>, and you pick the type by calling <code>create_delta_sync_index</code> vs <code>create_direct_access_index</code> — there is no <code>index_type="managed"</code> string.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>What is the difference between a Vector Search endpoint and an index, and why one endpoint but many indexes?</li>
+          <li>Name the three index types and give one situation where each is right.</li>
+          <li>Why must the source Delta table have Change Data Feed enabled, and what does the index use it for?</li>
+          <li><code>pipeline_type="TRIGGERED"</code> vs <code>"CONTINUOUS"</code>: what does each cost and when do you pick CONTINUOUS?</li>
+          <li>You ask for <code>columns=["chunk_id", "content"]</code>; result rows have a fourth value. What is it, and where does it sit?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📗 B2 — <em>Databricks Certified GenAI Engineer Associate Study Guide</em>, Ch 9: "Creating a basic Vector Search index" (Example 9-1, <code>VectorSearchClient</code>), "Index creation essentials" (primary key + embedding column; readiness via <code>list_indexes()</code>/<code>get_index()</code>; managed vs direct-access lifecycle), "Querying a Vector Search Index" (Examples 9-3/9-4, <code>columns</code> + <code>k</code> + filters). The book's client is simplified and self-flagged as approximate — see the ⚠️ Gotcha.</li>
+        <li>🌐 Databricks Python SDK reference — <code>databricks-vectorsearch</code> (<code>api-docs.databricks.com/python/vector-search</code>): confirms <code>create_endpoint</code>/<code>create_endpoint_and_wait</code>, <code>create_delta_sync_index</code>/<code>_and_wait</code>, <code>create_direct_access_index</code>, <code>get_index</code>; and index <code>similarity_search</code>, <code>sync</code>, <code>upsert</code>, <code>wait_until_ready</code>. Verified live.</li>
+        <li>🌐 Databricks Docs — Databricks AI Search (formerly Vector Search): <code>docs.databricks.com/aws/en/vector-search/vector-search</code> (endpoint types Standard vs Storage-optimized; index types managed / self-managed Delta Sync and Direct Vector Access; Delta Sync requires Change Data Feed; <code>pipeline_type</code> TRIGGERED vs CONTINUOUS).</li>
+        <li>🌐 Databricks Docs — SQL <code>vector_search()</code> table-valued function: <code>index =&gt;</code>, <code>query_text =&gt;</code> / <code>query_vector =&gt;</code>, <code>num_results =&gt;</code>; DBR ≤ 15.2 uses <code>query =&gt;</code>. Verified live.</li>
+        <li>🌐 Databricks — <code>databricks-langchain</code>: <code>DatabricksVectorSearch</code> + <code>.as_retriever()</code>; import is <code>from databricks_langchain import …</code> (not <code>langchain-databricks</code>). Naming cross-check: <code>references/naming-conventions.md</code> §3 (SDK still <code>databricks-vectorsearch</code>) and §5 (<code>vector_search</code> SQL GA).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Topic 04.3 ★</span>
+  <span>Grounded in 📗B2 Ch9 · Databricks SDK + docs</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"Delta Sync (the two synced types)",spine:false,comps:[
+   ["Managed embeddings","Databricks embeds","You give the text column; Databricks calls gte-large-en, writes the vectors, and syncs from the Delta table. Same model for index and query, guaranteed.","Best: default RAG on a governed chunk table (this lesson)"],
+   ["Self-managed embeddings","you precompute vectors","You fill an embedding ARRAY&lt;FLOAT&gt; column yourself, then index over that column with embedding_dimension. Databricks still syncs from Delta.","Best: a custom or external embedding model Databricks does not host"],
+ ]},
+ {name:"Direct (no Delta table)",spine:true,comps:[
+   ["Direct Vector Access","you push vectors","No source table and no sync — you upsert and delete vectors through the API. You define the schema and own updates.","Best: real-time or streaming writes where a Delta sync is too slow"],
+ ]},
+];
+const STEPS=[
+  ["Confirm CDF on the source","A Delta Sync Index needs Change Data Feed. ALTER TABLE ua_rag_chunks SET TBLPROPERTIES (delta.enableChangeDataFeed = true). ua_rag_chunks already has it on."],
+  ["Create the endpoint","vsc.create_endpoint_and_wait(name='unity-airways-vs', endpoint_type='STANDARD'). Async — the _and_wait helper blocks until ONLINE. One endpoint, reused for many indexes."],
+  ["Create the Delta Sync index","vsc.create_delta_sync_index_and_wait(source_table_name=..., primary_key='chunk_id', embedding_source_column='content', embedding_model_endpoint_name='databricks-gte-large-en', pipeline_type='TRIGGERED')."],
+  ["Wait until online","The initial sync reads the table, embeds every chunk, and builds the ANN structure. index.wait_until_ready(). Querying earlier returns empty or partial results."],
+  ["Sync on change","TRIGGERED does not auto-update. After a batch write, index.sync() reads CDF and re-embeds only new/changed rows and applies deletes."],
+  ["Query three ways","SDK index.similarity_search(query_text, columns, num_results); LangChain DatabricksVectorSearch(...).as_retriever(); SQL vector_search(index =&gt; ..., query_text =&gt; ..., num_results =&gt; ...). The retriever goes to Module 05."],
+];
+const MERMAID_SRC=`flowchart LR
+  src["Delta table<br/>ua_rag_chunks<br/>CDF enabled"] --> ep["VS endpoint<br/>Standard"]
+  ep --> idx["Delta Sync Index<br/>managed embeddings<br/>gte-large-en on content"]
+  src -. "Change Data Feed" .-> idx
+  idx --> sync["Sync<br/>TRIGGERED or CONTINUOUS<br/>wait until ONLINE"]
+  sync --> q{"Query three ways"}
+  q -->|"Python SDK"| a["similarity_search()"]
+  q -->|"LangChain"| b["as_retriever()"]
+  q -->|"SQL"| c["vector_search()"]
+  b --> m05["Module 05<br/>RAG chain (the R)"]`;
+const MERMAID_SRC2=`flowchart TD
+  q{"Where do vectors live and how does data update?"}
+  q -->|"Text in Delta, Databricks embeds"| managed["Delta Sync · managed<br/>(default, this lesson)"]
+  q -->|"You precompute vectors in Delta"| self["Delta Sync · self-managed"]
+  q -->|"You push vectors via API"| direct["Direct Vector Access Index"]`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

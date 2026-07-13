@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 03 Data Preparation & Chunking for RAG (module hub).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Data Prep &amp; Chunking for RAG · Databricks GenAI Tutor 03</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  /* ============ DESIGN SYSTEM — tokens (do not rename) ============ */
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line);
+    --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .toggle{display:none}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:16ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .ghost{display:none}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  .index-rail{display:none}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tag-pill{display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--line);border-radius:20px;color:var(--muted);margin-left:8px;vertical-align:middle}
+  .tag-pill.h{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.t{color:var(--accent-2);border-color:var(--accent-soft)}
+  .tag-pill.star{color:var(--danger);border-color:var(--danger-soft)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.3rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  h3.tk{font-family:var(--mono);font-size:.9rem;letter-spacing:.06em;margin:24px 0 6px}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.md">Databricks GenAI</a>
+    <span class="loc">Module 03 · Topics 03.1–03.9</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_03 · GenAI lesson · v1.0</span><span>Verified against books + docs</span></div>
+    <div class="filed">Module 03 — Data Prep &amp; Chunking for RAG · Topics 03.1–03.9 · Theory + Hands-on</div>
+    <h1>Data Prep and Chunking for RAG</h1>
+    <p class="dek">RAG quality is decided <em>before</em> a single vector exists. This module turns raw, messy documents into small, clean, well-labeled chunks in a query-ready Delta table — all on one use case: <em>Unity Airways customer support</em>.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>Get the chunks right first</h2></div>
+      <p class="lead">Chunking, cleaning, and structuring the source data set the ceiling on everything downstream. A retriever can only return a chunk that exists — and only help if that chunk is the right shape and free of noise.</p>
+      <ul>
+        <li><strong>Chunking</strong> breaks big documents into small, self-contained units. The <strong>strategy</strong> (fixed, sentence, paragraph, sliding-window, semantic) and the <strong>size + overlap</strong> are the two biggest levers.</li>
+        <li>Real docs are messy: scanned PDFs, boilerplate headers, cookie banners. You <strong>extract</strong> text with the right library, then <strong>filter</strong> the noise before chunking.</li>
+        <li>The output is an <strong>embed-ready Delta table</strong> — one row per chunk, plus metadata — which becomes the source for the Module 04 vector index.</li>
+        <li>On Databricks you can do most of this <strong>SQL-natively with AI Functions</strong> (<code>ai_parse_document</code>, <code>ai_extract</code>) and run the whole ingestion with <strong>Lakeflow Declarative Pipelines</strong> (built on the open-source Spark Declarative Pipelines framework, SDP).</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="problem">
+      <div class="entry-head"><span class="num">02 · The problem</span><h2>Why "just embed the documents" fails</h2></div>
+      <p>Unity Airways loads 4,000 policy PDFs, scanned refund forms, and an FAQ export into a RAG chatbot. In the demo it nails "what's the checked-bag fee?" In production, "Can I get a refund if I miss my connection?" returns a 12-page fare-rules chunk that buries the answer, or a chunk that stops mid-sentence. Retrieval is "working" — but the chunks are the wrong shape.</p>
+      <ul>
+        <li><strong>Embed the whole document</strong> → overflows the context window; retrieval returns the document, not the passage.</li>
+        <li><strong>Split every N characters</strong> → cuts definitions and procedures in half. "Step 2: Check the" is useless alone.</li>
+        <li><strong>Feed raw PDF text</strong> → garbled OCR and repeated headers/footers dominate similarity search.</li>
+        <li><strong>One chunk size fits all</strong> → tiny = precise but blinkered; huge = full but noisy. There's a trade-off to tune, not guess.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">03 · Explore</span><h2>The pipeline, the 9 topics, and the chunk-size trade-off</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Pipeline map</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The 9 topics</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Chunk-size trade-off</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Extraction libraries</button>
+      </div>
+
+      <!-- PANE A: pipeline map — mirrors module.md's first Mermaid -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — RAG data-prep pipeline">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Data prep is everything left of the AI Search index. The dashed line is the reality — you iterate on chunking from retrieval metrics.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the 9 topics -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — Topic index">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a topic</div><h3>The 9 topics</h3><p>Click a topic to see what it covers and its Theory/Hands-on label. ★ marks a cornerstone with its own deep-dive page.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: chunk-size stepper + mirrored chunk-size Mermaid -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <div class="plate" data-fig="Fig. 02 — Chunk size is a continuum" style="margin-top:18px">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">Smaller = sharper but blinkered; larger = fuller but noisier. Start medium (150–300 tokens) and tune with 03.7 metrics.</div>
+        </div>
+      </div>
+
+      <!-- PANE D: extraction library reference table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Library / tool</th><th>Best used for</th></tr></thead><tbody id="rows"></tbody></table>
+      </div>
+    </section>
+
+    <section class="entry" id="prep">
+      <div class="entry-head"><span class="num">04 · From raw docs to clean chunks</span><h2>03.1–03.5 — ingest, extract, filter, chunk</h2></div>
+
+      <h3 class="tk">03.1 RAG pipeline overview <span class="tag-pill t">Theory</span></h3>
+      <p>A RAG system has distinct stages: ingestion → <strong>content preparation (clean + chunk)</strong> → embedding → vector retrieval → response generation. Chunking happens in content preparation, <em>before</em> embeddings, so it has a cascading effect on retrieval accuracy, latency, and answer quality.</p>
+
+      <h3 class="tk">03.2 ★ Chunking strategies <span class="tag-pill h">Theory + Hands-on</span> <span class="tag-pill star">Cornerstone</span></h3>
+      <p>Five strategies, trading simplicity against meaning. Full walkthrough in the <a href="chunking-strategies.html">Chunking strategies deep-dive</a>.</p>
+      <table>
+        <thead><tr><th>Strategy</th><th>Best for</th><th>Watch out</th></tr></thead>
+        <tbody>
+          <tr><td>Fixed-length</td><td>Logs, structured data</td><td>Breaks context mid-thought</td></tr>
+          <tr><td>Sentence-level</td><td>Articles, FAQs</td><td>Loses broader context</td></tr>
+          <tr><td>Paragraph-based</td><td>Reports, blogs</td><td>Sizes vary a lot</td></tr>
+          <tr><td>Sliding-window</td><td>QA, legal/technical</td><td>More chunks to store</td></tr>
+          <tr><td>Semantic</td><td>Books, transcripts</td><td>Complex; needs NLP</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="tk">03.3 Overlap and granularity <span class="tag-pill t">Theory</span></h3>
+      <ul>
+        <li><strong>Granularity</strong> (chunk size): too large → distracting noise; too small → missing context. Mind the model context window.</li>
+        <li><strong>Overlap</strong>: repeating a slice of one chunk in the next preserves meaning that spans a boundary. Fixed (repeat N tokens) or dynamic (content-aware / semantic).</li>
+        <li>Retrieval trade-off: smaller → higher precision, lower recall, more vectors; larger → more coverage, more noise. <strong>Medium is the common default.</strong></li>
+      </ul>
+
+      <h3 class="tk">03.4 Content extraction from PDFs and images <span class="tag-pill h">Hands-on</span></h3>
+      <p>Get clean text out first. The production pattern is <strong>layered</strong>: text-based parsing first, OCR fallback only when the text is empty.</p>
+      <pre><code>import pdfplumber, pytesseract
+from PIL import Image
+
+def extract_text_from_pdf(pdf_path):
+    text = ""
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            page_text = page.extract_text()
+            if page_text:                      # digital PDF: keep the clean text
+                text += page_text + "\n"
+        if not text.strip():                   # scanned PDF: no text -> OCR
+            text = "\n".join(
+                pytesseract.image_to_string(page.to_image().original)
+                for page in pdf.pages)
+    return text</code></pre>
+
+      <h3 class="tk">03.5 Content filtering — noise and redundancy <span class="tag-pill h">Theory + Hands-on</span></h3>
+      <p>Remove <strong>redundancy</strong> (boilerplate, repeated headers, disclaimers) and <strong>noise</strong> (page numbers, HTML tags, timestamps, nav menus). If every article carries the same nav menu, it appears in nearly every chunk and precision collapses.</p>
+      <pre><code>import re
+def clean_text(text):
+    text = re.sub(r'&lt;[^&gt;]+&gt;', '', text)               # strip HTML tags
+    text = re.sub(r'Page \d+ of \d+', '', text)                # page numbers
+    text = re.sub(r'Last updated: .*?\n', '', text)            # timestamps
+    return text</code></pre>
+    </section>
+
+    <section class="entry" id="native">
+      <div class="entry-head"><span class="num">05 · Store, evaluate, productionize</span><h2>03.6–03.9 — Delta, metrics, AI Functions, Lakeflow Declarative Pipelines</h2></div>
+
+      <h3 class="tk">03.6 Converting to Delta for querying <span class="tag-pill h">Hands-on</span></h3>
+      <p>Each chunk becomes a <strong>row</strong> with metadata (source doc, chunk index, timestamp). Delta gives query efficiency, incremental upserts, auditability/time-travel, and is the source AI Search syncs from.</p>
+      <pre><code>from pyspark.sql.functions import current_timestamp, lit
+
+df = (spark.createDataFrame([(i, c) for i, c in enumerate(chunks)],
+                            ["chunk_id", "content"])
+        .withColumn("source_doc", lit("unity_airways_policy.pdf"))
+        .withColumn("ingested_at", current_timestamp()))
+
+# Governed UC managed table, not a DBFS mount
+df.write.format("delta").mode("overwrite").saveAsTable(f"{CATALOG}.{SCHEMA}.ua_rag_chunks")</code></pre>
+
+      <h3 class="tk">03.7 Evaluating retrieval quality + corrective techniques <span class="tag-pill h">Theory + Hands-on</span></h3>
+      <p>Measure against a labeled validation set. Each metric points to a specific fix.</p>
+      <table>
+        <thead><tr><th>Metric low</th><th>Likely cause</th><th>Corrective action</th></tr></thead>
+        <tbody>
+          <tr><td>Precision</td><td>Noisy / too-broad chunks</td><td>Better filtering; reranking; tighter chunks</td></tr>
+          <tr><td>Recall</td><td>Chunks too small; coverage gaps</td><td>Adjust size; improve ingestion; align embeddings</td></tr>
+          <tr><td>MRR</td><td>Poor ranking of top results</td><td>Tune ranking; cross-encoder reranking (04.9)</td></tr>
+        </tbody>
+      </table>
+      <p>Corrective levers: revisit chunking (semantic/overlap), align/fine-tune embeddings, fix indexing so tables/figures aren't dropped, query expansion/rewriting, and <strong>hybrid search</strong> (BM25 + dense) as a safety net. Evaluate <em>offline</em> before deploying.</p>
+
+      <h3 class="tk">03.8 ★ Parsing with AI Functions <span class="tag-pill h">Theory + Hands-on</span> <span class="tag-pill star">Cornerstone</span></h3>
+      <p>Databricks adds a SQL-native path — no pip installs. Full walkthrough in the <a href="ai-parse-extract.html">AI Functions parsing deep-dive</a>.</p>
+      <pre><code>-- Parse Unity Airways policy PDFs straight from a UC Volume
+SELECT path, ai_parse_document(content) AS parsed
+FROM READ_FILES('/Volumes/unity_airways/rag/landing/policies/', format =&gt; 'binaryFile');</code></pre>
+      <ul>
+        <li><code>ai_parse_document</code> — layout-aware parse to VARIANT (<code>document.pages</code>, <code>document.elements</code>, <code>error_status</code>). <strong>GA.</strong></li>
+        <li><code>ai_extract</code> — pull named fields (booking_reference, refund_amount) with a schema. <strong>GA.</strong></li>
+        <li><code>ai_prep_search</code> — parsed output → search-ready chunks for AI Search. <strong>Beta.</strong></li>
+      </ul>
+
+      <h3 class="tk">03.9 RAG ingestion as a Lakeflow Declarative Pipeline <span class="tag-pill h">Hands-on</span></h3>
+      <p>Run the whole ingestion as a declarative, incremental medallion pipeline (Lakeflow Declarative Pipelines is the successor to DLT).</p>
+      <pre><code>CREATE OR REFRESH STREAMING TABLE ua_docs_bronze
+AS SELECT *, _metadata.file_path AS source_path, current_timestamp() AS ingested_at
+FROM STREAM READ_FILES('/Volumes/unity_airways/rag/landing/', format =&gt; 'binaryFile');
+
+CREATE OR REFRESH STREAMING TABLE ua_docs_parsed
+AS SELECT source_path, ai_parse_document(content) AS parsed, ingested_at
+FROM STREAM(ua_docs_bronze);</code></pre>
+    </section>
+
+    <section class="entry" id="worked">
+      <div class="entry-head"><span class="num">06 · Worked thread</span><h2>Unity Airways, end to end</h2></div>
+      <ol>
+        <li><strong>Ingest (03.1, 03.9):</strong> PDFs, scanned refund forms, FAQ export land in a UC Volume; a Lakeflow Declarative Pipelines bronze table streams them in with Auto Loader.</li>
+        <li><strong>Parse/extract (03.4, 03.8):</strong> typed PDFs parse cleanly; scanned forms need OCR — or one <code>ai_parse_document</code> call handles both.</li>
+        <li><strong>Filter (03.5):</strong> strip nav, "last updated" lines, page numbers so they don't pollute every chunk.</li>
+        <li><strong>Chunk (03.2, 03.3):</strong> FAQ → sentence/paragraph chunks; dense fare-rules → paragraph chunks with sliding-window overlap. Start ~200 tokens.</li>
+        <li><strong>Store (03.6):</strong> one row per chunk in <code>unity_airways.rag.ua_rag_chunks</code> with source + chunk_id + timestamp.</li>
+        <li><strong>Index + evaluate (03.7 → Module 04):</strong> AI Search Delta Sync index on the table; run a labeled set; low precision on "miss my connection → refund?" traces back to noisy/coarse chunks — tune and re-measure.</li>
+      </ol>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">07 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Retrieval can only return a chunk that exists. If a fact is split across two chunks or buried in a noisy one, no downstream embedding-model or LLM tuning fully recovers it. Fix the shape of the data first. For Lakeflow Declarative Pipelines use <code>CREATE OR REFRESH STREAMING TABLE</code> (not <code>CREATE OR REPLACE</code>) and <code>from pyspark import pipelines as dp</code> (not <code>import dlt</code>).</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Start chunks at <strong>150–300 tokens</strong> with small overlap, then tune with precision/recall/MRR. Always eyeball source docs before writing noise-removal rules, and include metadata columns (source doc, chunk number, URI) for debugging and metadata-filtered retrieval.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>The book writes chunks to a DBFS mount (<code>/mnt/delta/...</code>) and wires semantic chunking to OpenAI — on current Databricks, use a <strong>UC managed table</strong> + <strong>Volume</strong> and the in-platform <code>databricks-gte-large-en</code> embeddings. And the two live docs disagree on <code>ai_parse_document</code>'s minimum runtime (overview says DBR 18.2+/serverless v3; the function reference says DBR 17.3+) — verify for your workspace.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">08 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>In the RAG pipeline, at which stage does chunking happen, and why does getting it wrong cascade downstream?</li>
+          <li>Name the five chunking strategies and give the best-fit document type for each.</li>
+          <li>Explain the granularity trade-off: what happens to precision, recall, and latency as chunk size grows? Where does the common default sit?</li>
+          <li>You extract text from a mix of typed and scanned PDFs. Describe the layered extraction pattern and why text-first-then-OCR is preferred.</li>
+          <li>Retrieval shows 60% precision and 30% recall. What does each number suggest, and which corrective levers would you pull first?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">09 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📗 B2 — <em>Cert Study Guide</em>, Ch 3 "Preparing and Chunking Data for RAG": pipeline overview, chunking strategies (Table 3-1), overlap/granularity (Tables 3-2, 3-3), content filtering &amp; extraction (Example 3-6, Table 3-4), converting to Delta (Example 3-9), evaluating retrieval (Examples 3-11/3-12; Tables 3-5/3-6/3-7).</li>
+        <li>🌐 Databricks Docs — AI Functions overview: <code>docs.databricks.com/aws/en/large-language-models/ai-functions</code> (<code>ai_parse_document</code>, <code>ai_extract</code> GA; <code>ai_prep_search</code> Beta).</li>
+        <li>🌐 Databricks Docs — <code>ai_parse_document</code> reference: <code>docs.databricks.com/aws/en/sql/language-manual/functions/ai_parse_document</code> (VARIANT output schema, runtime).</li>
+        <li>🌐 Databricks Docs — Lakeflow Declarative Pipelines: <code>docs.databricks.com/aws/en/ldp/</code> (<code>CREATE OR REFRESH STREAMING TABLE</code>, <code>read_files()</code>). Databricks AI Search (formerly Vector Search): <code>docs.databricks.com/aws/en/vector-search/vector-search</code>.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 03</span>
+  <span>Grounded in 📗B2 Ch3 · AI Functions + Lakeflow + AI Search docs</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Content preparation (03.1-03.6)",spine:false,comps:[
+   ["03.1 RAG pipeline overview","Theory","Where chunking fits: content prep sits before embeddings and cascades into retrieval and answer quality.","module.md 03.1"],
+   ["03.2 Chunking strategies ★","Theory + Hands-on","Fixed, sentence, paragraph, sliding-window, semantic. Trade simplicity vs meaning.","chunking-strategies.html"],
+   ["03.3 Overlap and granularity","Theory","Chunk size + overlap. Smaller = precise but blinkered; larger = full but noisy. Medium is the default.","module.md 03.3"],
+   ["03.4 Extraction from PDFs/images","Hands-on","pdfplumber / PyPDF2 / pytesseract / Form Recognizer. Layered: text-first, OCR fallback.","module.md 03.4"],
+   ["03.5 Content filtering","Theory + Hands-on","Remove redundancy (boilerplate) and noise (page numbers, HTML, timestamps) before chunking.","module.md 03.5"],
+   ["03.6 Converting to Delta","Hands-on","One row per chunk + metadata. Query efficiency, upserts, time travel, AI Search source.","module.md 03.6"],
+ ]},
+ {name:"Native path and evaluation (03.7-03.9)",spine:true,comps:[
+   ["03.7 Evaluating retrieval","Theory + Hands-on","Precision, recall, MRR on a labeled set. Each metric maps to a corrective lever.","module.md 03.7"],
+   ["03.8 AI Functions parsing ★","Theory + Hands-on","ai_parse_document (GA), ai_extract (GA), ai_prep_search (Beta). SQL-native, no pip installs.","ai-parse-extract.html"],
+   ["03.9 RAG ingestion as Lakeflow Declarative Pipelines","Hands-on","Bronze/silver Lakeflow pipeline: Auto Loader read_files + ai_parse_document, incremental.","module.md 03.9"],
+ ]},
+];
+const STEPS=[
+  ["Small chunks (50-100 tokens)","High retrieval precision, but low context coverage/recall and more vectors to scan (higher latency). Good for short, distinct facts like FAQs."],
+  ["Medium chunks (150-300 tokens)","Balanced precision and recall with moderate latency. The common production default — start here."],
+  ["Large chunks (400+ tokens)","High context coverage but lower precision (more noise) and lower latency. Good for interlinked content like contracts/policies."],
+  ["How to choose","Match granularity to document structure and query specificity, then tune empirically with the 03.7 metrics (precision, recall, MRR)."],
+];
+const ROWS=[
+  ["pdfplumber","Digitally generated PDFs — preserves layout, tables, page structure"],
+  ["PyPDF2","Simple, fast text extraction — but loses layout"],
+  ["pytesseract (Tesseract OCR)","Scanned PDFs and images — sensitive to scan quality"],
+  ["Azure Form Recognizer","Forms, invoices, structured PDFs — tables + key-value pairs"],
+];
+const MERMAID_SRC=`flowchart LR
+  subgraph Ingest["Ingest - 03.1, 03.9"]
+    V["Unity Airways docs<br/>policy PDFs, FAQ files<br/>in a UC Volume"] --> L["Load with Auto Loader<br/>read_files() in a Lakeflow pipeline"]
+  end
+  subgraph Prep["Content preparation"]
+    L --> P["Parse and extract text<br/>03.4 libraries or 03.8 ai_parse_document"]
+    P --> F["Filter noise and redundancy<br/>03.5"]
+    F --> C["Chunk the text<br/>03.2 strategy plus 03.3 size and overlap"]
+  end
+  subgraph Store["Store and index"]
+    C --> D["Embed-ready Delta table<br/>chunk_id, content, metadata - 03.6"]
+    D --> I["Databricks AI Search index<br/>Module 04"]
+  end
+  I --> R["Evaluate retrieval and correct<br/>03.7 precision, recall, MRR"]
+  R -.->|tune chunking, embeddings, indexing| C`;
+const MERMAID_SRC2=`flowchart TD
+  small["Small chunks<br/>50-100 tokens"] --> sp["High precision"]
+  small --> sc["Low context coverage / recall"]
+  small --> sl["More vectors, higher latency"]
+  med["Medium chunks<br/>150-300 tokens"] --> mp["Balanced precision and recall"]
+  med --> ml["Common production default"]
+  large["Large chunks<br/>400+ tokens"] --> lp["Lower precision, more noise"]
+  large --> lc["High context coverage"]`;
+
+/* ---------- light tutor front ---------- */
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td>${r[0]}</td><td><b>${r[1]}</b></td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline) ---------- */
+function drawMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

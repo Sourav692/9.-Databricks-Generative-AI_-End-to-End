@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Topic 05.3 (cornerstone): From an LLM-only app to a full RAG chain.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RAG Chain · Databricks GenAI Tutor 05.3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbox pre{margin:8px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI</a>
+    <span class="loc">Module 05 · Topic 05.3 ★</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_05.3 · Cornerstone · v1.0</span><span>Verified against books + docs</span></div>
+    <div class="filed">Module 05 — Building and versioning a RAG chain · Topic 05.3 · Hands-on ★</div>
+    <h1>RAG Chain</h1>
+    <p class="dek">Start from a one-line LLM app that confidently invents policy. Add a retrieval step, a prompt, and a parser with LCEL, and the same model answers from Unity Airways' real documents. The <code>chain</code> object you build here is what Module 05.5/05.6 will log and register.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>Same model, but now it reads your documents</h2></div>
+      <p class="lead">Ask a raw foundation model "Can I get a refund if I miss my connection?" and it answers in fluent, official-sounding language — describing a generic airline policy it never learned from Unity Airways. A RAG chain puts a retrieval step in front of the model: fetch the chunks that actually answer the question, paste them into the prompt as context, and tell the model to answer only from that.</p>
+      <ul>
+        <li>An <strong>LLM-only app</strong> is one line: <code>llm.invoke("...")</code>. It answers from training memory, so it can hallucinate a plausible-but-wrong Unity Airways rule.</li>
+        <li>A <strong>RAG chain</strong> = retriever + prompt + model + parser, wired with <strong>LCEL</strong> (the <code>|</code> pipe). The retriever from Module 04 becomes the "R"; <code>ChatDatabricks</code> is the "G".</li>
+        <li>The whole chain is one expression: <code>{"context": retriever | format_docs, "question": RunnablePassthrough()} | prompt | llm | StrOutputParser()</code>.</li>
+        <li>Turn on <code>mlflow.langchain.autolog()</code> once and every <code>chain.invoke(...)</code> becomes a trace — you can see the exact chunks retrieved and why the model said what it said.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>The pipe, its parts, and the build</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Pipeline</button>
+        <button role="tab" aria-selected="false" aria-controls="p-parts" id="t-parts" onclick="tab(this,'p-parts')">LCEL parts</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Walkthrough</button>
+        <button role="tab" aria-selected="false" aria-controls="p-compare" id="t-compare" onclick="tab(this,'p-compare')">Baseline vs RAG</button>
+      </div>
+
+      <!-- PANE A: LCEL flow mermaid — mirrors rag-chain.md diagram 1 -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — The LCEL RAG chain">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Read the pipe left to right. The one trick: a parallel dict sends the question down two branches, then hands both to the prompt.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the chain's runnables -->
+      <div id="p-parts" class="pane" role="tabpanel" aria-labelledby="t-parts" hidden>
+        <div class="plate" data-fig="Plate I — Every piece of the pipe">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a piece</div><h3>What each runnable does</h3><p>Click a part of the chain to see its input, its job, and what it hands to the next step.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: stepper walkthrough of the build -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE D: baseline vs RAG compare -->
+      <div id="p-compare" class="pane" role="tabpanel" aria-labelledby="t-compare" hidden>
+        <table>
+          <thead><tr><th>Aspect</th><th>LLM-only app</th><th>RAG chain</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Code</td><td>llm.invoke("...")</td><td>{"context": retriever | format_docs, "question": RunnablePassthrough()} | prompt | llm | StrOutputParser()</td></tr>
+            <tr><td class="k">Knows UA policy?</td><td>No — answers from training memory</td><td>Yes — reads retrieved UA chunks</td></tr>
+            <tr><td class="k">Failure mode</td><td>Confident hallucination</td><td>"I don't know" if retrieval misses</td></tr>
+            <tr><td class="k">Citable?</td><td>No source</td><td>Yes — cites source_doc</td></tr>
+            <tr><td class="k">Fix a wrong answer by</td><td>Prompting / bigger model</td><td>Fixing retrieval (chunking, k, columns)</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Same model in both rows. RAG doesn't make the model smarter — it changes what the model sees.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="how">
+      <div class="entry-head"><span class="num">03 · How it works</span><h2>What retrieval actually changes</h2></div>
+      <p>The baseline and the RAG chain use the <strong>same</strong> <code>ChatDatabricks</code> model and the same question. The only difference is the retrieval step that injects real Unity Airways text before the model answers.</p>
+      <div class="plate" data-fig="Fig. 02 — LLM-only baseline vs RAG chain">
+        <div class="mermaid" id="mermaidGraph2"></div>
+        <div class="plate-cap">Prove the gap with the baseline first, then wire retrieval in and re-ask the same question.</div>
+      </div>
+      <ul>
+        <li><strong>The retriever is the "R" — reused, not rebuilt.</strong> You wrap the Module 04 index with <code>DatabricksVectorSearch(...).as_retriever(search_kwargs={"k":5})</code>. <code>k</code> is a real dial: too small misses the answer chunk, too large pads the prompt with noise.</li>
+        <li><strong>format_docs bridges Documents → string.</strong> The retriever returns a list of <code>Document</code>s; the prompt slot needs one string, so join each <code>.page_content</code>.</li>
+        <li><strong>The prompt enforces grounding.</strong> The system message — "answer only from the context, say you don't know otherwise, cite the source" — is what keeps the model on your documents.</li>
+        <li><strong>The parallel dict feeds two slots.</strong> LCEL runs both dict values on the same question: one branch builds <code>{context}</code>, the other passes the raw question to <code>{question}</code>.</li>
+        <li><strong>Tracing makes it observable.</strong> <code>mlflow.langchain.autolog()</code> records each invoke as a trace with retriever, prompt, and model spans — open the retriever span to see exactly which chunks answered.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="dothis">
+      <div class="entry-head"><span class="num">04 · Run this</span><h2>Baseline, retriever, chain, trace</h2></div>
+      <p><strong>Prereqs:</strong> serverless or DBR ML runtime, MLflow ≥ 3.1; the Module 04 index <code>unity_airways.rag.ua_rag_chunks_index</code> online on endpoint <code>unity-airways-vs</code>; access to a chat serving endpoint.</p>
+      <pre><code>%pip install -U databricks-langchain databricks-vectorsearch mlflow
+dbutils.library.restartPython()</code></pre>
+      <pre><code>CATALOG       = "unity_airways"; SCHEMA = "rag"
+VS_ENDPOINT   = "unity-airways-vs"
+INDEX_NAME    = f"{CATALOG}.{SCHEMA}.ua_rag_chunks_index"
+CHAT_ENDPOINT = "databricks-claude-sonnet-4-5"   # confirm on the supported-models page</code></pre>
+      <p><strong>Trace first</strong> so even the baseline call is captured:</p>
+      <pre><code>import mlflow
+mlflow.langchain.autolog()   # every LangChain .invoke() now emits an MLflow trace</code></pre>
+      <p><strong>The LLM-only baseline</strong> — watch it answer without your documents:</p>
+      <pre><code>from databricks_langchain import ChatDatabricks
+
+llm = ChatDatabricks(endpoint=CHAT_ENDPOINT, temperature=0)   # deterministic while developing
+print(llm.invoke("Can I get a refund if I miss my connection?").content)
+# Fluent and official-sounding — but a GENERIC airline policy, not Unity Airways'.</code></pre>
+      <p><strong>Build the retriever</strong> (wrap the Module 04 index):</p>
+      <pre><code>from databricks_langchain import DatabricksVectorSearch
+
+vector_store = DatabricksVectorSearch(
+    endpoint=VS_ENDPOINT,
+    index_name=INDEX_NAME,
+    columns=["chunk_id", "content", "source_doc"],   # source_doc so answers are citable
+)
+retriever = vector_store.as_retriever(search_kwargs={"k": 5})</code></pre>
+      <p><strong>format_docs + the prompt</strong> (the prompt is where grounding is enforced):</p>
+      <pre><code>from langchain_core.prompts import ChatPromptTemplate
+
+def format_docs(docs):
+    return "\n\n".join(d.page_content for d in docs)   # Documents -> one string
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system",
+     "You are the Unity Airways policy assistant. Answer using ONLY the context below. "
+     "If the context does not contain the answer, say you don't know. Cite the source_doc.\n\n"
+     "Context:\n{context}"),
+    ("human", "{question}"),
+])</code></pre>
+      <p><strong>Assemble the RAG chain with LCEL</strong>, then invoke with a bare string:</p>
+      <pre><code>from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+
+chain = (
+    {"context": retriever | format_docs, "question": RunnablePassthrough()}
+    | prompt
+    | llm
+    | StrOutputParser()
+)
+
+answer = chain.invoke("Can I get a refund if I miss my connection?")
+print(answer)   # grounded in the Conditions of Carriage, names the source_doc</code></pre>
+      <p><strong>How to verify it worked:</strong> the answer now uses Unity Airways' actual language and cites a <code>source_doc</code>. Open the trace (<strong>Experiments → Traces</strong>): the retriever span should show the refund/connection chunks. Still generic? Read that span — the fix is upstream in retrieval, not the model. This <code>chain</code> object is exactly what Module 05.5 logs and 05.6 registers as "Model as Code."</p>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>The baseline and the RAG chain use the <strong>same model</strong>. RAG doesn't make the model smarter — it changes <em>what the model sees</em>. All the quality comes from putting the right chunks in the prompt, so when a RAG answer is wrong, suspect retrieval (chunking, <code>k</code>, index columns) before you touch the prompt or swap the model.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Build the chain incrementally and test each link with <code>.invoke()</code> before piping: <code>retriever.invoke(q)</code>, then <code>(retriever | format_docs).invoke(q)</code>, then <code>prompt.invoke({"context":..., "question":q})</code>, then the whole chain. When something breaks you already know which link failed. Keep <code>temperature=0</code> so runs are reproducible.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Book 1 (Ch 4) builds the same chain in a <strong>production-shaped</strong> variant: the input is an OpenAI-style <code>{"messages":[...]}</code> object and each branch starts with <code>itemgetter("messages") | RunnableLambda(extract_user_query_string)</code>, using <code>PromptTemplate</code> and <code>RunnableLambda(format_docs)</code>. That is what a deployed chat endpoint receives in production. This lesson — and the 05.6 packaging deep-dive — use the simpler <strong>string-in</strong> form (<code>RunnablePassthrough()</code> + <code>ChatPromptTemplate</code>) so the wiring is clear — same chain, simpler input. The book also pins <code>databricks-claude-3-7-sonnet</code>; the catalog moves fast, so confirm <code>databricks-claude-sonnet-4-5</code> on the supported-models page.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>In <code>{"context": retriever | format_docs, "question": RunnablePassthrough()}</code>, what input does each branch receive, and what does <code>RunnablePassthrough()</code> do?</li>
+          <li>Why must the chain end with <code>StrOutputParser()</code>, and what does <code>chain.invoke(...)</code> return without it?</li>
+          <li>You get a fluent but wrong answer. What do you inspect first, and where in the MLflow trace do you look?</li>
+          <li>What is the job of <code>format_docs</code>, and what breaks if it returns the raw <code>Document</code> list?</li>
+          <li>Why invoke this chain with a bare string rather than a dict, and what changes if the input is <code>{"messages":[...]}</code>?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📘 B1 — <em>Practical MLflow for Generative AI on Databricks</em>, Ch 4 ("LangChain and Databricks Integration" → "LLM-only Application" → "Full RAG Chain Application"): <code>ChatDatabricks(endpoint=..., temperature=, max_tokens=)</code> + <code>.invoke(...).content</code>; <code>DatabricksVectorSearch(...).as_retriever(search_kwargs=...)</code>; the LCEL chain <code>{"context": ... | format_docs, "question": ...} | prompt | model | StrOutputParser()</code>; <code>mlflow.langchain.autolog()</code> for tracing. O'Reilly Early Release (RAW &amp; UNEDITED) — book uses the <code>{"messages":[...]}</code> input shape and <code>databricks-claude-3-7-sonnet</code>.</li>
+        <li>🌐 LangChain — LCEL core primitives: <code>ChatPromptTemplate</code> in <code>langchain_core.prompts</code>, <code>StrOutputParser</code> in <code>langchain_core.output_parsers</code>, <code>RunnablePassthrough</code> in <code>langchain_core.runnables</code> (<code>python.langchain.com/api_reference/core/</code>). Live re-check pending — verified against Book 1 Ch4 code, which imports the same <code>langchain_core</code> submodules.</li>
+        <li>🌐 Databricks — <code>databricks-langchain</code>: <code>ChatDatabricks</code> (wrapper over a Model Serving endpoint) and <code>DatabricksVectorSearch</code> (wrapper over an AI Search index). Import is <code>from databricks_langchain import …</code> — not <code>langchain-databricks</code> / <code>langchain_community</code>.</li>
+        <li>🌐 MLflow — LangChain autologging / tracing: <code>mlflow.langchain.autolog()</code> records each <code>invoke</code> as a trace with retriever/prompt/model spans (<code>mlflow.org/docs/latest/genai/tracing/</code>).</li>
+        <li>🧭 Naming cross-check: <code>references/naming-conventions.md</code> §2 (LangChain import is <code>databricks-langchain</code>), §3 (AI Search; SDK still <code>databricks-vectorsearch</code>), §4 (served-model names churn — confirm <code>databricks-claude-sonnet-4-5</code>).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Topic 05.3 ★</span>
+  <span>Grounded in 📘B1 Ch4 · databricks-langchain + MLflow</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"The parallel dict (one step, two branches)",spine:false,comps:[
+   ["retriever | format_docs","context branch","The question flows into DatabricksVectorSearch, which returns the top-k Document objects; format_docs joins their page_content into one string that fills the prompt's {context} slot.","Best: grounding — this is where Unity Airways' real text enters the prompt"],
+   ["RunnablePassthrough()","question branch","Returns its input unchanged, forwarding the raw question string straight into the {question} slot. That's why you invoke the chain with a bare string.","Best: pass the user's exact words to the prompt"],
+ ]},
+ {name:"The pipe tail (prompt → model → text)",spine:true,comps:[
+   ["ChatPromptTemplate","fills the slots","from_messages([...system..., ...human...]). The system message says 'answer only from context, cite the source'; {context} and {question} are filled from the dict above, producing the messages the model receives.","Best: this instruction is what enforces grounding"],
+   ["ChatDatabricks","generates","Wrapper over a Databricks Model Serving endpoint (databricks-claude-sonnet-4-5). Same object as the LLM-only baseline; only the input differs.","Best: the 'G' in RAG"],
+   ["StrOutputParser()","extracts text","The model returns a message object with .content plus metadata. This parser pulls out just the answer string, so chain.invoke returns clean text.","Best: a clean string out of the chain"],
+ ]},
+];
+const STEPS=[
+  ["Trace first","mlflow.langchain.autolog() — one call, early. Every LangChain .invoke() now emits an MLflow trace, so even the baseline call is captured."],
+  ["LLM-only baseline","from databricks_langchain import ChatDatabricks; llm = ChatDatabricks(endpoint='databricks-claude-sonnet-4-5', temperature=0). llm.invoke('Can I get a refund if I miss my connection?').content answers fluently but invents a generic policy — the gap RAG closes."],
+  ["Build the retriever","DatabricksVectorSearch(endpoint='unity-airways-vs', index_name='unity_airways.rag.ua_rag_chunks_index', columns=['chunk_id','content','source_doc']).as_retriever(search_kwargs={'k':5}). Reused from Module 04, not rebuilt."],
+  ["format_docs + prompt","def format_docs(docs): join d.page_content. ChatPromptTemplate.from_messages([('system', 'answer only from {context}, cite source'), ('human', '{question}')])."],
+  ["Assemble with LCEL","chain = {'context': retriever | format_docs, 'question': RunnablePassthrough()} | prompt | llm | StrOutputParser(). The parallel dict sends the question to both branches at once."],
+  ["Invoke with a bare string","chain.invoke('Can I get a refund if I miss my connection?') — a string, not a dict, because RunnablePassthrough() forwards the input. The answer is grounded and cites source_doc."],
+  ["Read the trace, hand off","Open the trace: retriever span shows the chunks, model span shows the answer. This chain object goes to Module 05.5 (log with signature + resources) and 05.6 (register as Model as Code)."],
+];
+const MERMAID_SRC=`flowchart LR
+  q["Question (str)<br/>Can I get a refund<br/>if I miss my connection?"] --> fan{"Parallel dict<br/>same input to both"}
+  fan -->|"context"| r["retriever<br/>DatabricksVectorSearch<br/>k=5"]
+  r --> fd["format_docs<br/>join page_content"]
+  fan -->|"question"| pass["RunnablePassthrough()<br/>raw question"]
+  fd --> prompt["ChatPromptTemplate<br/>system + context + question"]
+  pass --> prompt
+  prompt --> llm["ChatDatabricks<br/>databricks-claude-sonnet-4-5"]
+  llm --> parser["StrOutputParser()"]
+  parser --> ans["Grounded answer<br/>cites source_doc"]`;
+const MERMAID_SRC2=`flowchart TD
+  subgraph A["LLM-only app (baseline)"]
+    q1["Question"] --> m1["ChatDatabricks"]
+    m1 --> a1["Answer from training memory<br/>may invent UA policy"]
+  end
+  subgraph B["RAG chain (this lesson)"]
+    q2["Question"] --> ret["Retriever pulls top-k<br/>Unity Airways chunks"]
+    ret --> m2["ChatDatabricks<br/>question + context"]
+    m2 --> a2["Grounded answer<br/>cites source_doc"]
+  end`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

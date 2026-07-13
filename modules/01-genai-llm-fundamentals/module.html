@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 01 overview (mirrors module.md).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GenAI and LLM Fundamentals · Databricks GenAI Tutor 01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  /* ============ DESIGN SYSTEM — tokens (do not rename) ============ */
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line);
+    --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  .tag-label{font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:2px 7px;margin-left:8px;vertical-align:middle}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.5rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px;min-height:40px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:12px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.md">Databricks GenAI</a>
+    <span class="loc">Module 01 · GenAI and LLM fundamentals</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_01 · GenAI lesson · v1.0</span><span>Verified against books + docs</span></div>
+    <div class="filed">Module 01 — GenAI and LLM fundamentals · Topics 01.1–01.6 · Theory + Hands-on</div>
+    <h1>GenAI and LLM Fundamentals</h1>
+    <p class="dek">The concept foundation for everything that follows: what an LLM does, how it differs from the ML you know, and how you reach a model on Databricks. <em>One numbered entry per topic.</em></p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01</span><h2>The big idea</h2></div>
+      <p class="lead">Before you build RAG, evaluate an agent, or ship a Genie space, you need a working model of tokens, context windows, embeddings, the cost/latency/quality trade-off, and how a prompt reaches a model here.</p>
+      <ul>
+        <li><strong>Generative AI</strong> produces new content from a prompt; <strong>traditional ML</strong> mostly predicts a label or number.</li>
+        <li>An <strong>LLM</strong> reads <strong>tokens</strong> up to a <strong>context window</strong> and predicts the next token; <strong>temperature</strong> and <strong>sampling</strong> control randomness.</li>
+        <li><strong>Embeddings</strong> turn text into vectors so meaning becomes distance — the engine of semantic search and RAG.</li>
+        <li>Model choice is a three-way trade-off: <strong>cost, latency, quality</strong>. Read the <strong>model card</strong> for risk and bias first.</li>
+        <li>You reach models through <strong>Model Serving</strong>: <strong>Foundation Model APIs</strong> (pay-per-token / provisioned throughput) and <strong>External Models</strong>.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02</span><h2>Explore the topic map</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">Topic map</button>
+        <button role="tab" aria-selected="false" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Prompt to answer</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Task types</button>
+      </div>
+
+      <div id="p-explore" class="pane active" role="tabpanel" aria-labelledby="t-explore">
+        <div class="plate" data-fig="Plate I — the six topics">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a topic</div><h3>Six fundamentals</h3><p>Click a chip to see what each topic covers and why a Field Engineer needs it.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="p-flow" class="pane" role="tabpanel" aria-labelledby="t-flow" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <div class="plate" data-fig="Fig. 01 — how a prompt becomes an answer" style="margin-top:18px">
+          <div class="mermaid" id="m-flow"></div>
+          <div class="plate-cap">Every Module 01 topic sits on this path. Source: module.md · 📗 B2 Ch2.</div>
+        </div>
+      </div>
+
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <p>Name the <strong>task type</strong> before you pick a model — it drives the prompt, the output shape, and the eval (📗 B2 Ch2, Table 2-2/2-3).</p>
+        <table><thead><tr><th>Task type</th><th>Output</th><th>Use it when</th></tr></thead><tbody id="rows"></tbody></table>
+      </div>
+    </section>
+
+    <section class="entry" id="t1">
+      <div class="entry-head"><span class="num">03</span><h2>Generative AI vs traditional ML <span class="tag-label">01.1 · Theory</span></h2></div>
+      <p>Traditional (predictive) ML answers a fixed question about a row and outputs a <strong>label or number</strong>. Generative AI learns the shape of language so well it can <strong>produce new content</strong> one token at a time. A <strong>foundation model</strong> is pre-trained broadly and adapted with prompts instead of retraining.</p>
+      <table><thead><tr><th></th><th>Traditional ML</th><th>Generative AI</th></tr></thead>
+      <tbody>
+        <tr><td><b>Output</b></td><td>Label or number</td><td>New content (text, code, embeddings)</td></tr>
+        <tr><td><b>Built by</b></td><td>Training a model per task</td><td>Prompting one foundation model</td></tr>
+        <tr><td><b>Databricks tool</b></td><td>MLflow + classic ML</td><td>Model Serving + Foundation Model APIs</td></tr>
+      </tbody></table>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>They are not rivals: a small classifier can <em>route</em> a request and an LLM can <em>respond</em> — the "classify → route → process" pattern.</div>
+    </section>
+
+    <section class="entry" id="t2">
+      <div class="entry-head"><span class="num">04</span><h2>Tokens, context windows, temperature and sampling <span class="tag-label">01.2 · Theory</span></h2></div>
+      <ul>
+        <li><strong>Token</strong> — the unit an LLM reads and generates (~¾ of an English word). You pay per token, input + output.</li>
+        <li><strong>Context window</strong> — the max tokens the model reads in one call (prompt + system + retrieved context + answer). Small (512) is fast/cheap but truncates; large (8k–32k+) reasons more but costs more.</li>
+        <li><strong>Temperature</strong> — randomness of the next-token pick. <strong>0</strong> is near-deterministic (extraction, JSON, SQL); higher adds variety.</li>
+        <li><strong>Sampling</strong> — <strong>top-p</strong> (nucleus) and <strong>top-k</strong> trim the candidate set; <code>max_tokens</code> caps length.</li>
+      </ul>
+      <div class="plate" data-fig="Fig. 02 — the next-token loop" style="margin-top:8px">
+        <div class="mermaid" id="m-sampling"></div>
+        <div class="plate-cap">Predict → trim → sample → append → repeat. Source: module.md · 📗 B2 Ch2.</div>
+      </div>
+      <div class="note imp"><span class="tag">📌 Important</span>For anything a system will parse (JSON, SQL, labels), set <strong>temperature = 0</strong>. The book's structured-output and agent examples use <code>temperature=0</code>.</div>
+    </section>
+
+    <section class="entry" id="t3">
+      <div class="entry-head"><span class="num">05</span><h2>Embeddings — meaning as distance <span class="tag-label">01.3 · Theory</span></h2></div>
+      <p>An <strong>embedding</strong> turns text into a vector (often 384–1,536+ dimensions) placed so <strong>similar meaning sits close together</strong>. Keyword search matches letters; embeddings match meaning — the engine behind semantic search and RAG. Closeness is scored with <strong>cosine similarity</strong> or dot product.</p>
+      <ul>
+        <li>An embedding model <em>encodes</em>; an LLM <em>generates</em>. RAG uses both.</li>
+        <li>On Databricks the safe default is <code>databricks-gte-large-en</code> (also <code>databricks-bge-large-en</code>).</li>
+      </ul>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Query and document embeddings must come from the <strong>same</strong> model, or identical meaning lands in different spaces and retrieval quietly fails (📗 B2 Ch3, "Embedding mismatch").</div>
+    </section>
+
+    <section class="entry" id="t4">
+      <div class="entry-head"><span class="num">06</span><h2>Model tasks and reading model cards <span class="tag-label">01.4 · Theory</span></h2></div>
+      <p>Pick the <strong>task type</strong> (see the Task types tab above), then read the <strong>model card</strong> before you deploy. A model card documents how a model was built and where it fails.</p>
+      <ul>
+        <li><strong>Training data sources</strong> — bias and domain fit.</li>
+        <li><strong>Intended use cases</strong> — using a model off-label is risky.</li>
+        <li><strong>Known limitations / biases</strong> — weak non-English, hallucination tendencies.</li>
+        <li><strong>Evaluation by language / domain</strong> — does it generalize to your users?</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Important</span>Justify model choice with <strong>documented metadata and model-card limitations</strong>, not "it looked good in testing." Never deploy in health/finance/legal without reading the card (📗 B2 Ch2, Table 2-7).</div>
+    </section>
+
+    <section class="entry" id="t5">
+      <div class="entry-head"><span class="num">07</span><h2>Balancing cost, latency, and quality <span class="tag-label">01.5 · Theory</span></h2></div>
+      <p>Model selection is a three-way optimization, not a hunt for the single "best" model. <strong>Cost</strong> (per token or per compute), <strong>latency</strong> (time to respond), and <strong>quality</strong> (accuracy, low hallucination) trade off — and model size is the lever (small ~3B cheap/fast; large 13B+ best but slow/pricey).</p>
+      <div class="plate" data-fig="Fig. 03 — choosing a model tier" style="margin-top:8px">
+        <div class="mermaid" id="m-cost"></div>
+        <div class="plate-cap">High-volume + low-risk → small/fast. Customer-facing/regulated → higher quality + fallback. Source: 📗 B2 Ch2.</div>
+      </div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Use <strong>caching and batching</strong> to cut cost, <strong>fallback logic</strong> for customer-facing quality, and <strong>dynamic routing</strong> — a cheap model for easy queries, a strong one for hard ones.</div>
+    </section>
+
+    <section class="entry" id="t6">
+      <div class="entry-head"><span class="num">08</span><h2>Foundation Model APIs and external models <span class="tag-label">01.6 · ★ Cornerstone · T + H</span></h2></div>
+      <p>This is how you actually reach a model. Everything runs through <strong>Mosaic AI Model Serving</strong>, with three endpoint families. The <strong>Foundation Model APIs</strong> come in two modes — <strong>pay-per-token</strong> (start here) and <strong>provisioned throughput</strong> (production). <strong>External Models</strong> proxy OpenAI / Anthropic / Google under one governance layer.</p>
+      <div class="plate" data-fig="Fig. 04 — where the model lives" style="margin-top:8px">
+        <div class="mermaid" id="m-families"></div>
+        <div class="plate-cap">One endpoint surface, three families. Source: foundation-model-apis.md · 🌐 Model Serving docs.</div>
+      </div>
+      <p>Full deep-dive with the hands-on lab: <a href="foundation-model-apis.html">foundation-model-apis.html</a> · notebook <a href="../../notebooks/01-genai-llm-fundamentals/01-module-lab.py">01-module-lab.py</a>.</p>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>The LangChain package is <code>databricks-langchain</code> (<code>from databricks_langchain import ChatDatabricks</code>) — NOT <code>langchain-databricks</code>. And <code>databricks-dbrx-instruct</code> is no longer a listed pay-per-token model; treat any endpoint name as a dated snapshot and verify.</div>
+    </section>
+
+    <section class="entry" id="worked">
+      <div class="entry-head"><span class="num">09</span><h2>Worked example — Unity Airways</h2></div>
+      <p>The book's running use case is an airline support assistant. Here is how Module 01's concepts show up before a single line of RAG is written:</p>
+      <table><thead><tr><th>Decision</th><th>Concept</th><th>Choice for Unity Airways</th></tr></thead>
+      <tbody>
+        <tr><td>What is the "brain"?</td><td>01.6 FM APIs</td><td>Databricks-hosted chat model, pay-per-token to prototype</td></tr>
+        <tr><td>Answer over policy PDFs later</td><td>01.3 Embeddings</td><td><code>databricks-gte-large-en</code> to embed policy chunks</td></tr>
+        <tr><td>"Cancel booking" vs "Where's my gate?"</td><td>01.4 Task types</td><td>Classification to route intent, generation to reply</td></tr>
+        <tr><td>Keep JSON stable for the booking API</td><td>01.2 Temperature</td><td><code>temperature = 0</code> for the extraction step</td></tr>
+        <tr><td>Real-time chat on a budget</td><td>01.5 Cost/latency/quality</td><td>Start mid-size pay-per-token; add fallback + caching</td></tr>
+        <tr><td>Safe for a regulated airline?</td><td>01.4 Model card</td><td>Review training data, limitations, licensing before deploy</td></tr>
+      </tbody></table>
+      <div class="plate" data-fig="Fig. 05 — Unity Airways: a question's path" style="margin-top:8px">
+        <div class="mermaid" id="m-airways"></div>
+        <div class="plate-cap">Classify → generate, grounded by retrieval, governed by the platform. Source: module.md.</div>
+      </div>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">10</span><h2>Field notes</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Design your app against "a serving endpoint" and keep the endpoint <strong>name in config</strong> — then you can move pay-per-token → provisioned throughput → custom weights without a rewrite.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Foundation Model APIs speak the <strong>OpenAI schema</strong>, so existing OpenAI-client and many LangChain integrations work by changing only <code>base_url</code> and the model name.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Sending text longer than the context window causes <strong>silent truncation</strong> and wrong answers. Check the model's max context; chunk and retrieve instead.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">11</span><h2>Notes &amp; self-check</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>How do generative AI and traditional ML differ in what they output and how they are built?</li>
+          <li>Your prompt + retrieved docs total 10,000 tokens but the window is 8,000. What happens, and what does it do to quality?</li>
+          <li>You extract <code>invoice_total</code> as JSON for a downstream system. What temperature, and why?</li>
+          <li>Why must the document and query embeddings come from the <em>same</em> model?</li>
+          <li>Name the three Model Serving families and the two Foundation Model API modes. When choose provisioned throughput over pay-per-token?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">12</span><h2>Sources</h2></div>
+      <ul>
+        <li>📗 B2 — <em>GenAI Engineer Associate Study Guide</em>, Ch2 (task types, model selection, model cards, cost/latency/quality), Ch3 (embeddings, cosine, chunking), Ch9 (Mosaic AI scaling).</li>
+        <li>🌐 Foundation Model APIs — <code>/machine-learning/foundation-model-apis/</code> (pay-per-token vs provisioned throughput) and <code>/supported-models</code> (endpoint snapshot; verify live).</li>
+        <li>🌐 External models — <code>/generative-ai/external-models/</code>; LangChain — <code>/large-language-models/langchain</code> (<code>databricks-langchain</code>, <code>ChatDatabricks</code>).</li>
+        <li>📎 <code>references/naming-conventions.md</code> — current naming (verified July 2026; re-verify live).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 01</span>
+  <span>Grounded in books + current docs · endpoint names are a snapshot</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Concepts",spine:false,comps:[
+   ["01.1 GenAI vs ML","Theory","Generative produces content; predictive ML outputs a label/number. Foundation models are prompted, not retrained.","entry 03"],
+   ["01.2 Tokens + context","Theory","Tokens are the unit; the context window caps how much the model reads; temperature and sampling control randomness.","entry 04"],
+   ["01.3 Embeddings","Theory","Text becomes a vector so meaning is distance. Same model for query and docs. Default: databricks-gte-large-en.","entry 05"],
+ ]},
+ {name:"Decisions",spine:false,comps:[
+   ["01.4 Tasks + model cards","Theory","Name the task type (generate/classify/extract/transform). Read the model card for risk, bias, licensing.","entry 06"],
+   ["01.5 Cost/latency/quality","Theory","A three-way trade-off; model size is the lever. Add caching, fallback, and dynamic routing.","entry 07"],
+ ]},
+ {name:"On Databricks",spine:true,comps:[
+   ["01.6 Foundation Model APIs","T + H · ★","Model Serving: hosted Foundation Models (pay-per-token / provisioned throughput), External Models, Custom Models.","foundation-model-apis.html"],
+ ]},
+];
+const STEPS=[
+ ["Tokenize","Your text is split into tokens — words and word-pieces the model actually reads."],
+ ["Fit the window","Prompt + system + retrieved context must fit the context window, or it truncates."],
+ ["Predict","The LLM (on Model Serving) scores a probability for every possible next token."],
+ ["Sample","top-p / top-k trim the candidates; temperature decides how random the pick is."],
+ ["Emit + repeat","One token is emitted, appended, and the loop runs again until the answer is done."],
+];
+const ROWS=[
+ ["Text generation","New free-form text","Summaries, emails, drafts — content the input lacks"],
+ ["Classification","One label from a set","Route / tag / triage: intent, sentiment, topic"],
+ ["Extraction","Structured fields (JSON)","Pull claim_type, codes, amounts from messy text"],
+ ["Transformation","Same meaning, new format","English → SQL, bullets → email, translation"],
+];
+const MERMAIDS={
+ "m-flow":`flowchart LR
+  U(["User text"]) --> TOK["Tokenizer"]
+  TOK --> CTX["Context window"]
+  CTX --> LLM["LLM on Model Serving"]
+  SAMP["Temperature + sampling"] -.controls.-> LLM
+  LLM --> OUT(["Answer"])
+  EMB["Embedding model"] -.enables retrieval.-> CTX`,
+ "m-sampling":`flowchart LR
+  P(["Prompt tokens"]) --> M["Score every next token"]
+  M --> F["top-p / top-k trim"]
+  F --> T["Temperature pick"]
+  T --> N(["Next token"])
+  N -->|append and repeat| M`,
+ "m-cost":`flowchart TB
+  START(["Pick a model"]) --> Q1{"High-volume, low-risk?"}
+  Q1 -->|Yes| SMALL["Small/fast model"]
+  Q1 -->|No| Q2{"Customer-facing or regulated?"}
+  Q2 -->|Yes| BIG["Higher-quality + fallback"]
+  Q2 -->|No| MID["Mid-size, balance budget"]`,
+ "m-families":`flowchart TB
+  APP["App / notebook / SQL"] --> SERVE["Mosaic AI Model Serving"]
+  SERVE --> FM["Foundation Models<br/>pay-per-token or provisioned throughput"]
+  SERVE --> EXT["External Models<br/>OpenAI / Anthropic / Google"]
+  SERVE --> CUST["Custom Models"]
+  GW["AI Gateway"] -.fronts.-> SERVE
+  UC["Unity Catalog"] -.governs.-> SERVE`,
+ "m-airways":`flowchart LR
+  PAX(["Passenger question"]) --> ROUTE["Classifier<br/>route intent (01.4)"]
+  ROUTE --> GEN["Chat model on FM API<br/>generate answer (01.6)"]
+  EMB["Policy chunks embedded<br/>databricks-gte-large-en (01.3)"] -.retrieved context.-> GEN
+  GEN --> ANS(["Answer to passenger"])
+  GEN -.governed by.-> GW["AI Gateway + Unity Catalog"]`,
+};
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (renders every .mermaid; graceful offline) ---------- */
+function drawMermaid(){if(!window.mermaid)return;
+  try{mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+    const nodes=[];
+    Object.entries(MERMAIDS).forEach(([id,src])=>{const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");nodes.push(el);});
+    mermaid.run({nodes});}
+  catch(e){Object.keys(MERMAIDS).forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';});}}
+if(document.querySelector(".mermaid")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){document.querySelectorAll(".mermaid").forEach(el=>{el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

@@ -224,6 +224,24 @@ the `{{placeholders}}` + JS data arrays. Keep the CSS design system intact. Non-
 - Make cells runnable & well-commented; prefer serverless-friendly, Unity-Catalog-first patterns.
 - Note: offer `.ipynb` instead if the user prefers — both import into Databricks.
 
+## Step 7 — Revision (critic-loop) mode
+This skill is the **maker** in the `genai-build-loop` critic loop (maker → critic → revise). When you
+are invoked with a `genai-teacher-reviewer` findings report (or by `genai-build-loop`), operate in
+**revision mode**, not fresh-authoring mode:
+- **Apply only the prioritized fixes** the reviewer listed — do not rewrite or re-expand approved
+  sections. Preserve factual content, citations, code, callouts, `[Theory]/[Hands-on]` labels, roadmap
+  markers, and **MD↔HTML Mermaid parity**.
+- **Regenerate only the affected artifact(s)** named in the findings; if a fix changes a fact or diagram
+  in one artifact, propagate it to the others (MD / HTML / notebook) so they stay consistent.
+- **Re-verify each corrected fact** against current docs + `references/naming-conventions.md` — never
+  swap one wrong value for another.
+- **Return control to the loop.** Do not self-approve; the critic re-checks and owns the verdict.
+
+**Pre-flight self-check (before first hand-off, to cut loop rounds):** quickly self-audit the draft
+against the reviewer's two checks — current product names/APIs/versions (Step 1b), the required MD
+skeleton, ≥1 Mermaid mirrored in HTML, the shared tutor HTML design system, hands-on verification steps,
+and cited Sources. Fix obvious gaps before submitting for critique.
+
 ## Module completion
 When all topics in a module are ✅, summarize the module and **ask if they want a consolidated module notebook / mini-project**, then advance to the next module.
 

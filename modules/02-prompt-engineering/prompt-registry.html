@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Topic 02.5 (cornerstone): MLflow Prompt Registry.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MLflow Prompt Registry · Databricks GenAI Tutor 02.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbox pre{margin:8px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI</a>
+    <span class="loc">Module 02 · Topic 02.5 ★</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_02.5 · Cornerstone · v1.0</span><span>Verified against books + docs</span></div>
+    <div class="filed">Module 02 — Prompt Engineering · Topic 02.5 · Hands-on ★</div>
+    <h1>MLflow Prompt Registry</h1>
+    <p class="dek">Git for prompts. Immutable versions, mutable aliases, tags for discovery, all governed in Unity Catalog. Promote and roll back by moving a pointer, not by redeploying.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>Prompts are governed assets, not notebook strings</h2></div>
+      <p class="lead">A customer's bot promised a full refund. Nobody could say which prompt was live, who changed it, or what the last known-good version was. That is a lifecycle problem, and the Prompt Registry is the fix.</p>
+      <ul>
+        <li><strong>Prompts</strong> are named entities in Unity Catalog: <code>catalog.schema.prompt_name</code>.</li>
+        <li><strong>Versions</strong> are immutable snapshots (edit = new version). <strong>Aliases</strong> (<code>staging</code>, <code>production</code>) are mutable pointers. <strong>Tags</strong> are version metadata.</li>
+        <li>The SDK is small and lives under <code>mlflow.genai</code>: <code>register_prompt</code>, <code>load_prompt</code>, <code>set_prompt_alias</code>, <code>delete_prompt_alias</code>, <code>search_prompts</code>, <code>delete_prompt</code>.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>The lifecycle and the SDK</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Lifecycle map</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Walkthrough</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">SDK reference</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Gotchas</button>
+      </div>
+
+      <!-- PANE A: lifecycle mermaid — mirrors prompt-registry.md Figure 3-2 equivalent -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 02 — Registry functions to lifecycle stages">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">The whole SDK maps onto one loop: create, version, retrieve, promote, discover, (rarely) delete.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: stepper walkthrough -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE C: clickable SDK explorer -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — mlflow.genai SDK">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a function</div><h3>mlflow.genai</h3><p>Click a function to see what it does and its key arguments.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE D: gotchas table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Mistake</th><th>Better move</th></tr></thead><tbody id="rows"></tbody></table>
+      </div>
+    </section>
+
+    <section class="entry" id="how">
+      <div class="entry-head"><span class="num">03 · How it works</span><h2>Immutable versions, mutable aliases</h2></div>
+      <p><code>register_prompt</code> with a <strong>new</strong> name creates v1; calling it again with the <strong>same</strong> name adds v2, v3. Each version is frozen. <code>set_prompt_alias(name, alias, version)</code> points a label at a version and can be reassigned freely.</p>
+      <ul>
+        <li><strong>Why immutable:</strong> comparisons stay meaningful and rollback is deterministic ("go back to v3," not "hope no one overwrote it").</li>
+        <li><strong>Why aliases:</strong> they turn versioned artifacts into an operational lever. Load by alias in production; re-point to promote or roll back with no redeploy.</li>
+        <li><strong>Naming:</strong> a prompt name is a Unity Catalog identifier, so ownership and permissions are explicit. Keep names stable; do not encode version numbers in them.</li>
+        <li><strong>Loading safely:</strong> pin a version for deterministic dev/test; wrap <code>format()</code> so a renamed variable fails loudly instead of producing nonsense.</li>
+      </ul>
+      <p>Consumption pipeline in the app:</p>
+      <div class="plate" data-fig="Fig. 03 — Prompt consumption pipeline">
+        <div class="mermaid" id="mermaidGraph2"></div>
+        <div class="plate-cap">Load by alias, render variables, call the model. Re-pointing the alias changes behavior with no code change.</div>
+      </div>
+    </section>
+
+    <section class="entry" id="dothis">
+      <div class="entry-head"><span class="num">04 · Run this</span><h2>Register, promote, load, roll back</h2></div>
+      <p><strong>Prereqs:</strong> <code>mlflow[databricks]&gt;=3.1.0</code>; a Unity Catalog schema where you hold <code>CREATE FUNCTION</code>, <code>EXECUTE</code>, and <code>MANAGE</code>; the feature enabled on the workspace Previews page (Beta).</p>
+      <pre><code>import mlflow
+uc_prompt = "main.default.unity_airways_customer_support"
+
+# v1 baseline (creates the prompt if the name is new)
+v1 = mlflow.genai.register_prompt(
+    name=uc_prompt,
+    template="""You are a customer support assistant for Unity Airways.
+Rules:
+- If key details are missing, ask exactly one clarifying question.
+- Do not invent fees, waivers, or exceptions.
+Customer question: {{question}}
+Write a concise answer (max 120 words).""",
+    commit_message="v1: baseline support answer with safety and brevity constraints",
+    tags={"use_case": "customer_support", "language": "en"})
+
+# Promote via aliases (mutable pointers)
+mlflow.genai.set_prompt_alias(name=uc_prompt, alias="production", version=1)
+
+# Load by alias in the app; render variables
+prompt = mlflow.genai.load_prompt(f"prompts:/{uc_prompt}@production")
+content = prompt.format(question="Can I change my flight tomorrow?")
+
+# Roll back = one line (re-point the alias)
+mlflow.genai.set_prompt_alias(name=uc_prompt, alias="production", version=1)</code></pre>
+      <p><strong>Make the model call</strong> with the OpenAI-compatible client from the Databricks SDK:</p>
+      <pre><code>from databricks.sdk import WorkspaceClient
+w = WorkspaceClient()
+client = w.serving_endpoints.get_open_ai_client()
+resp = client.chat.completions.create(
+    model="databricks-claude-sonnet-4-5",   # verify on the supported-models page
+    messages=[{"role": "user", "content": content}],
+    temperature=0.1, max_tokens=350)</code></pre>
+      <p><strong>How to verify it worked:</strong> the experiment's Prompts tab shows v1 with your commit message and tags; alias badges appear on the promoted versions; log <code>prompt.name</code> + <code>prompt.version</code> next to each response so any customer report traces to an exact version.</p>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Versions are immutable, aliases are mutable. That single sentence is the whole philosophy: you never overwrite history, and you promote or roll back by moving a pointer.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Standardize a commit message shaped like "behavior change | context | expected outcome", a <code>risk</code> tag (low/medium/high), and one intentional change per version. Months-later debugging becomes a lookup instead of an investigation.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>The book is an Early Release and the Databricks Prompt Registry is <strong>Beta</strong>. Re-verify the API surface, the <code>mlflow[databricks]</code> minimum version, and the UC privilege list against current docs before building a customer POC. Registry templates use <code>{{double}}</code> braces; convert with <code>to_single_brace_format()</code> for LangChain/LlamaIndex.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Why are prompt <strong>versions</strong> immutable while <strong>aliases</strong> are mutable, and what operation does each enable?</li>
+          <li>Write the two URI forms for loading a prompt by version and by alias, using <code>main.default.unity_airways_customer_support</code>.</li>
+          <li>On a Unity Catalog-backed registry, what is the only supported <code>search_prompts</code> filter, and how do you filter further?</li>
+          <li>What is the correct deletion order for a prompt that still has versions, and which functions do you call?</li>
+          <li>What three Unity Catalog privileges and which minimum <code>mlflow[databricks]</code> version does the Databricks Prompt Registry require?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📘 B1 — <em>Practical MLflow for GenAI on Databricks</em> (Early Release), Ch 3: "Managing Prompts with the MLflow Prompt Registry," "Using Prompts in Code," "Integrating Prompts into Applications."</li>
+        <li>🌐 MLflow Docs — GenAI Prompt Registry: <code>mlflow.org/docs/latest/genai/prompt-registry/</code> (register/load/search/alias; URIs <code>prompts:/name/2</code> and <code>prompts:/name@alias</code>; <code>{{variable}}</code>; <code>to_single_brace_format()</code>).</li>
+        <li>🌐 Databricks Docs — MLflow 3 Prompt Registry (Beta): <code>docs.databricks.com/aws/en/mlflow3/genai/prompt-version-mgmt/prompt-registry/</code> (Beta, <code>mlflow[databricks]&gt;=3.1.0</code>, UC CREATE FUNCTION + EXECUTE + MANAGE, alias URI).</li>
+        <li>🌐 MLflow Docs — <code>mlflow.genai</code> API reference: <code>mlflow.org/docs/latest/api_reference/python_api/mlflow.genai.html</code>.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Topic 02.5 ★</span>
+  <span>Grounded in 📘B1 Ch3 · MLflow + Databricks docs</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"Create and version",spine:true,comps:[
+   ["register_prompt()","create / version","New name = v1; same name again = v2, v3. Args: name, template ({{var}}), commit_message, tags, optional response_format and model_config.","Immutable snapshots"],
+   ["search_prompts()","discover","Find prompts. On UC the only filter is catalog='...' AND schema='...'; filter further in Python.","Naming prefix helps"],
+ ]},
+ {name:"Retrieve and render",spine:false,comps:[
+   ["load_prompt()","retrieve","Load by URI. Version: prompts:/name/2. Alias: prompts:/catalog.schema.name@production. allow_missing + cache_ttl_seconds available.","Pin version in dev, alias in prod"],
+   ["format()","render","prompt.format(**variables) fills {{variables}}. Wrap it so a renamed variable fails loudly.","to_single_brace_format() for LangChain"],
+ ]},
+ {name:"Promote and clean up",spine:false,comps:[
+   ["set_prompt_alias()","promote","Point staging/production at a version. Reassign to promote or roll back with no redeploy.","Mutable pointer"],
+   ["delete_prompt_alias()","demote","Remove an alias pointer.","Rare"],
+   ["delete_prompt_version() / delete_prompt()","cleanup","UC requires deleting versions first, then the prompt. Deletion is conservative on purpose.","Deprecate > delete"],
+ ]},
+];
+const STEPS=[
+  ["Design the prompt","Set role, scope, constraints, and missing-info behavior. Author variables as {{double_brace}}."],
+  ["Register v1","register_prompt(name='main.default.unity_airways_customer_support', template=..., commit_message='v1: baseline', tags={...}) creates the prompt at version 1."],
+  ["Add v2 (one change)","Call register_prompt() again with the same name and a tightened template. v2 is immutable; commit_message records the single intentional change."],
+  ["Promote via alias","set_prompt_alias(alias='staging', version=2); set_prompt_alias(alias='production', version=1). Aliases are the pointers you move."],
+  ["Load in the app","load_prompt('prompts:/main.default.unity_airways_customer_support@production').format(question=...). No redeploy when you re-point the alias."],
+  ["Roll back","set_prompt_alias(alias='production', version=1) puts the previous known-good version live in one call."],
+];
+const ROWS=[
+  ["Encoding version numbers in the prompt name","Keep the name stable; let versions + aliases carry versioning"],
+  ["Single-brace variables in a registry template","Author with {{var}}; convert via to_single_brace_format() for LangChain"],
+  ["Hard-coding a version in production","Load by alias; move the pointer to promote/roll back"],
+  ["Loading the prompt on every request","Load at startup; refresh on schedule or deploy restart"],
+  ["allow_missing=True with no fallback","Only with a conservative fallback and a clear log line"],
+];
+const MERMAID_SRC=`flowchart TD
+  design["Design prompt"] --> create["Create v1<br/>register_prompt()"]
+  create --> newver["Add versions v2, v3<br/>register_prompt() again"]
+  newver --> retrieve["Retrieve for use/testing<br/>load_prompt()"]
+  retrieve --> promote["Promote / rollback<br/>set_prompt_alias()"]
+  promote --> discover["Discover in schema<br/>search_prompts()"]
+  discover -->|iterate| newver
+  newver -.->|cleanup| cleanup["delete_prompt_version()<br/>then delete_prompt()"]`;
+const MERMAID_SRC2=`flowchart LR
+  uri["Prompt URI<br/>(version or alias)"] --> load["load_prompt()"]
+  load --> fmt["format(**variables)"]
+  fmt --> call["Model request<br/>(serving endpoint)"]`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td>${r[0]}</td><td><b>${r[1]}</b></td></tr>`).join("");
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

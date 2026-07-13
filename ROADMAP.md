@@ -27,8 +27,8 @@
 
 ## Level 0 — Orientation & Environment
 
-### Module 00 — Databricks platform foundations for GenAI  🔄
-<!-- progress: 00.4, 00.5 ✅ -->
+### Module 00 — Databricks platform foundations for GenAI  ✅
+<!-- progress: 00.1–00.6 ✅ (built in phase P0) -->
 
 *Why: you can't build GenAI without the platform plumbing.*
 - 00.1 Databricks Lakehouse & workspace basics — clusters/serverless, notebooks, repos `[T+H]` · 📗B2 Ch1
@@ -42,7 +42,8 @@
 
 ## Level 1 — GenAI Foundations
 
-### Module 01 — GenAI & LLM fundamentals  ⬜
+### Module 01 — GenAI & LLM fundamentals  ✅
+<!-- progress: 01.1–01.6 ✅ (built in phase P0) -->
 - 01.1 What is Generative AI vs traditional ML `[T]` · 📗B2 Ch2
 - 01.2 LLMs, tokens, context windows, temperature & sampling `[T]` · 📗B2 Ch2
 - 01.3 Embeddings — what they are and why they matter `[T]` · 📗B2 Ch3, Ch9
@@ -50,7 +51,8 @@
 - 01.5 Balancing cost, latency, and quality when choosing models `[T]` · 📗B2 Ch2, Ch9
 - 01.6 Foundation Model APIs & external models on Databricks `[T+H]` · 🌐Docs, 🌐Agents
 
-### Module 02 — Prompt engineering  ⬜
+### Module 02 — Prompt engineering  ✅
+<!-- progress: 02.1–02.8 ✅ (built in phase P0) -->
 - 02.1 Fundamentals & core prompting techniques `[T]` · 📘B1 Ch3, 📗B2 Ch2
 - 02.2 Prompts for **structured output**; prompt templates in code `[T+H]` · 📗B2 Ch2
 - 02.3 Prompt injection considerations with templates `[T]` · 📗B2 Ch2, Ch4
@@ -64,7 +66,7 @@
 
 ## Level 2 — RAG Core
 
-### Module 03 — Data preparation & chunking for RAG  ⬜
+### Module 03 — Data preparation & chunking for RAG  ✅
 - 03.1 RAG pipeline overview — where chunking fits `[T]` · 📗B2 Ch3
 - 03.2 Chunking strategies: fixed, sentence, paragraph, sliding-window, **semantic** `[T+H]` · 📗B2 Ch3
 - 03.3 Controlling overlap & granularity; impact on retrieval `[T]` · 📗B2 Ch3
@@ -75,7 +77,7 @@
 - 03.8 Document parsing & extraction with **AI Functions** (`ai_parse_document`, `ai_extract`) `[T+H]` · 🌐Docs
 - 03.9 Building the RAG ingestion pipeline as a **Lakeflow Spark Declarative Pipeline (SDP)** `[H]` · 🌐Docs
 
-### Module 04 — Embeddings & Databricks AI Search (formerly Vector Search)  ⬜
+### Module 04 — Embeddings & Databricks AI Search (formerly Vector Search)  ✅
 - 04.1 AI Search (Vector Search) fundamentals — cosine vs dot-product, normalization `[T]` · 📗B2 Ch9
 - 04.2 Choosing an embedding model & context length `[T]` · 📗B2 Ch3, Ch9
 - 04.3 Creating & querying a Vector Search index `[H]` · 📗B2 Ch9, 🌐Agents (AI Search)
@@ -86,8 +88,7 @@
 - 04.8 Hybrid search — combining keyword + vector retrieval `[T+H]` · 🌐Docs
 - 04.9 **Reranking** retrieved results (cross-encoder / reranker models) `[T+H]` · 🌐Docs
 
-### Module 05 — Building & versioning a RAG chain  🔄
-<!-- progress: 05.2 ✅ -->
+### Module 05 — Building & versioning a RAG chain  ✅
 
 - 05.1 What is a "chain"? RAG chain anatomy `[T]` · 📘B1 Ch4, 📗B2 Ch4
 - 05.2 LangChain ↔ Databricks integration: `ChatDatabricks`, `DatabricksVectorSearch` `[H]` · 📘B1 Ch4
@@ -101,7 +102,7 @@
 
 ## Level 3 — MLOps for GenAI with MLflow
 
-### Module 06 — MLflow for GenAI core  ⬜
+### Module 06 — MLflow for GenAI core  ✅
 - 06.1 What is MLflow? Experiments, Runs, Model Registry `[T]` · 📘B1 Ch1, 📗B2 Ch6
 - 06.2 From **MLflow 2 → MLflow 3** (what changed for GenAI) `[T]` · 📘B1 Ch1
 - 06.3 Tracking experiments, params, metrics, artifacts `[H]` · 📘B1 Ch1, 📗B2 Ch6
@@ -111,7 +112,7 @@
 - 06.7 Reproducibility, signatures, metadata, archiving/cleanup `[T+H]` · 📗B2 Ch6
 - 06.8 MLflow internals — **backend store, artifact store, nested runs** `[T+H]` · 📘B1 Ch1
 
-### Module 07 — MLflow Tracing & observability  ⬜
+### Module 07 — MLflow Tracing & observability  ✅
 - 07.1 Tracing concepts — Trace & Span `[T]` · 📘B1 Ch5
 - 07.2 Automated tracing `[H]` · 📘B1 Ch5
 - 07.3 Manual tracing / custom spans `[H]` · 📘B1 Ch5

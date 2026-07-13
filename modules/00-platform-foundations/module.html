@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 00 explainer.
+  Shared tutor front (warm paper, JetBrains Mono chrome, Source Serif 4 reading face).
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Platform Foundations for GenAI · Databricks GenAI Tutor 00</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  /* ============ DESIGN SYSTEM — tokens (do not rename) ============ */
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line);
+    --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .toggle{display:none}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:16ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .ghost{display:none}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  .index-rail{display:none}
+  .index-rail .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--ink-soft);
+    padding-bottom:10px;border-bottom:1px solid var(--rule);margin-bottom:10px}
+  .index-rail a{display:flex;gap:10px;align-items:baseline;text-decoration:none;color:var(--ink-soft);font-family:var(--mono);
+    font-size:12.5px;padding:7px 0;transition:color .2s}
+  .index-rail a .n{color:var(--accent);font-weight:600;min-width:22px}
+  .index-rail a:hover,.index-rail a.on{color:var(--ink)}
+  .index-rail a.on .n{text-decoration:underline}
+  @media(max-width:860px){.shell{grid-template-columns:1fr;gap:0}.index-rail{display:none}}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.5rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.md">Databricks GenAI</a>
+    <span class="loc">Module 00 · Platform Foundations</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_00 · GenAI module · v1.0</span><span>Verified against books plus docs</span></div>
+    <div class="filed">Module 00 — Platform Foundations for GenAI · Entries 00.1–00.6 · Theory + Hands-on</div>
+    <h1>Platform Foundations</h1>
+    <p class="dek">The workspace, compute, Unity Catalog governance, the Mosaic AI map, the Unity Airways use case, and Marketplace — the plumbing every later GenAI module builds on.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="index-rail" aria-label="Contents">
+    <div class="lbl">Contents</div>
+    <a href="#overview"><span class="n">01</span> The big idea</a>
+    <a href="#explore"><span class="n">02</span> Explore the six topics</a>
+    <a href="#practice"><span class="n">03</span> Foundation in practice</a>
+    <a href="#markers"><span class="n">04</span> Field notes</a>
+    <a href="#check"><span class="n">05</span> Self-check</a>
+    <a href="#sources"><span class="n">06</span> Sources</a>
+  </aside>
+
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01</span><h2>The big idea</h2></div>
+      <p class="lead">You can't build GenAI on Databricks until the platform plumbing is in place: a Lakehouse workspace, compute, Unity Catalog governance, and a way to find data and models.</p>
+      <ul>
+        <li><strong>Lakehouse</strong> — one platform storing raw + structured data as Delta, governed by Unity Catalog, run on shared <strong>compute</strong> (serverless or classic).</li>
+        <li><strong>Unity Catalog</strong> — the governance spine: a single three-level namespace <code>catalog.schema.object</code> for tables, <strong>volumes</strong> (files), functions, models, and vector indexes.</li>
+        <li><strong>Mosaic AI</strong> — the umbrella for building, serving, and governing AI; a stack of modular pieces, not one product. Cornerstone deep-dive: <a href="mosaic-ai-landscape.html">mosaic-ai-landscape.html</a>.</li>
+        <li><strong>Unity Airways</strong> — the running airline-assistant use case; <strong>Databricks Marketplace</strong> — how you pull in ready-made data and models (e.g. NOAA weather) via Delta Sharing.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02</span><h2>Explore the six topics</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">Topic map</button>
+        <button role="tab" aria-selected="false" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Module flow</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Reference</button>
+      </div>
+
+      <!-- PANE A: clickable explorer -->
+      <div id="p-explore" class="pane active" role="tabpanel" aria-labelledby="t-explore">
+        <p>Click any topic to see what it is, the concrete Databricks handle, and its label.</p>
+        <div class="plate" data-fig="Plate I — the six topics">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a topic</div><h3>Module 00 map</h3><p>Pick a chip on the left to read its role and how you invoke it on Databricks.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE B: stepper + theme-aware mermaid (mirrors the markdown's Visual map) -->
+      <div id="p-flow" class="pane" role="tabpanel" aria-labelledby="t-flow" hidden>
+        <p>Foundation (00.1–00.3) sits under the map and mission (00.4–00.5); Marketplace (00.6) feeds data and models in.</p>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <div class="plate" data-fig="Fig. 01 — how the six topics fit together" style="margin-top:18px">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Mirrors the Visual map in module.md · dashed = Marketplace feeds governed data + models</div>
+        </div>
+      </div>
+
+      <!-- PANE C: reference table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Foundation choice</th><th>Current handle / rule</th></tr></thead><tbody id="rows"></tbody></table>
+      </div>
+    </section>
+
+    <section class="entry" id="practice">
+      <div class="entry-head"><span class="num">03</span><h2>Foundation in practice</h2></div>
+      <p><strong>00.3 [Hands-on]</strong> — confirm the workspace can run code (book Ch1, Step 13):</p>
+<pre><code># Attach the notebook to Serverless (or a classic ML cluster), then run:
+print("Databricks environment is ready")</code></pre>
+      <p><strong>00.2 [Theory]</strong> — the three-level namespace and a governance grant. Everything lives at <code>catalog.schema.object</code>, including <strong>volumes</strong> for files:</p>
+<pre><code>-- structured records: catalog.schema.table
+SELECT * FROM main.airways.bookings;
+
+-- non-tabular files (RAG PDFs) governed as a volume
+-- read them at /Volumes/main/airways/faq_docs/...
+GRANT READ VOLUME ON VOLUME main.airways.faq_docs
+  TO `data-scientists`;</code></pre>
+      <p><strong>00.6 [Hands-on]</strong> — after <em>Get instant access</em> in Marketplace, the dataset appears as a read-only catalog; query it with the three-part namespace:</p>
+<pre><code>-- a Marketplace listing (e.g. NOAA / weather) installs as a read-only catalog
+SELECT * FROM weather_data.noaa.daily_summaries LIMIT 10;</code></pre>
+      <p class="plate-cap" style="text-align:left">Catalog, schema, table, and volume names above are illustrative — create your own and confirm the exact listing name in the live Marketplace.</p>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">04</span><h2>Field notes</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Unity Catalog's three-level namespace <code>catalog.schema.object</code> is the single most important idea in Module 00 — tables, volumes, functions, models, and vector indexes all live there and inherit its permissions, lineage, and audit.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Default to <strong>serverless compute</strong> (no cluster tuning) and put every RAG document in a <strong>UC volume</strong>. That removes two of the most common beginner blockers in one move.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>The book's Ch1 setup is Azure-portal-specific and uses a classic ML cluster; current Databricks leads with <strong>serverless</strong> and cross-cloud sign-up. Databricks is also moving <strong>away from "Mosaic AI"</strong> branding (Vector Search is surfaced as <strong>AI Search</strong>). Verify the live product name before quoting it.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">05</span><h2>Notes &amp; self-check</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>What are the three levels of the Unity Catalog namespace, and name three object types that live in it.</li>
+          <li>When would you pick serverless compute over a classic ML cluster, and vice versa?</li>
+          <li>Which UC object governs non-tabular files (like FAQ PDFs), and what is the path to read them?</li>
+          <li>Describe the "Get instant access" flow in Marketplace — where does the data end up and how do you query it?</li>
+          <li>Why are Unity Catalog and the AI Gateway called "cross-cutting spines" in the Mosaic AI landscape?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">06</span><h2>Sources</h2></div>
+      <ul>
+        <li>📗 B2 — <em>Cert Study Guide</em>, Ch1 (workspace setup, <code>genai-exam-cluster</code>, <code>environment_check</code>, Table 1-2 domain weights) · Ch6 (three-level namespace, RBAC / lineage / audit).</li>
+        <li>📘 B1 — <em>Practical MLflow for GenAI</em>, Ch1 (Unity Airways use case). Early Release — verify against docs.</li>
+        <li>🌐 Docs — Compute (<code>/aws/en/compute/</code>), Volumes (<code>/aws/en/volumes/</code>), Marketplace + get-started-consumer (<code>/aws/en/marketplace/</code>), Generative AI landing (<code>/aws/en/generative-ai/generative-ai</code>).</li>
+        <li>🔗 Cornerstone deep-dive: <a href="mosaic-ai-landscape.html">mosaic-ai-landscape.html</a> (Topic 00.4).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 00</span>
+  <span>Grounded in 📘B1 Ch1 · 📗B2 Ch1, Ch6 · current docs</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Foundation — set it up (00.1–00.3)",spine:false,comps:[
+   ["00.1 Lakehouse & workspace","[T+H]","One platform: Delta storage, UC governance, shared compute. Sidebar: Workspace, Catalog, Compute, Marketplace, Serving.","Compute → Create; Workspace → Notebook"],
+   ["00.2 Unity Catalog 101","[T]","Governance spine. Three-level namespace catalog.schema.object; volumes govern non-tabular files.","GRANT / Catalog Explorer / /Volumes/..."],
+   ["00.3 Workspace + ML compute","[H]","Provision a Premium workspace, create compute, run a first notebook.","Premium tier · genai-exam-cluster · environment_check"],
+ ]},
+ {name:"Orientation — the map and the mission (00.4–00.5)",spine:false,comps:[
+   ["00.4 Mosaic AI landscape ★","[T]","The whole GenAI stack as 5 layers + 2 spines. Cornerstone deep-dive.","See mosaic-ai-landscape.html"],
+   ["00.5 Unity Airways","[T]","Running airline-assistant use case: structured bookings (Delta) + FAQ PDFs (volume).","POC scaffold for the whole roadmap"],
+ ]},
+ {name:"Discovery (00.6)",spine:true,comps:[
+   ["00.6 Databricks Marketplace","[T+H]","Open exchange on Delta Sharing. Datasets, models, notebooks, apps as a read-only catalog.","Marketplace → Get instant access → query catalog.schema.table"],
+ ]},
+];
+const STEPS=[
+ ["00.3 Set up","Provision a Premium workspace; attach a notebook to Serverless (or a genai-exam-cluster ML cluster). Run print('...') to confirm."],
+ ["00.1 Workspace","Learn the Lakehouse workspace: compute types (serverless vs classic ML runtime), notebooks, Git folders."],
+ ["00.2 Govern","Create catalog + schema; add a volume for FAQ PDFs and a Delta table for bookings — all at catalog.schema.object."],
+ ["00.4 Map","Place the pieces on the Mosaic AI landscape: models → retrieval → apps/agents → consumption, with UC + AI Gateway + MLflow across every layer."],
+ ["00.5 Mission","Fill the map with the Unity Airways use case — structured + unstructured data + actions."],
+ ["00.6 Discover","Pull governed public data/models from Marketplace (e.g. NOAA weather) to enrich the demo — no ingestion pipeline."],
+];
+const ROWS=[
+ ["Compute for notebooks","Serverless (default) — auto-managed, seconds to start"],
+ ["Compute with ML/GPU libs","Classic cluster on the ML runtime (e.g. genai-exam-cluster)"],
+ ["Where files (PDFs) live","UC volume · /Volumes/&lt;catalog&gt;/&lt;schema&gt;/&lt;volume&gt;/..."],
+ ["Where tables/models/indexes live","Three-level namespace catalog.schema.object"],
+ ["Governance controls","RBAC (GRANT) · lineage · audit logging"],
+ ["Get demo data fast","Marketplace → Get instant access → read-only catalog (Delta Sharing)"],
+ ["Vector Search package","databricks-vectorsearch (product now called AI Search)"],
+];
+const MERMAID_SRC=`flowchart TB
+  subgraph FOUND["Foundation - set it up (00.1 to 00.3)"]
+    WS["00.1 Lakehouse and workspace"]
+    UC["00.2 Unity Catalog 101"]
+    SETUP["00.3 Workspace and ML compute"]
+  end
+  subgraph MAP["Orientation - the map and mission (00.4 to 00.5)"]
+    MOSAIC["00.4 Mosaic AI landscape"]
+    UA["00.5 Unity Airways"]
+  end
+  MKT["00.6 Databricks Marketplace"]
+  SETUP --> WS
+  WS --> UC
+  UC --> MOSAIC
+  MOSAIC --> UA
+  MKT -. governed into .-> UC
+  MKT -. feeds .-> UA`;
+
+/* ---------- light tutor front ---------- */
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");
+  if(id==="p-flow")drawMermaid();}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td>${r[0]}</td><td><b>${r[1]}</b></td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline) ---------- */
+function drawMermaid(){if(!window.mermaid)return;const el=document.getElementById("mermaidGraph");if(!el)return;
+  el.innerHTML=MERMAID_SRC;el.removeAttribute("data-processed");
+  try{mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+    mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){var el=document.getElementById("mermaidGraph");if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';};document.body.appendChild(s);}
+
+/* ---------- reveal + scroll-spy + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+  const spy=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting)document.querySelectorAll(".index-rail a").forEach(a=>a.classList.toggle("on",a.getAttribute("href")==="#"+e.target.id));});},{rootMargin:"-35% 0px -55% 0px"});
+  entries.forEach(s=>spy.observe(s));
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

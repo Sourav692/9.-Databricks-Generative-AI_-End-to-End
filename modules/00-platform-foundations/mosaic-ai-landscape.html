@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Topic 00.4 cornerstone deep-dive.
+  Shared tutor front (warm paper, JetBrains Mono chrome, Source Serif 4 reading face).
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Mosaic AI Product Landscape · Databricks GenAI Tutor 00.4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  .index-rail{display:none}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.5rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card)}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI · Module 00</a>
+    <span class="loc">Topic 00.4 · ★ Cornerstone</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_00.4 · GenAI lesson · v1.0</span><span>Verified against books plus docs</span></div>
+    <div class="filed">Module 00 — Platform Foundations · Entry 00.4 · Theory · Cornerstone</div>
+    <h1>The Mosaic AI Landscape</h1>
+    <p class="dek">A map of the whole GenAI stack: <em>5 layers plus 2 cross-cutting spines</em>. Every later module is a deep dive into one box on this map.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="index-rail" aria-label="Contents">
+    <div class="lbl">Contents</div>
+    <a href="#overview"><span class="n">01</span> The big idea</a>
+    <a href="#explore"><span class="n">02</span> Explore the stack</a>
+    <a href="#journey"><span class="n">03</span> A request's journey</a>
+    <a href="#markers"><span class="n">04</span> Field notes</a>
+    <a href="#check"><span class="n">05</span> Self-check</a>
+    <a href="#sources"><span class="n">06</span> Sources</a>
+  </aside>
+
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01</span><h2>The big idea</h2></div>
+      <p class="lead">Mosaic AI is not one product — it's a stack of modular pieces that snap together over the Unity Catalog and Delta foundation.</p>
+      <ul>
+        <li><strong>5 layers:</strong> data → models → retrieval → apps and agents → consumption.</li>
+        <li><strong>2 cross-cutting spines:</strong> governance (Unity Catalog + AI Gateway) and quality/ops (MLflow, Tracing, Evaluation, Monitoring) — they touch <em>every</em> layer.</li>
+        <li>The cert book frames the same thing as a <strong>3-layer infrastructure view</strong>: Model Serving, Feature/Data integration, and Orchestration.</li>
+        <li>Reason <strong>by layer first</strong>, then pick the box. That's how you place components in a customer design without over-engineering or under-governing.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02</span><h2>Explore the stack</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">Layer explorer</button>
+        <button role="tab" aria-selected="false" aria-controls="p-map" id="t-map" onclick="tab(this,'p-map')">Landscape map</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">3-layer view</button>
+      </div>
+
+      <!-- PANE A: clickable explorer of layers + spines -->
+      <div id="p-explore" class="pane active" role="tabpanel" aria-labelledby="t-explore">
+        <p>Click a piece to see its role and the module where you go deep. Dashed groups are the two cross-cutting spines.</p>
+        <div class="plate" data-fig="Plate I — pieces by layer">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a piece</div><h3>The landscape</h3><p>Pick a chip on the left to read what it does and which roadmap module covers it.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE B: theme-aware mermaid (mirrors the markdown's Visual map) -->
+      <div id="p-map" class="pane" role="tabpanel" aria-labelledby="t-map" hidden>
+        <p>The landscape, layer by layer. Dashed arrows are the two spines that touch every layer.</p>
+        <div class="plate" data-fig="Fig. 01 — the Mosaic AI landscape">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Mirrors the Visual map in mosaic-ai-landscape.md</div>
+        </div>
+      </div>
+
+      <!-- PANE C: 3-layer reference table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <p>The cert book's 3-layer infrastructure view (📗B2 Ch9) — memorize this.</p>
+        <table><thead><tr><th>Layer</th><th>Role</th></tr></thead><tbody id="rows"></tbody></table>
+      </div>
+    </section>
+
+    <section class="entry" id="journey">
+      <div class="entry-head"><span class="num">03</span><h2>A request's journey</h2></div>
+      <p>Step through what happens when a passenger asks the Unity Airways assistant a question.</p>
+      <div class="flowline" id="flowline"></div>
+      <div class="stepbox" id="stepbox"></div>
+      <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      <p style="margin-top:18px"><strong>Minimum viable stack</strong> — four boxes, all governed by Unity Catalog:</p>
+<pre><code>AI Search  →  Foundation Model API  →  Agent Framework/Bricks  →  Model Serving
+   (retrieve)      (the brain)             (the logic)               (the endpoint)</code></pre>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">04</span><h2>Field notes</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Mosaic AI is a stack of modular pieces, not a single product. Learn the <strong>layers</strong> first, then the boxes. Unity Catalog (governance) and the AI Gateway + MLflow/Tracing (ops) are <strong>cross-cutting</strong> — they touch every layer.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>When a customer says "chatbot over our docs," the minimum viable stack is four boxes: AI Search → Foundation Model API → Agent Framework/Bricks → Model Serving. Enable <strong>dynamic batching</strong> on serving endpoints for many short requests — more throughput, lower cost, minimal latency hit.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Databricks is trending away from "Mosaic AI" branding; the Generative AI landing page now leads with "Build AI agents." "Databricks Vector Search" is surfaced as <strong>AI Search</strong> (SDK unchanged: <code>databricks-vectorsearch</code>). There is no <code>agents.evaluate()</code> — evaluate with <code>mlflow.genai.evaluate()</code>. Confirm live page titles before quoting a name.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">05</span><h2>Notes &amp; self-check</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>What are the three core layers of the Mosaic AI architecture (per the cert book)?</li>
+          <li>Which two "spines" are cross-cutting across all layers, and what does each govern or provide?</li>
+          <li>When would you choose Agent Bricks over the Agent Framework?</li>
+          <li>In the Unity Airways assistant, which piece answers questions from policy documents, and which serves the LLM?</li>
+          <li>What does the AI Gateway add that raw Model Serving does not?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">06</span><h2>Sources</h2></div>
+      <ul>
+        <li>📗 B2 — <em>Cert Study Guide</em>, Ch9 "Scaling Applications with Mosaic AI" (three-layer view, model serving at scale, dynamic batching).</li>
+        <li>📘 B1 — <em>Practical MLflow for GenAI</em>, Ch7 (Agent Framework, <code>agents.deploy()</code>). Early Release — verify against docs.</li>
+        <li>🌐 Docs — Generative AI landing (<code>/aws/en/generative-ai/generative-ai</code>), Agent Framework (<code>ResponsesAgent</code>), AI Search (formerly Vector Search; SDK <code>databricks-vectorsearch</code>), Genie / Genie One.</li>
+        <li>📎 Naming cross-check: <code>.claude/skills/genai-teacher/references/naming-conventions.md</code>.</li>
+        <li>🔗 Module overview: <a href="module.html">module.html</a>.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Entry 00.4</span>
+  <span>Grounded in 📘B1 Ch7 · 📗B2 Ch9 · current docs</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Models — the brains",spine:false,comps:[
+   ["Foundation Model APIs","Model","Databricks-hosted state-of-the-art models; pay-per-token or provisioned throughput.","Module 01, 11"],
+   ["External Models","Model","Third-party models (OpenAI, Anthropic, Google) via a governed proxy.","Module 11"],
+   ["Model Serving","Serving","One scalable REST endpoint family for all model types; autoscaling, batching, A/B.","Module 11"],
+ ]},
+ {name:"Retrieval and context — the memory",spine:false,comps:[
+   ["AI Search (Vector Search)","Retrieval","Embedding index + similarity search over your docs for RAG. SDK: databricks-vectorsearch.","Module 04"],
+   ["AI Functions","Retrieval","Call models from SQL: ai_query, ai_parse_document, ai_extract.","Module 03, 11"],
+ ]},
+ {name:"Application and agents — the logic",spine:false,comps:[
+   ["AI Playground","App","No-code chat + tool prototyping.","Module 10"],
+   ["Agent Framework","App","Code-first agents via ResponsesAgent, then agents.deploy().","Module 09"],
+   ["Agent Bricks","App","No/low-code: Knowledge Assistant, Supervisor, Info Extraction, Custom LLM.","Module 10"],
+   ["Databricks Apps","App","Host the web UI for your app or agent.","Module 10"],
+ ]},
+ {name:"Consumption — humans use it",spine:false,comps:[
+   ["AI/BI Genie","Consume","Business users ask questions in natural language over governed data.","Module 14"],
+   ["Metric views","Consume","Semantic layer (KPIs, synonyms) so Genie/agents answer consistently.","Module 15"],
+ ]},
+ {name:"Governance spine (cross-cutting)",spine:true,comps:[
+   ["Unity Catalog","Govern","Governs data, features, models, functions, indexes; lineage + access control.","Module 00, 12"],
+   ["AI Gateway","Govern","Rate limits, guardrails, payload logging, usage tracking, fallbacks.","Module 11, 12"],
+ ]},
+ {name:"Quality and ops spine (cross-cutting)",spine:true,comps:[
+   ["MLflow","Ops","Tracking, UC Model Registry, Prompt Registry, models from code.","Module 06"],
+   ["MLflow Tracing","Ops","See every step an agent took (observability).","Module 07"],
+   ["Agent Evaluation","Ops","mlflow.genai.evaluate() with LLM-as-a-judge scorers.","Module 08"],
+   ["Monitoring","Ops","Inference tables, production metrics, feedback.","Module 13"],
+ ]},
+];
+const STEPS=[
+ ["Client request","A passenger asks: 'Can I change my flight next week, and will I be charged?'"],
+ ["AI Gateway","Traffic passes through the AI Gateway: guardrails filter unsafe input and rate limits apply."],
+ ["Agent","The Agent (Framework or Bricks) plans: it needs the change/fee policy and the passenger's booking."],
+ ["AI Search","The retriever tool queries the AI Search index over policy + FAQ PDFs and returns the relevant passages."],
+ ["Model Serving","The enriched prompt (policy + booking context) goes to a Foundation Model API served endpoint."],
+ ["Response + trace","A grounded answer returns to the passenger; MLflow Tracing records every span for evaluation."],
+];
+const ROWS=[
+ ["Model serving layer","Hosts foundation, embedding, and fine-tuned models behind scalable API endpoints."],
+ ["Feature + data integration layer","Supplies models with current context from Delta tables, AI Search indexes, or streaming."],
+ ["Orchestration layer","Scales resources, balances workloads, routes requests, caches responses, and holds SLOs."],
+];
+const MERMAID_SRC=`flowchart TB
+  subgraph CONSUME["Consumption - humans use it"]
+    GEN["AI/BI Genie and Genie One"]
+    SEM["Metric views - semantic layer"]
+  end
+  subgraph APPL["Application and Agents - the logic"]
+    PG["AI Playground"]
+    AF["Agent Framework - code-first"]
+    AB["Agent Bricks - no/low-code"]
+    MCP["MCP servers"]
+    APPS["Databricks Apps"]
+  end
+  subgraph RETR["Retrieval and Context - the memory"]
+    VS["AI Search (Vector Search)"]
+    AIF["AI Functions - ai_query"]
+  end
+  subgraph MODELS["Models - the brains"]
+    FM["Foundation Model APIs"]
+    EXT["External Models"]
+    SRV["Model Serving"]
+  end
+  subgraph DATA["Foundation - data"]
+    DLT["Delta tables and Volumes"]
+  end
+  CONSUME --> APPL --> RETR --> MODELS --> DATA
+  UC["Unity Catalog - governs every layer"]
+  GW["AI Gateway - guards model access"]
+  OPS["MLflow · Tracing · Evaluation · Monitoring"]
+  UC -. governs .-> CONSUME
+  UC -. governs .-> DATA
+  GW -. fronts .-> MODELS
+  OPS -. observes .-> APPL`;
+
+/* ---------- light tutor front ---------- */
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");
+  if(id==="p-map")drawMermaid();}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline) ---------- */
+let mermaidLoaded=false;
+function drawMermaid(){if(!window.mermaid)return;const el=document.getElementById("mermaidGraph");if(!el)return;
+  el.innerHTML=MERMAID_SRC;el.removeAttribute("data-processed");
+  try{mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+    mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=function(){mermaidLoaded=true;drawMermaid();};s.onerror=function(){var el=document.getElementById("mermaidGraph");if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';};document.body.appendChild(s);}
+
+/* ---------- reveal + scroll-spy + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+  const spy=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting)document.querySelectorAll(".index-rail a").forEach(a=>a.classList.toggle("on",a.getAttribute("href")==="#"+e.target.id));});},{rootMargin:"-35% 0px -55% 0px"});
+  entries.forEach(s=>spy.observe(s));
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

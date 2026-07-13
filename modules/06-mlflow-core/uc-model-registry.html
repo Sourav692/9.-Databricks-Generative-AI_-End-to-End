@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Topic 06.5 (cornerstone): Unity Catalog Model Registry — registration, aliases, tags.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UC Model Registry · Databricks GenAI Tutor 06.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbox pre{margin:8px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI</a>
+    <span class="loc">Module 06 · Topic 06.5 ★</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_06.5 · Cornerstone · v1.0</span><span>Verified against 📘B1 Ch1 · 📗B2 Ch6 · docs</span></div>
+    <div class="filed">Module 06 — MLflow for GenAI core · Topic 06.5 · Theory + Hands-on ★</div>
+    <h1>UC Model Registry</h1>
+    <p class="dek">Name it, version it, point at it. A logged run becomes a governed Unity Catalog object with an immutable version history and one movable pointer — the <code>@champion</code> alias — that serving, rollback, and audit all read. <em>Aliases and tags, not stages.</em></p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>From run artifact to governed asset</h2></div>
+      <p class="lead">In 05.6 you logged the Unity Airways RAG chain and got <code>logged.model_uri = runs:/&lt;run_id&gt;/chain</code>. That URI is tied to one run in one workspace — not something production should depend on. Registering it into Unity Catalog gives it a stable name, a version history, a movable "this one is live" pointer, metadata, and access control.</p>
+      <ul>
+        <li><strong>Point the registry at UC once:</strong> <code>mlflow.set_registry_uri("databricks-uc")</code>. After that every register writes to Unity Catalog, with RBAC, lineage, and cross-workspace access instead of the per-workspace legacy registry.</li>
+        <li><strong>Register with a three-level name:</strong> <code>mlflow.register_model("runs:/&lt;run_id&gt;/chain", "unity_airways.rag.ua_rag_chain")</code>. The name is always <code>catalog.schema.model</code>. Each register mints a new immutable <strong>version</strong>.</li>
+        <li><strong>Aliases replace stages.</strong> UC models have no <code>Staging</code>/<code>Production</code> stages. You set a movable pointer — <code>set_registered_model_alias("...", "champion", 3)</code> — and load <code>models:/...@champion</code>. Promote or roll back by repointing it, with zero client changes.</li>
+        <li><strong>Tags + grants make it auditable and safe.</strong> Tag versions with eval score, approver, and change ticket; <code>GRANT EXECUTE ON MODEL</code> to just the serving service principal.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>The lifecycle, the moves, and the URIs</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Lifecycle</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The four moves</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Walkthrough</button>
+        <button role="tab" aria-selected="false" aria-controls="p-compare" id="t-compare" onclick="tab(this,'p-compare')">Alias vs stage</button>
+        <button role="tab" aria-selected="false" aria-controls="p-res" id="t-res" onclick="tab(this,'p-res')">Load URIs</button>
+      </div>
+
+      <!-- PANE A: lifecycle mermaid — mirrors uc-model-registry.md diagram 1 -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — Register → versions → alias @champion → load → deploy">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Registration builds an immutable version history; the alias is the one movable thing everyone reads; tags and grants make it auditable and safe.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the governing moves -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — What you call on the registry">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select an item</div><h3>Registry moves</h3><p>Click one to see what it does and where it bites.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: stepper walkthrough of the build -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE D: alias vs stage compare -->
+      <div id="p-compare" class="pane" role="tabpanel" aria-labelledby="t-compare" hidden>
+        <table>
+          <thead><tr><th>Aspect</th><th>Alias (UC — current)</th><th>Stage (Workspace / MLflow 2 — legacy)</th></tr></thead>
+          <tbody>
+            <tr><td class="k">What it is</td><td>named, movable pointer to one version</td><td>fixed ladder None/Staging/Production/Archived</td></tr>
+            <tr><td class="k">API</td><td>set_registered_model_alias(name, alias, version)</td><td>transition_model_version_stage(...)</td></tr>
+            <tr><td class="k">Load / reference</td><td>models:/name@champion</td><td>models:/name/Production (stage in URI)</td></tr>
+            <tr><td class="k">Names allowed</td><td>any string: champion, challenger, staging, production</td><td>only the four fixed stage names</td></tr>
+            <tr><td class="k">On UC models</td><td>this is the mechanism</td><td>removed — no stage to transition to</td></tr>
+            <tr><td class="k">Status</td><td>GA · teach this</td><td>legacy · recognize, do not use</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">An alias <em>named</em> <code>production</code> is just a string pointer you created — it is not the removed Production stage. Same word, different mechanism.</p>
+      </div>
+
+      <!-- PANE E: the three models:/ URI shapes -->
+      <div id="p-res" class="pane" role="tabpanel" aria-labelledby="t-res" hidden>
+        <table>
+          <thead><tr><th>Load URI</th><th>Resolves to</th><th>Behaviour</th></tr></thead>
+          <tbody>
+            <tr><td class="k">models:/name@alias</td><td>whatever the alias points at now</td><td>follows promotions — moves when you repoint</td></tr>
+            <tr><td class="k">models:/name/version</td><td>one exact, immutable version</td><td>frozen — for compliance or deterministic dev/test</td></tr>
+            <tr><td class="k">models:/model_id</td><td>an MLflow 3 LoggedModel by id</td><td>run-scoped logged model, not a registered version</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Rule of thumb (📘B1): pin a <code>/version</code> when developing, testing, or debugging; use an <code>@alias</code> anywhere promotion and rollback should not require a redeploy. Serving a <code>@alias</code> means the endpoint moves when you repoint.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="how">
+      <div class="entry-head"><span class="num">03 · How it works</span><h2>Aliases replaced stages — the one distinction</h2></div>
+      <p>UC models have no stages. The "which version is live" question is answered by a movable alias, not by a fixed stage ladder. Get this right and everything downstream — serving, rollback, audit — falls out of it.</p>
+      <div class="plate" data-fig="Fig. 02 — How do you mark 'which version is live'?">
+        <div class="mermaid" id="mermaidGraph2"></div>
+        <div class="plate-cap">Roll forward or back by repointing the alias; clients keep the same code and URL.</div>
+      </div>
+      <ul>
+        <li><strong>UC beats the legacy Workspace registry.</strong> Models become UC securables: access is <code>GRANT</code>/<code>REVOKE</code>, lineage links model → run → data, and one metastore serves dev, staging, and prod workspaces. Workspace-registry models were trapped in one workspace.</li>
+        <li><strong>Each register call is a new immutable version.</strong> Register the same three-level name again and you get v2, v3, …; older versions never change. That immutability is what makes rollback trustworthy.</li>
+        <li><strong>The alias is the operational knob.</strong> <code>set_registered_model_alias(name, "champion", 4)</code> promotes v4; call it with <code>3</code> to roll back. Consumers loading <code>@champion</code> follow instantly.</li>
+        <li><strong>Tags are the audit trail.</strong> <code>set_registered_model_tag</code> labels the whole model (team, project); <code>set_model_version_tag</code> labels one build (eval score, approver, change ticket, <code>lifecycle=archived</code>).</li>
+        <li><strong>Grants gate who can serve it.</strong> <code>EXECUTE</code> lets a principal load/serve; ownership or <code>MANAGE</code> is needed to move aliases and tags. Registry permissions and endpoint permissions are separate levels of control.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="dothis">
+      <div class="entry-head"><span class="num">04 · Run this</span><h2>Register, version, alias, tag, grant</h2></div>
+      <p><strong>Prereqs:</strong> serverless or DBR ML runtime, <strong>MLflow ≥ 3.1</strong>; the logged chain from 05.6 (<code>logged.model_uri</code>); rights to create a model in <code>unity_airways.rag</code> (<code>USE CATALOG</code> + <code>USE SCHEMA</code> + <code>CREATE MODEL</code>).</p>
+      <pre><code>%pip install -U mlflow databricks-langchain
+dbutils.library.restartPython()</code></pre>
+      <p><strong>0. Point the registry at Unity Catalog and set the three-level name:</strong></p>
+      <pre><code>import mlflow
+from mlflow import MlflowClient
+
+CATALOG  = "unity_airways"
+SCHEMA   = "rag"
+UC_MODEL = f"{CATALOG}.{SCHEMA}.ua_rag_chain"   # catalog.schema.model
+
+mlflow.set_registry_uri("databricks-uc")        # ← every register now writes to UC
+client = MlflowClient()</code></pre>
+      <p><strong>1. Register the logged chain — this creates version 1:</strong></p>
+      <pre><code>mv = mlflow.register_model(
+    model_uri=f"runs:/{run.info.run_id}/chain",   # from 05.6; or f"models:/{logged.model_id}"
+    name=UC_MODEL,
+)
+print(mv.name, mv.version)   # unity_airways.rag.ua_rag_chain 1</code></pre>
+      <p><strong>2. Register improved builds to see versioning (v2, then v3):</strong></p>
+      <pre><code>mv2 = mlflow.register_model(f"runs:/{run2.info.run_id}/chain", UC_MODEL)  # -> version 2
+mv3 = mlflow.register_model(f"runs:/{run3.info.run_id}/chain", UC_MODEL)  # -> version 3</code></pre>
+      <p><strong>3. Set the <code>champion</code> alias to the approved version — this is the "promotion":</strong></p>
+      <pre><code>client.set_registered_model_alias(name=UC_MODEL, alias="champion", version=3)</code></pre>
+      <p><strong>Verify + load by alias</strong> (the way apps and endpoints should reference the model):</p>
+      <pre><code>print(client.get_model_version_by_alias(UC_MODEL, "champion").version)   # 3
+chain = mlflow.langchain.load_model(f"models:/{UC_MODEL}@champion")
+print(chain.invoke("Can I get a refund on a Basic Economy fare?")[:200])</code></pre>
+      <p><strong>4. Tag the version (audit trail) and the model (ownership):</strong></p>
+      <pre><code>client.set_model_version_tag(UC_MODEL, 3, "eval_correctness", "0.91")
+client.set_model_version_tag(UC_MODEL, 3, "approver", "s.banerjee")
+client.set_model_version_tag(UC_MODEL, 3, "change_ticket", "CHG-2187")
+client.set_registered_model_tag(UC_MODEL, "team", "ml-platform")</code></pre>
+      <p><strong>5. Roll back in one line — no redeploy:</strong></p>
+      <pre><code>client.set_registered_model_alias(UC_MODEL, "champion", 2)   # champion now = v2
+# every models:/...@champion consumer follows instantly; v3 is untouched for later</code></pre>
+      <p><strong>6. Grant a serving service principal permission to load it</strong> (SQL cell or Catalog Explorer):</p>
+      <pre><code>GRANT USE CATALOG ON CATALOG unity_airways TO `sp-ua-serving`;
+GRANT USE SCHEMA  ON SCHEMA  unity_airways.rag TO `sp-ua-serving`;
+GRANT EXECUTE     ON MODEL   unity_airways.rag.ua_rag_chain TO `sp-ua-serving`;</code></pre>
+      <p><strong>The legacy stage call</strong> — recognize it, never use it on a UC model:</p>
+      <pre><code># LEGACY / Workspace registry — on a UC model there is no stage to move to.
+client.transition_model_version_stage(name="ua_rag_chain", version=3, stage="Production")
+# Correct UC equivalent:
+client.set_registered_model_alias(UC_MODEL, "production", 3)</code></pre>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>The whole lesson reduces to three moves: <strong>name it</strong> (<code>catalog.schema.model</code>), <strong>version it</strong> (every register call), <strong>point at it</strong> (an alias, never a stage). Everything downstream — serving, rollback, audit — reads the alias. In the UC Model Registry, model stages do not exist; the lifecycle is aliases + tags.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Standardize alias names across the org: <code>champion</code> = live, <code>challenger</code> = the next candidate under eval. Attach the eval score, approver, and change ticket to the <strong>version</strong> as tags at promotion time — you will thank yourself during the next incident review when you can answer "which version, who approved it, and why" from the registry alone.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Books lag here. 📗B2 <strong>Ch5</strong> still describes registration as enabling "controlled stage transitions" through staging/production <strong>stages</strong> — legacy Workspace-registry / MLflow-2 framing. 📗B2 <strong>Ch6</strong> corrects it: "lifecycle management is implemented through aliases and tags rather than deprecated stages," and notes the exam may still use "stage" wording. Teach aliases + tags. Method names (<code>set_registered_model_alias</code>, <code>set_registered_model_tag</code>, <code>set_model_version_tag</code>, <code>get_model_version_by_alias</code>) verified against the current MLflow client API.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>You logged a chain in 05.6. Give the two lines that point the registry at Unity Catalog and register it as <code>unity_airways.rag.ua_rag_chain</code>. What does a second register call produce?</li>
+          <li>UC models have no stages. How do you express "version 3 is the live one," and how do you then load it without hard-coding the number?</li>
+          <li>A regression hits the live build. In one line, how do you roll back, and why do the calling apps need no change?</li>
+          <li>Which API tags a whole registered model vs a single version, and what belongs on each? Give one realistic tag for the version at promotion time.</li>
+          <li>What UC privilege does a serving service principal need to load the model, and what two traversal grants must accompany it?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📘 B1 — <em>Practical MLflow for Generative AI on Databricks</em>, Ch 1 + the agent-registration chapter: <code>mlflow.set_registry_uri("databricks-uc")</code>, three-level namespace <code>catalog.schema.model_name</code>, <code>mlflow.register_model(model_uri=..., name=UC_MODEL_NAME)</code>, registered models appearing in Catalog Explorer under <code>workspace.unity_airways</code>, and the load-by-alias vs load-by-version rule of thumb. O'Reilly Early Release — RAW &amp; UNEDITED; APIs verified against current docs.</li>
+        <li>📗 B2 — <em>Databricks Certified Generative AI Engineer Associate Study Guide</em>, Ch 6 ("Managing Versions with Aliases and Tags," "Lifecycle and Governance Mapping"): three-level UC registration, <code>MlflowClient().set_registered_model_alias(name, alias, version)</code>, <code>set_model_version_tag(...)</code> with <code>approval_ticket</code>/<code>lifecycle=archived</code>, "aliases and tags <strong>replace deprecated stages</strong>," and two-level (registry + endpoint) governance (Table 5-3). Ch 5 is the <strong>legacy</strong> stage-based framing, flagged as such.</li>
+        <li>🌐 MLflow Python API — <code>mlflow.client.MlflowClient</code>: <code>set_registered_model_alias</code>, <code>set_registered_model_tag</code>, <code>set_model_version_tag</code>, <code>get_model_version_by_alias</code>. Method names <strong>verified live</strong> against <code>mlflow.org/docs/latest/api_reference/python_api/mlflow.client.html</code>.</li>
+        <li>🌐 Databricks Docs — "Manage model lifecycle in Unity Catalog": UC Model Registry, aliases, and the <code>EXECUTE</code> privilege on a registered model. <code>EXECUTE</code> grant <strong>verified live</strong> at <code>docs.databricks.com/aws/en/machine-learning/manage-model-lifecycle/</code>.</li>
+        <li>🧭 Naming cross-check: <code>references/naming-conventions.md</code> §1 (register to UC via <code>set_registry_uri("databricks-uc")</code> → <code>register_model</code> → <code>catalog.schema.model</code>; Workspace Model Registry is legacy) and §2 (UC governs models, functions/tools, and data).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Topic 06.5 ★</span>
+  <span>Grounded in 📘B1 Ch1 · 📗B2 Ch6 · MLflow + Databricks docs</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"Register into Unity Catalog",spine:false,comps:[
+   ["mlflow.set_registry_uri('databricks-uc')","point at UC","Flips the registry target to Unity Catalog for the session. Do this before any register/alias/tag call, or you write to the legacy per-workspace registry. Off-platform, also set the tracking URI to 'databricks'.","Run it once, first"],
+   ["mlflow.register_model(uri, 'catalog.schema.model')","create a version","Promotes a logged model into UC under a three-level name. model_uri is runs:/<run_id>/<path> or the MLflow 3 models:/<model_id>. Each call mints a new immutable version (v1, v2, v3 ...).","Needs USE CATALOG + USE SCHEMA + CREATE MODEL"],
+ ]},
+ {name:"Govern the versions",spine:true,comps:[
+   ["set_registered_model_alias('champion', 3)","movable pointer","Names one version 'live'. Load models:/name@champion. Promote or roll back by repointing the alias — consumers never change code. Replaces the removed Staging/Production stages.","Requires ownership or MANAGE"],
+   ["set_model_version_tag(v3, key, value)","per-build audit","Labels one version with its eval score, approver, and change ticket (e.g. change_ticket=CHG-2187), or lifecycle=archived to retire it. This is your durable promotion record.","The audit trail"],
+   ["set_registered_model_tag(key, value)","product metadata","Labels the whole model — owning team, project, cost center, data classification. Applies across all versions, does not change per build.","Model-level, not version-level"],
+   ["GRANT EXECUTE ON MODEL ...","gate serving","EXECUTE lets a principal load/serve the model; pair it with USE CATALOG + USE SCHEMA. Registry permissions and endpoint permissions are separate levels of control.","Least privilege for the serving SP"],
+ ]},
+];
+const STEPS=[
+  ["Point the registry at UC","mlflow.set_registry_uri('databricks-uc'). Every register/alias/tag call now targets Unity Catalog. Set UC_MODEL = 'unity_airways.rag.ua_rag_chain' — always three levels."],
+  ["Register the logged chain (v1)","mlflow.register_model(f'runs:/{run.info.run_id}/chain', UC_MODEL). Returns a ModelVersion with .version == 1. Or pass registered_model_name= into log_model to log + register in one shot."],
+  ["Register more builds (v2, v3)","Re-register the same name after each improvement. Each call mints a new immutable version; older versions never change, which is what makes rollback trustworthy."],
+  ["Promote via the champion alias","client.set_registered_model_alias(UC_MODEL, 'champion', 3). 'champion' now means version 3 — a named, movable pointer, not a stage."],
+  ["Load by alias","mlflow.langchain.load_model(f'models:/{UC_MODEL}@champion'). Verify with client.get_model_version_by_alias(UC_MODEL, 'champion').version. Apps reference the alias, never the number."],
+  ["Tag for audit","set_model_version_tag(UC_MODEL, 3, 'approver', 's.banerjee') and 'change_ticket'='CHG-2187' and 'eval_correctness'='0.91'. set_registered_model_tag(UC_MODEL, 'team', 'ml-platform') for the whole model."],
+  ["Roll back by repointing","client.set_registered_model_alias(UC_MODEL, 'champion', 2). Traffic is back on the known-good build in seconds; no app redeploy; v3 is preserved for inspection."],
+  ["Grant EXECUTE to the serving SP","GRANT EXECUTE ON MODEL unity_airways.rag.ua_rag_chain TO `sp-ua-serving`, plus USE CATALOG and USE SCHEMA. Now the endpoint can load the model — and only the model."],
+];
+const MERMAID_SRC=`flowchart TB
+  subgraph LOG["From 05.6 - you already have a logged chain"]
+    run["MLflow run<br/>logged.model_uri = runs:/&lt;run_id&gt;/chain"]
+  end
+  subgraph REG["Register into Unity Catalog · set_registry_uri('databricks-uc')"]
+    run --> reg["mlflow.register_model(uri, 'unity_airways.rag.ua_rag_chain')"]
+    reg --> v1["version 1"]
+    reg --> v2["version 2"]
+    reg --> v3["version 3 (latest build)"]
+  end
+  subgraph GOV["Govern the versions - aliases + tags + grants"]
+    v3 --> alias["set_registered_model_alias('champion', version=3)"]
+    v3 --> vtag["set_model_version_tag(v3): eval_score, approver, ticket"]
+    reg --> mtag["set_registered_model_tag: team, project (whole model)"]
+    reg --> grant["GRANT EXECUTE ON MODEL ... TO serving service principal"]
+  end
+  subgraph USE["Consume by alias, never by number"]
+    alias --> load["load models:/unity_airways.rag.ua_rag_chain@champion"]
+    load --> deploy["Model Serving or batch reads the same stable pointer"]
+    deploy --> roll["promote v4 or roll back to v3 = repoint the alias, no client change"]
+  end`;
+const MERMAID_SRC2=`flowchart TD
+  q{"How do you mark 'which version is live'?"}
+  q -->|"UC Model Registry (current, teach this)"| al["ALIAS = named, movable pointer<br/>set_registered_model_alias('champion', version=3)<br/>load models:/name@champion"]
+  q -->|"Workspace Registry / MLflow 2 (legacy)"| st["STAGE = fixed None/Staging/Production/Archived<br/>transition_model_version_stage(...)<br/>REMOVED on UC models"]
+  al --> repoint["roll forward or back by repointing the alias<br/>clients keep the same code and URL"]
+  st --> gone["no stages exist on a UC-backed model"]`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

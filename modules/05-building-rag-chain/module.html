@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 05 Building & versioning a RAG chain (module hub).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Building &amp; Versioning a RAG Chain · Databricks GenAI Tutor 05</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  /* ============ DESIGN SYSTEM — tokens (do not rename) ============ */
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line);
+    --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .toggle{display:none}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:16ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .ghost{display:none}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  .index-rail{display:none}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tag-pill{display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--line);border-radius:20px;color:var(--muted);margin-left:8px;vertical-align:middle}
+  .tag-pill.h{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.t{color:var(--accent-2);border-color:var(--accent-soft)}
+  .tag-pill.star{color:var(--danger);border-color:var(--danger-soft)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.3rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  h3.tk{font-family:var(--mono);font-size:.9rem;letter-spacing:.06em;margin:24px 0 6px}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.md">Databricks GenAI</a>
+    <span class="loc">Module 05 · Topics 05.1–05.7</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_05 · GenAI lesson · v1.0</span><span>Verified against books + naming cheat-sheet</span></div>
+    <div class="filed">Module 05 — Building &amp; Versioning a RAG Chain · Topics 05.1–05.7 · Theory + Hands-on</div>
+    <h1>Building and Versioning a RAG Chain</h1>
+    <p class="dek">A retriever isn't an app. This module wires the <em>Unity Airways</em> Module 04 retriever to <code>ChatDatabricks</code>, assembles a LangChain RAG chain, then packages, logs, registers, and <em>versions</em> it with MLflow 3 — the point where "we have an index" becomes "we have an app."</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>From a retriever to a versioned RAG chain</h2></div>
+      <p class="lead">Module 04 handed us a <code>retriever</code>: one call returns the five most relevant policy chunks. This module glues <strong>retrieve → prompt → generate</strong> into one chain, then makes it shippable — a signature, dependent resources, Models-from-Code logging, a UC-registered model, and MLflow-tracked versions.</p>
+      <ul>
+        <li>A <strong>RAG chain</strong> is a small LCEL pipeline: extract the question, retrieve chunks, format them into a <strong>prompt</strong>, send it to <code>ChatDatabricks</code>, parse the answer.</li>
+        <li>Build incrementally: an <strong>LLM-only</strong> baseline first, then add the retriever for a <strong>full RAG chain</strong> — and compare the two versions in MLflow.</li>
+        <li>Keep config (endpoint, index, <code>k</code>, prompt) in a <strong>YAML</strong> loaded by <code>ModelConfig</code>, so a version is "this code + this config."</li>
+        <li>Package with a <strong>signature</strong> + <strong>dependent resources</strong>, log via <strong>Models-from-Code</strong> (<code>mlflow.models.set_model()</code>), register to UC as <code>unity_airways.rag.ua_rag_chain</code>, and version each iteration with <code>mlflow.set_active_model()</code>.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Two naming rules</span><strong>(1)</strong> The LangChain integration is <strong><code>databricks-langchain</code></strong> — <code>from databricks_langchain import ChatDatabricks, DatabricksVectorSearch, DatabricksEmbeddings</code> — not <code>langchain-databricks</code>, not <code>langchain_community</code>. <strong>(2)</strong> On <strong>MLflow ≥ 3.1</strong>, log chains with <strong>Models-from-Code</strong> (<code>mlflow.models.set_model()</code>) and version them with <strong><code>mlflow.set_active_model()</code></strong> (LoggedModel).</div>
+    </section>
+
+    <section class="entry" id="problem">
+      <div class="entry-head"><span class="num">02 · The problem</span><h2>Why gluing it by hand — and pickling it — fails</h2></div>
+      <p>The retriever returns passages, not answers. The support agent needs the system to <em>read</em> those chunks and <em>write</em> a grounded reply, the same way every time, then version and serve it. Naive shortcuts break:</p>
+      <ul>
+        <li><strong>Paste chunks into a prompt by hand</strong> → no reusable object, no schema, no version history. Fine for one demo, useless for an eval loop or serving.</li>
+        <li><strong>Hard-code endpoint/index names</strong> → every experiment is a code edit; you can't tell which config produced which result. Externalize to YAML.</li>
+        <li><strong>Pickle the chain</strong> → a RAG chain is a <em>system of live services</em>, and the <code>VectorStoreRetriever</code> inside it isn't serializable — flavor logging throws <code>Failed to save runnable sequence</code>.</li>
+        <li><strong>Deploy and hope auth works</strong> → a served chain has no notebook creds; without declared <code>resources=[...]</code> it can't reach the index or the LLM.</li>
+        <li><strong>Track versions in a spreadsheet</strong> → manual, and can't link a version to the traces/metrics it produced. MLflow 3's LoggedModel does.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">03 · Explore</span><h2>The chain flow, the 7 topics, the anatomy, and code-vs-flavor logging</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">RAG chain flow</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The 7 topics</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Chain anatomy</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Logging: code vs flavor</button>
+      </div>
+
+      <!-- PANE A: chain flow map — mirrors module.md's first Mermaid -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — RAG chain flow">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Two branches run in parallel — one fetches and formats context through the Module 04 retriever, the other passes the raw question through — then merge into the prompt. The retriever is Module 04's object; Module 05 doesn't rebuild it.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the 7 topics -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — Topic index">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a topic</div><h3>The 7 topics</h3><p>Click a topic to see what it covers and its Theory/Hands-on label. ★ marks a cornerstone with its own deep-dive page.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: chain-anatomy stepper -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <div class="plate-cap" style="margin-top:14px">The seven ordered steps of a RAG chain (05.1). Steps 2–4 (build context) and the question passthrough run in parallel, then merge at the prompt.</div>
+      </div>
+
+      <!-- PANE D: logging comparison table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Facet</th><th>LangChain flavor</th><th>Models-from-Code ★</th></tr></thead><tbody id="rows"></tbody></table>
+      </div>
+    </section>
+
+    <section class="entry" id="build">
+      <div class="entry-head"><span class="num">04 · Build the chain</span><h2>05.1–05.4 — anatomy, integration, LLM→RAG, memory</h2></div>
+
+      <h3 class="tk">05.1 What is a "chain"? RAG chain anatomy <span class="tag-pill t">Theory</span></h3>
+      <p>A chain is ordered steps composed with LCEL's <code>|</code> pipe. A RAG chain adds a retrieval step: extract query → retrieve → format context → prompt → generate → parse. The context branch and a question passthrough run in parallel, then merge at the prompt.</p>
+      <pre><code>from operator import itemgetter
+from langchain_core.runnables import RunnableLambda
+from langchain_core.output_parsers import StrOutputParser
+
+chain = (
+    {
+        "context":  itemgetter("messages") | RunnableLambda(extract_user_query_string)
+                    | retriever | RunnableLambda(format_docs),
+        "question": itemgetter("messages") | RunnableLambda(extract_user_query_string),
+    }
+    | prompt | model | StrOutputParser()   # model = ChatDatabricks
+)</code></pre>
+      <p>The chain's input contract is <code>{"messages":[{"role":"user","content":"..."}]}</code> — the OpenAI chat shape, not a bare string. <code>chain.get_graph().draw_mermaid_png()</code> renders the wiring.</p>
+
+      <h3 class="tk">05.2 LangChain ↔ Databricks integration <span class="tag-pill h">Hands-on</span></h3>
+      <p>Two classes from <code>databricks-langchain</code> do the wiring. <code>ChatDatabricks</code> wraps a serving endpoint; <code>DatabricksVectorSearch</code> wraps the Module 04 index and returns the retriever.</p>
+      <pre><code>from databricks_langchain import ChatDatabricks, DatabricksVectorSearch
+
+model = ChatDatabricks(endpoint="databricks-claude-sonnet-4-5", temperature=0, max_tokens=1000)
+
+vs = DatabricksVectorSearch(
+    endpoint="unity-airways-vs",
+    index_name="unity_airways.rag.ua_rag_chunks_index",
+    columns=["chunk_id", "content", "source_doc"],
+)
+retriever = vs.as_retriever(search_kwargs={"k": 5})   # the SAME object Module 04 built</code></pre>
+
+      <h3 class="tk">05.3 ★ LLM-only app → full RAG chain <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span></h3>
+      <p>Build in two steps so you can measure what retrieval buys you. Full walkthrough in the <a href="rag-chain.html">LLM-only → RAG chain deep-dive</a>.</p>
+      <pre><code>import mlflow
+mlflow.langchain.autolog()                    # auto-trace every call
+
+# Step 1 — baseline: just the LLM, no context
+mlflow.set_active_model(name="llm_only")
+# ChatDatabricks answers confidently but ungrounded
+
+# Step 2 — full RAG chain, config in YAML
+from mlflow.models import ModelConfig
+config = ModelConfig(development_config="../conf/rag_chain_config.yml")
+mlflow.set_active_model(name="rag_chain")     # new version to compare against llm_only
+chain.invoke({"messages": [{"role": "user",
+    "content": "Can I rebook for free if my connection is cancelled?"}]})</code></pre>
+      <p>Both versions show in the MLflow <strong>Versions</strong> tab; every question is a <strong>trace</strong> under its version. Enable the Version column in Traces and confirm <code>rag_chain</code> shows both the retriever <em>and</em> <code>ChatDatabricks</code> spans.</p>
+
+      <h3 class="tk">05.4 Memory and context management <span class="tag-pill h">Theory + Hands-on</span></h3>
+      <p>The base chain is stateless. Memory preserves earlier turns so a follow-up ("and for business class?") builds on the last one. Inject it via a <code>{chat_history}</code> slot in the prompt, alongside <code>{context}</code> and <code>{question}</code>.</p>
+      <table>
+        <thead><tr><th>Memory type</th><th>Keeps</th><th>Best for</th></tr></thead>
+        <tbody>
+          <tr><td>Buffer</td><td>Last few turns verbatim</td><td>Short chats; support / form-filling bots</td></tr>
+          <tr><td>Conversation summary</td><td>Running summary of old turns</td><td>Long chats where topic &gt; exact wording</td></tr>
+          <tr><td>Entity</td><td>Named entities (people, order IDs)</td><td>Personalized flows; CRM / assistant bots</td></tr>
+        </tbody>
+      </table>
+      <p>Short-term memory lives in one conversation; long-term persists across sessions in an external store. History affects retrieval too — a bare follow-up may need the earlier subject folded in before it hits the retriever.</p>
+    </section>
+
+    <section class="entry" id="operate">
+      <div class="entry-head"><span class="num">05 · Package, log, version</span><h2>05.5–05.7 — signatures + resources, code vs flavor, versioning</h2></div>
+
+      <div class="plate" data-fig="Fig. 02 — Log, register, version path to UC" style="margin-bottom:22px">
+        <div class="mermaid" id="mermaidGraph2"></div>
+        <div class="plate-cap">Every arrow into <code>log_model</code> is something the served chain needs to run outside the notebook. <code>set_active_model</code> opens the version and anchors its traces/evals.</div>
+      </div>
+
+      <h3 class="tk">05.5 Packaging &amp; logging: signatures, dependent resources <span class="tag-pill h">Theory + Hands-on</span></h3>
+      <p>Two pieces are mandatory before logging. A <strong>signature</strong> (input/output schema) and the <strong>dependent resources</strong> that enable automatic authentication passthrough when the chain is served.</p>
+      <pre><code>from mlflow.models import infer_signature
+from mlflow.models.resources import DatabricksServingEndpoint, DatabricksVectorSearchIndex
+
+signature = infer_signature(model_input=config.get("input_example"),
+                            model_output=config.get("output_example"))
+
+dependent_resources = [
+    DatabricksServingEndpoint(endpoint_name="databricks-claude-sonnet-4-5"),
+    DatabricksVectorSearchIndex(index_name="unity_airways.rag.ua_rag_chunks_index"),
+]</code></pre>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Flavor logging serializes the chain, and the <code>VectorStoreRetriever</code> inside <code>DatabricksVectorSearch</code> is <strong>not natively serializable</strong> — you'll hit <code>Failed to save runnable sequence ... a loader_fn must be provided</code>. Old fix: a <code>loader_fn(persist_directory)</code>. Better fix: Models-from-Code (05.6). And if a served chain 401s but the notebook works, you forgot <code>resources=[...]</code>.</div>
+
+      <h3 class="tk">05.6 ★ Logging "Model as Code" vs LangChain flavor <span class="tag-pill h">Theory + Hands-on</span> <span class="tag-pill star">Cornerstone</span></h3>
+      <p>Both call <code>mlflow.langchain.log_model</code>; the difference is what you pass as <code>lc_model</code>. Full walkthrough in the <a href="model-as-code.html">Model-as-Code deep-dive</a>.</p>
+      <pre><code># rag_chain.py  — build the chain, then mark it:
+mlflow.models.set_model(model=chain)     # THE crucial line for Models-from-Code
+
+# log the SCRIPT PATH, not the object:
+logged = mlflow.langchain.log_model(
+    lc_model="rag_chain.py",
+    code_paths=["helpers/"],                     # helper modules the script imports
+    model_config="../conf/rag_chain_config.yml", # config saved with the model
+    signature=signature,
+    resources=dependent_resources,
+    registered_model_name="unity_airways.rag.ua_rag_chain",  # register to UC
+)</code></pre>
+      <p>Models-from-Code saves the <em>source</em> instead of pickling the object — no serialization errors, scales to complex apps, and is the GA-recommended path for chains and agents. The artifacts show <code>rag_chain.py</code> + <code>helpers/</code> + config, not a pickle.</p>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · scope</span>This module stops at LangChain <strong>chains</strong>. Authoring agents with <code>ResponsesAgent</code> — which also uses <code>mlflow.models.set_model()</code> — is <strong>Module 09</strong>. Same logging primitive, different authoring interface.</div>
+
+      <h3 class="tk">05.7 MLflow app versioning for chains <span class="tag-pill h">Hands-on</span></h3>
+      <p><code>mlflow.set_active_model(name=...)</code> creates a <strong>LoggedModel</strong> — a metadata hub for one version (new in MLflow 3). Traces, params, evals, and the artifact all link to it automatically.</p>
+      <pre><code>active = mlflow.set_active_model(name="rag_chain")
+app_params = {"model_name": databricks_resources.get("model_name"),
+              "retriever_config": retriever_config.get("parameters"),   # {"k": 5}
+              "llm_config": llm_config.get("llm_parameters")}
+mlflow.log_model_params(model_id=active.model_id, params=app_params)</code></pre>
+      <ul>
+        <li>The <strong>Versions</strong> tab lists each version with its params; the <strong>Traces</strong> tab shows which version produced each answer.</li>
+        <li>For real reproducibility, name the LoggedModel by <strong>Git commit hash</strong> and record the <strong>Databricks Runtime</strong> and source <strong>Delta table version</strong> as metadata.</li>
+        <li>Versioning is the basis for <strong>evaluation</strong> (Module 08): scorers attach metrics to a specific version, so you can promote the winner with numbers, not a vibe check.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="worked">
+      <div class="entry-head"><span class="num">06 · Worked thread</span><h2>Unity Airways, retriever to registered chain</h2></div>
+      <ol>
+        <li><strong>Retriever (04):</strong> <code>DatabricksVectorSearch(...).as_retriever(search_kwargs={"k":5})</code> on <code>unity_airways.rag.ua_rag_chunks_index</code>.</li>
+        <li><strong>Baseline (05.3):</strong> <code>set_active_model("llm_only")</code> + <code>ChatDatabricks("databricks-claude-sonnet-4-5")</code> — ungrounded answer.</li>
+        <li><strong>Config (05.3):</strong> endpoint, index, <code>k=5</code>, prompt in <code>rag_chain_config.yml</code>, loaded by <code>ModelConfig</code>.</li>
+        <li><strong>Chain (05.1):</strong> LCEL parallel <code>context</code>/<code>question</code> → <code>PromptTemplate</code> → <code>ChatDatabricks</code> → <code>StrOutputParser</code>. <code>set_active_model("rag_chain")</code>.</li>
+        <li><strong>Memory (05.4):</strong> add a <code>{chat_history}</code> buffer of the last N turns for follow-ups.</li>
+        <li><strong>Package (05.5):</strong> <code>infer_signature(...)</code> + <code>resources=[DatabricksServingEndpoint, DatabricksVectorSearchIndex]</code>.</li>
+        <li><strong>Log as code (05.6):</strong> <code>set_model(chain)</code> in <code>rag_chain.py</code>; <code>log_model(lc_model="rag_chain.py", ..., registered_model_name="unity_airways.rag.ua_rag_chain")</code>.</li>
+        <li><strong>Version (05.7):</strong> each iteration a LoggedModel; compare <code>llm_only</code> vs <code>rag_chain</code>; hand off to <strong>Module 09 / 11</strong>.</li>
+      </ol>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">07 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Import from <code>databricks-langchain</code> (never <code>langchain-databricks</code> / <code>langchain_community</code>). The chain's input is <code>{"messages":[...]}</code>. Log chains as <strong>Models-from-Code</strong> (<code>mlflow.models.set_model()</code>) and version them with <strong><code>mlflow.set_active_model()</code></strong>. A served chain needs a <strong>signature</strong> + <strong><code>resources=[...]</code></strong> to run and authenticate.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Separate config into YAML so a version is "this code + this config" — changing <code>k</code> or the prompt is one line + a fresh <code>set_active_model</code>. Name versions by Git SHA, not <code>v1</code>/<code>v2</code>, so "which commit made this trace?" is one glance.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Served-model names churn — confirm <code>databricks-claude-sonnet-4-5</code> on the supported-models page (the book's <code>databricks-claude-3-7-sonnet</code> is older). Flavor-logging a <code>VectorStoreRetriever</code> throws <code>Failed to save runnable sequence</code> → use Models-from-Code. Don't buffer unlimited memory — it overflows the context window.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">08 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Write the LCEL for a RAG chain's two parallel branches. Why does the <code>question</code> branch exist separately from <code>context</code>, and what merges them?</li>
+          <li>Which package do <code>ChatDatabricks</code> and <code>DatabricksVectorSearch</code> come from, and what is the chain's input shape?</li>
+          <li>You log with <code>mlflow.langchain.log_model(lc_model=chain, ...)</code> and get <code>Failed to save runnable sequence</code>. What caused it and what are your two fixes?</li>
+          <li>Name the two things you must define before logging so a <em>served</em> chain can run, and what each does.</li>
+          <li>What does <code>mlflow.set_active_model()</code> create, why is it useful for versioning, and what name gives real reproducibility?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">09 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📘 B1 — <em>Practical MLflow for GenAI on Databricks</em> (Early Release), Ch 4: <code>ChatDatabricks</code> / <code>DatabricksVectorSearch</code> from <code>databricks_langchain</code>; the LCEL RAG chain (parallel <code>context</code>/<code>question</code>, <code>extract_user_query_string</code>, <code>format_docs</code>, <code>PromptTemplate</code>, <code>StrOutputParser</code>, Fig 4-6); LLM-only vs full RAG; <code>ModelConfig</code> YAML; <code>set_active_model</code> / LoggedModel; <code>infer_signature</code>; dependent resources <code>DatabricksServingEndpoint</code> / <code>DatabricksVectorSearchIndex</code> (pp. 155, 161); flavor logging + <code>loader_fn</code>; Models-from-Code <code>set_model()</code>; UC registration.</li>
+        <li>📗 B2 — <em>Cert Study Guide</em>, Ch 4 "Application Development": AI pipelines and chain components; prompt templates; memory / context managers — buffer, conversation summary, entity (pp. 70–74).</li>
+        <li>🌐 MLflow Docs — Models-from-Code (<code>mlflow.models.set_model()</code>): <code>mlflow.org/docs/latest/ml/model/models-from-code/</code>; <code>mlflow.set_active_model()</code> (MLflow 3 LoggedModel). <em>(Verified live at authoring; <code>mlflow.models.resources</code> module confirmed live, exact class names confirmed against B1 Ch4 — class-page re-check pending.)</em></li>
+        <li>🌐 <code>databricks-langchain</code> — <code>ChatDatabricks</code>, <code>DatabricksVectorSearch</code>, <code>DatabricksEmbeddings</code> (<code>api-docs.databricks.com/python/databricks-ai-bridge/latest/databricks_langchain.html</code>). <em>(Verified live at authoring.)</em></li>
+        <li>📎 Project cheat-sheet — <code>.claude/skills/genai-teacher/references/naming-conventions.md</code> §1 (MLflow 3 Models-from-Code / LoggedModel / <code>set_active_model</code>), §4 (served-model name churn), §9 (<code>databricks-langchain</code> import rule).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 05</span>
+  <span>Grounded in 📘B1 Ch4 · 📗B2 Ch4 · MLflow 3 + databricks-langchain docs · naming §1/§9</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Build the chain (05.1-05.4)",spine:false,comps:[
+   ["05.1 What is a chain? RAG anatomy","Theory","LCEL pipe steps: extract query -> retrieve -> format context -> prompt -> generate -> parse. Context branch and question passthrough run in parallel, then merge at the prompt. Input is the messages shape.","module.md 05.1"],
+   ["05.2 LangChain <-> Databricks","Hands-on","ChatDatabricks wraps a serving endpoint; DatabricksVectorSearch wraps the Module 04 index and returns the retriever. Both from databricks-langchain.","module.md 05.2"],
+   ["05.3 LLM-only -> full RAG chain ★","Hands-on","Baseline (just ChatDatabricks) then add the retriever; config in YAML via ModelConfig; compare the two versions in MLflow.","rag-chain.html"],
+   ["05.4 Memory & context management","Theory + Hands-on","Short vs long-term; buffer / summary / entity memory; inject via a {chat_history} prompt slot. Watch context-window overflow.","module.md 05.4"],
+ ]},
+ {name:"Package, log, version (05.5-05.7)",spine:true,comps:[
+   ["05.5 Packaging & logging","Theory + Hands-on","infer_signature for the schema; resources=[DatabricksServingEndpoint, DatabricksVectorSearchIndex] for auto-auth passthrough when served.","module.md 05.5"],
+   ["05.6 Model-as-Code vs flavor ★","Theory + Hands-on","Flavor logs the object (serialization-prone); Models-from-Code logs a .py script with mlflow.models.set_model(). Code path is GA-recommended.","model-as-code.html"],
+   ["05.7 MLflow app versioning","Hands-on","set_active_model creates a LoggedModel per version, linking traces/evals/params. Name by Git SHA for reproducibility. New in MLflow 3.","module.md 05.7"],
+ ]},
+];
+const STEPS=[
+  ["1 · Input (messages)","Arrives in OpenAI chat shape: {\"messages\": [{\"role\":\"user\",\"content\":\"How do I book with Unity Airways?\"}]}. Not a bare string."],
+  ["2 · Extract query","A helper (extract_user_query_string) pulls the latest user message out of messages. This runs on BOTH branches."],
+  ["3 · Retrieve (Module 04)","The query text goes to the retriever — DatabricksVectorSearch.as_retriever(k=5) on unity_airways.rag.ua_rag_chunks_index — returning the top-k chunks."],
+  ["4 · Format context","A helper (format_docs) flattens the retrieved chunks into one context string for the prompt."],
+  ["5 · Prompt","A PromptTemplate merges {context} and {question} (and optionally {chat_history}) into one instruction. This is where the two parallel branches join."],
+  ["6 · Generate","ChatDatabricks sends the prompt to the model endpoint (databricks-claude-sonnet-4-5) and returns a response message."],
+  ["7 · Parse","StrOutputParser turns the model's message object into a plain answer string — the chain's output."],
+];
+const ROWS=[
+  ["lc_model=","the chain <b>object</b>","a <b>path to a .py script</b>"],
+  ["How MLflow captures it","<b>serializes</b> the object (cloudpickle)","<b>saves the source code</b>"],
+  ["Failure mode","VectorStoreRetriever not serializable -> needs a loader_fn","none — code is saved and re-run"],
+  ["Scales to complex apps","poorly (trial-and-error on unpicklable parts)","yes"],
+  ["Status","valid, still supported","<b>GA, recommended for chains/agents</b>"],
+];
+const MERMAID_SRC=`flowchart LR
+  Q["User question<br/>messages: role user, content ...<br/>OpenAI chat-completion shape"]
+  X["extract_user_query_string<br/>pull the latest user message"]
+  R["Retriever (Module 04)<br/>DatabricksVectorSearch.as_retriever k=5<br/>unity_airways.rag.ua_rag_chunks_index"]
+  F["format_docs<br/>chunks to one context string"]
+  P["PromptTemplate<br/>context plus question"]
+  L["ChatDatabricks<br/>databricks-claude-sonnet-4-5"]
+  O["StrOutputParser<br/>clean answer string"]
+  Q --> X
+  X --> R --> F --> P
+  X -. question passthrough .-> P
+  P --> L --> O`;
+const MERMAID_SRC2=`flowchart TD
+  A["mlflow.set_active_model(name=...)<br/>creates a LoggedModel = this version"]
+  S["infer_signature(...)<br/>input/output schema"]
+  RES["resources=[DatabricksServingEndpoint,<br/>DatabricksVectorSearchIndex]<br/>auto-auth passthrough"]
+  C["mlflow.models.set_model(chain)<br/>in rag_chain.py (Models-from-Code)"]
+  LOG["mlflow.langchain.log_model(<br/>lc_model=rag_chain.py, signature=,<br/>resources=, registered_model_name=)"]
+  UC["Unity Catalog model<br/>unity_airways.rag.ua_rag_chain"]
+  T["Traces + evals + params<br/>auto-linked to the LoggedModel"]
+  A --> LOG
+  S --> LOG
+  RES --> LOG
+  C --> LOG
+  LOG --> UC
+  A --> T`;
+
+/* ---------- light tutor front ---------- */
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0].split(" · ")[1];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline) ---------- */
+function drawMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

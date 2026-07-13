@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 04 Embeddings & Databricks AI Search (module hub).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Embeddings &amp; Databricks AI Search · Databricks GenAI Tutor 04</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  /* ============ DESIGN SYSTEM — tokens (do not rename) ============ */
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line);
+    --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .toggle{display:none}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:16ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .ghost{display:none}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  .index-rail{display:none}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tag-pill{display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--line);border-radius:20px;color:var(--muted);margin-left:8px;vertical-align:middle}
+  .tag-pill.h{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.t{color:var(--accent-2);border-color:var(--accent-soft)}
+  .tag-pill.star{color:var(--danger);border-color:var(--danger-soft)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.3rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  h3.tk{font-family:var(--mono);font-size:.9rem;letter-spacing:.06em;margin:24px 0 6px}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.md">Databricks GenAI</a>
+    <span class="loc">Module 04 · Topics 04.1–04.9</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_04 · GenAI lesson · v1.0</span><span>Verified against books + naming cheat-sheet</span></div>
+    <div class="filed">Module 04 — Embeddings &amp; Databricks AI Search · Topics 04.1–04.9 · Theory + Hands-on</div>
+    <h1>Embeddings and Databricks AI Search</h1>
+    <p class="dek">A clean Delta table can't answer a question. This module embeds the <em>Unity Airways</em> chunks, builds a Databricks AI Search index over them, and hands a <em>retriever</em> to the Module 05 RAG chain — matching on meaning, not keywords.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>From rows of text to a retriever</h2></div>
+      <p class="lead">Module 03 left one row per chunk in <code>unity_airways.rag.ua_rag_chunks</code>. AI Search embeds each chunk into a vector, stores it on an endpoint, and at query time returns the chunks nearest the question's vector — so a bot answers "rebook for free?" from a clause that says "involuntary re-accommodation."</p>
+      <ul>
+        <li><strong>Similarity</strong> is measured by <strong>cosine</strong> (direction) or <strong>dot-product</strong> (direction + magnitude); normalize the vectors and the two are identical.</li>
+        <li>The <strong>embedding model</strong> decides quality. Default to <code>databricks-gte-large-en</code> (1024-dim, 8192-token context) and make sure chunks fit its context length.</li>
+        <li>The workhorse index is a <strong>Delta Sync Index with managed embeddings</strong> — point it at the table; Change Data Feed keeps it current incrementally.</li>
+        <li>Query with <strong>ANN</strong> or <strong>HYBRID</strong>, filter on metadata, add a <strong>reranker</strong>, then hand a <code>DatabricksVectorSearch(...).as_retriever()</code> from <code>databricks-langchain</code> to Module 05.</li>
+      </ul>
+      <div class="note imp"><span class="tag">📌 Naming</span>The product is <strong>Databricks AI Search</strong> (formerly Databricks Vector Search / "Mosaic AI Vector Search"), GA. But the SDK package is still <strong><code>databricks-vectorsearch</code></strong> — <code>from databricks.vector_search.client import VectorSearchClient</code>. There is no <code>databricks-ai-search</code> package and no <code>AISearchClient</code>.</div>
+    </section>
+
+    <section class="entry" id="problem">
+      <div class="entry-head"><span class="num">02 · The problem</span><h2>Why keyword search (and naive vectors) fail</h2></div>
+      <p>A support agent asks "Can I rebook for free if my connection is cancelled?" The answering chunk says "involuntary re-accommodation" and never uses "rebook" or "free." A <code>LIKE '%rebook%'</code> finds nothing. The system must match on <em>meaning</em>, over hundreds of thousands of chunks, in tens of milliseconds, staying fresh as policy changes.</p>
+      <ul>
+        <li><strong>Keyword-only</strong> → misses paraphrases and synonyms; great for codes, useless for reworded questions.</li>
+        <li><strong>Any embedding model</strong> → a 512-token-context model silently truncates a 700-token chunk. Match context length to chunk size.</li>
+        <li><strong>Re-embed everything nightly</strong> → slow and costly. Delta Sync re-embeds only the rows that changed via Change Data Feed.</li>
+        <li><strong>One endpoint for all</strong> → Standard = low latency; Storage-optimized = billions of vectors, cheaper, higher latency. Wrong choice = overpay or miss latency budget.</li>
+        <li><strong>Top-k is enough</strong> → coarse bi-encoder scores can rank the best chunk 4th; the LLM never sees it. A reranker reorders.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">03 · Explore</span><h2>The pipeline, the 9 topics, similarity metrics, and the type matrix</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Retrieval pipeline</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The 9 topics</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Similarity metrics</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Index + endpoint types</button>
+      </div>
+
+      <!-- PANE A: pipeline map — mirrors module.md's first Mermaid -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — Module 04 retrieval pipeline">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">The Delta Sync index calls the embedding endpoint for you. Everything left of the RAG chain is Module 04; the reranker is optional but the cheapest fix for "retrieved but ranked too low."</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the 9 topics -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — Topic index">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a topic</div><h3>The 9 topics</h3><p>Click a topic to see what it covers and its Theory/Hands-on label. ★ marks a cornerstone with its own deep-dive page.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: similarity-metric stepper + mirrored normalization Mermaid -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <div class="plate" data-fig="Fig. 02 — Normalize and the metrics agree" style="margin-top:18px">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">Cosine ignores magnitude; dot-product does not. Scale both vectors to length 1 and dot-product becomes numerically identical to cosine (Book Fig 9-1).</div>
+        </div>
+      </div>
+
+      <!-- PANE D: index + endpoint type reference table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Type</th><th>What it is / when to use</th></tr></thead><tbody id="rows"></tbody></table>
+      </div>
+    </section>
+
+    <section class="entry" id="build">
+      <div class="entry-head"><span class="num">04 · Foundations and build</span><h2>04.1–04.5 — metric, model, index, filters, retriever</h2></div>
+
+      <h3 class="tk">04.1 AI Search fundamentals — cosine vs dot-product <span class="tag-pill t">Theory</span></h3>
+      <p><strong>Cosine</strong> measures the angle (direction) and ignores length: <code>A=(2,2)</code> and <code>B=(4,4)</code> score <strong>1.0</strong>. <strong>Dot-product</strong> measures direction <em>and</em> magnitude: <code>A·B=16</code> but <code>A·A=8</code>, so a longer vector can outrank a better match. <strong>Normalize</strong> to unit length and <code>dot-product(Â, B̂) = cosine(A, B)</code>. Cosine is the standard for semantic RAG.</p>
+
+      <h3 class="tk">04.2 Choosing an embedding model + context length <span class="tag-pill t">Theory</span></h3>
+      <ul>
+        <li><code>databricks-gte-large-en</code> — 1024-dim, <strong>8192-token</strong> context. <strong>Safe default</strong>; covers 150–500-token chunks whole.</li>
+        <li><code>databricks-bge-large-en</code> — 1024-dim, <strong>512-token</strong> context — truncates larger chunks.</li>
+        <li><code>databricks-qwen3-embedding-0-6b</code> — <strong>Preview</strong>; verify specs before use.</li>
+        <li>Query and index <strong>must use the same model</strong> — same space, same dimension.</li>
+      </ul>
+
+      <h3 class="tk">04.3 ★ Creating and querying an index <span class="tag-pill h">Hands-on</span> <span class="tag-pill star">Cornerstone</span></h3>
+      <p>Endpoint → Delta Sync index → sync → query. Full walkthrough in the <a href="create-query-index.html">Create &amp; query an index deep-dive</a>.</p>
+      <pre><code># %pip install databricks-vectorsearch   # unchanged despite the "AI Search" rebrand
+from databricks.vector_search.client import VectorSearchClient   # NOT AISearchClient
+
+vsc = VectorSearchClient()
+vsc.create_endpoint_and_wait(name="unity-airways-vs", endpoint_type="STANDARD")
+
+index = vsc.create_delta_sync_index_and_wait(
+    endpoint_name="unity-airways-vs",
+    index_name="unity_airways.rag.ua_rag_chunks_index",
+    source_table_name="unity_airways.rag.ua_rag_chunks",
+    primary_key="chunk_id",
+    embedding_source_column="content",
+    embedding_model_endpoint_name="databricks-gte-large-en",
+    pipeline_type="TRIGGERED",
+    columns_to_sync=["chunk_id", "content", "source_doc", "chunk_index"],
+)</code></pre>
+      <p>You can also query an index from SQL with the built-in <code>vector_search()</code> function. A Delta Sync index needs <strong>Change Data Feed</strong> on the source table (Module 03 already enabled it).</p>
+
+      <h3 class="tk">04.4 Metadata filtering on queries <span class="tag-pill h">Hands-on</span></h3>
+      <p>Restrict which rows are eligible before ranking. Filter syntax depends on the endpoint type: <strong>Standard</strong> uses dict/<code>filters_json</code>; <strong>Storage-optimized</strong> uses a SQL-like <code>filters</code> string. You can only filter on columns you synced.</p>
+      <pre><code>results = index.similarity_search(
+    query_text="checked bag allowance",
+    columns=["chunk_id", "content", "source_doc"],
+    num_results=5,
+    filters="source_doc = 'baggage_policy' AND chunk_index &lt; 20",  # storage-optimized syntax
+)</code></pre>
+
+      <h3 class="tk">04.5 Retrievers and embedding models together <span class="tag-pill h">Theory + Hands-on</span></h3>
+      <p>The <strong>retriever</strong> wraps the index behind one call for the chain. It comes from <code>databricks-langchain</code> (not <code>langchain_community</code>, not <code>langchain-databricks</code>).</p>
+      <pre><code>from databricks_langchain import DatabricksVectorSearch, DatabricksEmbeddings
+
+vs = DatabricksVectorSearch(
+    endpoint="unity-airways-vs",
+    index_name="unity_airways.rag.ua_rag_chunks_index",
+    columns=["chunk_id", "content", "source_doc"],
+)
+retriever = vs.as_retriever(search_kwargs={"k": 5})   # hand THIS to Module 05
+docs = retriever.invoke("Can I rebook for free if my connection is cancelled?")</code></pre>
+      <p>Managed-embeddings index → the retriever just passes text. Self-managed / Direct Vector Access → embed the query with <code>DatabricksEmbeddings(endpoint="databricks-gte-large-en")</code> so query and docs share one space.</p>
+    </section>
+
+    <section class="entry" id="operate">
+      <div class="entry-head"><span class="num">05 · Query, tune, productionize</span><h2>04.6–04.9 — cost, types, hybrid, reranking</h2></div>
+
+      <h3 class="tk">04.6 Tuning for latency and cost <span class="tag-pill h">Theory + Hands-on</span></h3>
+      <ul>
+        <li><strong>Endpoint type</strong> is the biggest lever — Standard (low latency) vs Storage-optimized (cheap, huge, higher latency).</li>
+        <li><strong><code>num_results</code></strong> — return only what the LLM reads; fetch wide only to feed a reranker.</li>
+        <li><strong><code>columns_to_sync</code></strong> — sync only needed columns → smaller, faster index.</li>
+        <li><strong>Pipeline type</strong> — TRIGGERED (cheap, on-demand) vs CONTINUOUS (live, costlier).</li>
+      </ul>
+
+      <h3 class="tk">04.7 Index and endpoint types <span class="tag-pill h">Theory + Hands-on</span></h3>
+      <table>
+        <thead><tr><th>Index type</th><th>Embeddings / sync</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Delta Sync (managed)</td><td>Databricks computes; auto from CDF</td><td>GA · default</td></tr>
+          <tr><td>Delta Sync (self-managed)</td><td>You provide vectors; auto from CDF</td><td>GA</td></tr>
+          <tr><td>Direct Vector Access</td><td>You provide; manual CRUD</td><td>GA</td></tr>
+          <tr><td>Full-text search</td><td>Keyword only, no vectors</td><td>Beta</td></tr>
+        </tbody>
+      </table>
+      <p>Endpoints: <strong>Standard</strong> (low latency, up to hundreds of millions of vectors, GA) vs <strong>Storage-optimized</strong> (&gt;1B vectors, faster indexing, cheaper, GA). Start with <strong>Delta Sync managed + Standard</strong>.</p>
+
+      <h3 class="tk">04.8 Hybrid search — keyword + vector <span class="tag-pill h">Theory + Hands-on</span></h3>
+      <p>ANN matches meaning but can miss exact tokens (booking refs, fare classes, IATA codes). <strong>HYBRID</strong> runs ANN + BM25 and merges — semantic recall plus exact-term precision. GA. Costs ~2x ANN.</p>
+      <pre><code>results = index.similarity_search(
+    query_text="baggage fee for fare class Q on flight UA-8842",
+    columns=["chunk_id", "content", "source_doc"],
+    query_type="HYBRID",   # "ANN" (default) or "HYBRID"
+    num_results=10,
+)</code></pre>
+
+      <h3 class="tk">04.9 ★ Reranking retrieved results <span class="tag-pill h">Theory + Hands-on</span> <span class="tag-pill star">Cornerstone</span></h3>
+      <p>Bi-encoder retrieval is fast but coarse; the best chunk can land at rank 4. A <strong>cross-encoder reranker</strong> reads each (query, chunk) pair together and reorders. Full walkthrough in the <a href="reranking.html">Reranking deep-dive</a>.</p>
+      <ul>
+        <li>Retrieve a <strong>wider</strong> candidate set (top 25–50) with ANN/HYBRID.</li>
+        <li>Cross-encoder re-scores each pair — accurate, but too slow for the whole corpus, so run it only on candidates.</li>
+        <li>Keep the top <strong>k</strong> (e.g. 5). Fixes the <strong>MRR</strong> problem from 03.7 — pushes the right chunk to rank 1.</li>
+        <li>On Databricks: run the reranker behind a Model Serving endpoint or in the chain. Exact managed-reranking names are <em>live re-check pending</em> — confirm at build time.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="worked">
+      <div class="entry-head"><span class="num">06 · Worked thread</span><h2>Unity Airways, table to retriever</h2></div>
+      <ol>
+        <li><strong>Source (03):</strong> <code>unity_airways.rag.ua_rag_chunks</code> — CDF on, columns <code>chunk_id, content, source_doc, chunk_index, ingested_at</code>.</li>
+        <li><strong>Model (04.2):</strong> <code>databricks-gte-large-en</code> — 8192-token context covers ~200-token chunks whole.</li>
+        <li><strong>Index (04.3, 04.7):</strong> Delta Sync managed index <code>ua_rag_chunks_index</code> on a Standard endpoint, key <code>chunk_id</code>, embed <code>content</code>, sync <code>source_doc</code>/<code>chunk_index</code>, TRIGGERED.</li>
+        <li><strong>Query (04.1, 04.8):</strong> "rebook for free?" → ANN finds the "involuntary re-accommodation" chunk despite zero shared keywords; a booking-code query switches to HYBRID.</li>
+        <li><strong>Filter (04.4):</strong> baggage question adds <code>filters="source_doc = 'baggage_policy'"</code>.</li>
+        <li><strong>Rerank (04.9):</strong> retrieve top 30, cross-encoder re-scores, keep top 5 — the exact refund clause moves to rank 1.</li>
+        <li><strong>Hand off (04.5):</strong> <code>as_retriever(search_kwargs={"k": 5})</code> → the <strong>Module 05</strong> RAG chain.</li>
+      </ol>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">07 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Package is <code>databricks-vectorsearch</code> / <code>VectorSearchClient</code> (never <code>databricks-ai-search</code> / <code>AISearchClient</code>). LangChain integration is <code>databricks-langchain</code> (<code>DatabricksVectorSearch</code>, <code>DatabricksEmbeddings</code>, <code>ChatDatabricks</code>). Start with a <strong>Delta Sync managed index on a Standard endpoint</strong>. Exam trap: <em>normalized dot-product = cosine similarity</em>.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Right-size before you scale: Standard endpoint + TRIGGERED sync + <code>k=5</code> is the cheap, fast default for a modest corpus. Plan your filter/return columns into <code>columns_to_sync</code> up front. Hybrid is the safety net for the "exact terms matter" gap from 03.7.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Don't mix models between build and query (wrong space / dimension mismatch), don't embed a 700-token chunk with a 512-token model, and don't mix filter syntaxes (SQL-string on Standard, or JSON dict on Storage-optimized). Reranking fixes <em>ordering</em>, not recall — a chunk never retrieved can't be reranked in.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">08 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>What does cosine measure that dot-product does not ignore, and what single operation makes them numerically equal?</li>
+          <li>Why does <code>databricks-gte-large-en</code>'s 8192-token context matter for ~200-token chunks — and when would <code>bge-large-en</code> bite you?</li>
+          <li>Give the minimum spec for a Delta Sync managed index on <code>ua_rag_chunks</code>: which parameters, and what must be true of the source table?</li>
+          <li>When do you switch from ANN to HYBRID search, and roughly what does it cost?</li>
+          <li>A relevant chunk is retrieved but ranked 4th. Which stage fixes this, how does it work, and what can it <em>not</em> fix?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">09 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📗 B2 — <em>Cert Study Guide</em>, Ch 9 "Vector Search Fundamentals": cosine / dot-product / normalization (the <code>A=(2,2)</code>/<code>B=(4,4)</code> example, Fig 9-1, Table 9-1, "normalized dot product = cosine similarity"); indexing &amp; similarity search; retrievers &amp; embedding models. Ch 3 (context length), Ch 5 (serving/scaling).</li>
+        <li>🌐 Databricks Docs — Databricks AI Search (formerly Vector Search): <code>docs.databricks.com/aws/en/generative-ai/vector-search</code> — index types, endpoint types, SDK <code>databricks-vectorsearch</code>, managed embeddings, CDF requirement, hybrid search (GA), <code>vector_search()</code> SQL. <em>(Live re-check pending — fetch blocked at authoring; verified against naming cheat-sheet §3.)</em></li>
+        <li>🌐 <code>databricks-langchain</code> — <code>DatabricksVectorSearch</code>, <code>DatabricksEmbeddings</code>, <code>ChatDatabricks</code>, <code>.as_retriever()</code>. <em>(Live re-check pending.)</em></li>
+        <li>📎 Project cheat-sheet — <code>.claude/skills/genai-teacher/references/naming-conventions.md</code> §3 (Databricks AI Search): current names, GA/Beta status, and the <code>databricks-vectorsearch</code> / <code>databricks-langchain</code> naming rules honored throughout.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 04</span>
+  <span>Grounded in 📗B2 Ch9 · AI Search + databricks-langchain docs · naming §3</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Foundations and build (04.1-04.5)",spine:false,comps:[
+   ["04.1 AI Search fundamentals","Theory","Cosine (direction) vs dot-product (direction + magnitude); normalize and they become equal. Cosine is the RAG default.","module.md 04.1"],
+   ["04.2 Embedding model + context length","Theory","gte-large-en (1024-dim, 8192-token) is the safe default. Match model context to chunk size; query and index share one model.","module.md 04.2"],
+   ["04.3 Create and query an index ★","Hands-on","Endpoint -> Delta Sync managed index on ua_rag_chunks -> sync -> query. VectorSearchClient.","create-query-index.html"],
+   ["04.4 Metadata filtering","Hands-on","Restrict eligible rows before ranking (e.g. source_doc). Standard = dict; Storage-optimized = SQL-like string.","module.md 04.4"],
+   ["04.5 Retrievers + embedding models","Theory + Hands-on","DatabricksVectorSearch(...).as_retriever() from databricks-langchain — the object handed to Module 05.","module.md 04.5"],
+ ]},
+ {name:"Query, tune, productionize (04.6-04.9)",spine:true,comps:[
+   ["04.6 Tuning latency and cost","Theory + Hands-on","Endpoint type, num_results, columns_to_sync, TRIGGERED vs CONTINUOUS, query mode cost.","module.md 04.6"],
+   ["04.7 Index and endpoint types","Theory + Hands-on","Delta Sync managed/self-managed, Direct Vector Access (GA), Full-text (Beta); Standard vs Storage-optimized.","module.md 04.7"],
+   ["04.8 Hybrid search","Theory + Hands-on","ANN + BM25 keyword, query_type=HYBRID. Use for codes/proper nouns. GA. ~2x ANN cost.","module.md 04.8"],
+   ["04.9 Reranking ★","Theory + Hands-on","Cross-encoder re-scores top-N candidates for precise ordering. Fixes MRR, not recall.","reranking.html"],
+ ]},
+];
+const STEPS=[
+  ["Cosine similarity","Measures the angle (direction) between vectors and ignores length. A=(2,2) and B=(4,4) score 1.0; C=(2,-2) scores -1.0. The standard metric for semantic search and RAG."],
+  ["Dot-product similarity","Measures direction AND magnitude. A·B=(2×4)+(2×4)=16 but A·A=8 — a longer vector outranks a better match. Unstable when magnitudes vary."],
+  ["Normalization","Rescale each vector to unit length 1 (Â = A / |A|), preserving direction. Now magnitude is gone from the comparison."],
+  ["The equivalence","dot-product(Â, B̂) = cosine(A, B). That is why models trained for dot-product usually output normalized vectors, and why the metrics are interchangeable for ranking on normalized data."],
+];
+const ROWS=[
+  ["Delta Sync (managed)","Databricks computes embeddings from a text column, auto-syncs from Delta CDF. GA. Easiest — the Unity Airways default."],
+  ["Delta Sync (self-managed)","You precompute and store a vector column; still auto-syncs. GA. For custom/fine-tuned embedding models."],
+  ["Direct Vector Access","You push vectors via CRUD API; no Delta source. GA. Real-time updates."],
+  ["Full-text search","Keyword only, no vectors. Beta — verify before production."],
+  ["Standard endpoint","Low latency (tens of ms), up to hundreds of millions of vectors. GA. Real-time chat. Start here."],
+  ["Storage-optimized endpoint",">1B vectors, faster indexing, substantially lower cost, higher latency. GA. Large or cost-sensitive corpora."],
+];
+const MERMAID_SRC=`flowchart LR
+  T["unity_airways.rag.ua_rag_chunks<br/>Delta table, CDF on<br/>chunk_id, content, source_doc, chunk_index"]
+  E["Embedding endpoint<br/>databricks-gte-large-en<br/>1024-dim · 8192-token"]
+  I["Delta Sync Index<br/>managed embeddings<br/>Standard or Storage-optimized endpoint"]
+  Q["Query and retriever<br/>ANN or HYBRID plus metadata filters<br/>04.3-04.8"]
+  RR["Optional reranker<br/>cross-encoder re-scores top-N<br/>04.9"]
+  C["RAG chain<br/>Module 05"]
+  T --> E --> I --> Q --> RR --> C`;
+const MERMAID_SRC2=`flowchart TD
+  A["Vector A<br/>small magnitude"] --> nA["Normalize to<br/>unit length 1"]
+  B["Vector B<br/>large magnitude"] --> nB["Normalize to<br/>unit length 1"]
+  nA --> D["Dot product of the<br/>two unit vectors"]
+  nB --> D
+  D --> S["equals Cosine similarity<br/>direction only, magnitude removed"]`;
+
+/* ---------- light tutor front ---------- */
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td>${r[0]}</td><td><b>${r[1]}</b></td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline) ---------- */
+function drawMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

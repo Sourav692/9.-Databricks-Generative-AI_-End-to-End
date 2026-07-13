@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Module 02 Prompt Engineering (module hub).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prompt Engineering · Databricks GenAI Tutor 02</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  /* ============ DESIGN SYSTEM — tokens (do not rename) ============ */
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line);
+    --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .toggle{display:none}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2.1rem,5.6vw,3.5rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:16ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .ghost{display:none}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  .index-rail{display:none}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);border-bottom:0;opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.83rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0;position:relative}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tag-pill{display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--line);border-radius:20px;color:var(--muted);margin-left:8px;vertical-align:middle}
+  .tag-pill.h{color:var(--ok);border-color:var(--ok-soft)}
+  .tag-pill.t{color:var(--accent-2);border-color:var(--accent-soft)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.3rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.3rem;font-weight:600;margin:4px 0 8px}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  .mermaid svg{max-width:100%;height:auto}
+  .twinfig{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.twinfig{grid-template-columns:1fr}}
+  .handoff{font-family:var(--mono);font-size:.72rem;line-height:1.6;color:var(--muted);text-align:center;
+    margin-top:14px;padding:10px 14px;border:1px dashed var(--line);border-radius:8px;background:var(--card)}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="../../ROADMAP.md">Databricks GenAI</a>
+    <span class="loc">Module 02 · Topics 02.1–02.8</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_02 · GenAI lesson · v1.0</span><span>Verified against books + docs</span></div>
+    <div class="filed">Module 02 — Prompt Engineering · Topics 02.1–02.8 · Theory + Hands-on</div>
+    <h1>Prompt Engineering</h1>
+    <p class="dek">A prompt is a control surface, not a magic phrase. This module goes from prompt craft to prompt operations, all on one use case: <em>Unity Airways customer support</em>.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>Prompts are production assets</h2></div>
+      <p class="lead">Good prompts set the role, the constraints, and what to do when information is missing. The moment a prompt touches customers, you version it, review it, and roll it back like code.</p>
+      <ul>
+        <li>For anything a machine parses, make the <strong>output format a contract</strong> (JSON, fixed keys, "return only that").</li>
+        <li>On Databricks the lifecycle tool is the <strong>MLflow Prompt Registry</strong> (<code>mlflow.genai</code>, Beta): immutable versions, mutable aliases, governed in Unity Catalog.</li>
+        <li>Promotions are driven by <strong>evaluation on a fixed dataset</strong>, not by "I like version 2 better." Optimization proposes candidates; they still earn promotion through the same checks.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="problem">
+      <div class="entry-head"><span class="num">02 · The problem</span><h2>Why "just write a better prompt" fails</h2></div>
+      <p>A support assistant works in the demo, then invents refund eligibility in production. The deployed prompt is whatever someone last pasted into a notebook. Nobody can say which prompt is live, who changed it, or what the last known-good version was. These are prompt <em>lifecycle</em> problems, not model problems.</p>
+      <ul>
+        <li><strong>One clever prompt</strong> still fails when the user is vague, angry, or missing details.</li>
+        <li><strong>Free-text output</strong> breaks downstream parsers on a missing key or stray sentence.</li>
+        <li><strong>Prompts as repo strings</strong> lose history, comparison, and safe rollback.</li>
+        <li><strong>"Do not hallucinate"</strong> is weak; models follow "do X instead" far better.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">03 · Explore</span><h2>Module map, lifecycle, and the 8 topics</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Module map</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The 8 topics</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Lifecycle</button>
+        <button role="tab" aria-selected="false" aria-controls="p-table" id="t-table" onclick="tab(this,'p-table')">Format pitfalls</button>
+      </div>
+
+      <!-- PANE A: module map — mirrors module.md's first Mermaid. Split into two side-by-side diagrams so labels stay readable. -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="twinfig">
+          <div class="plate" data-fig="Fig. 01a — Prompt craft · 02.1–02.4">
+            <div class="mermaid" id="mermaidCraft"></div>
+            <div class="plate-cap">How you <strong>write</strong> a prompt.</div>
+          </div>
+          <div class="plate" data-fig="Fig. 01b — Prompt operations · 02.5–02.8">
+            <div class="mermaid" id="mermaidOps"></div>
+            <div class="plate-cap">How you <strong>keep it alive</strong> in production.</div>
+          </div>
+        </div>
+        <div class="handoff">Craft hands off to operations at <strong>02.4 → 02.5</strong> (Metaprompts → Prompt Registry), then <strong>02.8 anti-patterns loop back</strong> to 02.1 as you iterate.</div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the 8 topics -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — Topic index">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a topic</div><h3>The 8 topics</h3><p>Click a topic to see what it covers and its Theory/Hands-on label.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: lifecycle stepper + mirrored lifecycle Mermaid -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+        <div class="plate" data-fig="Fig. 02 — Prompt lifecycle on Databricks" style="margin-top:18px">
+          <div class="mermaid" id="mermaidGraph2"></div>
+          <div class="plate-cap">Versions are immutable snapshots; aliases are the pointers you move to promote or roll back.</div>
+        </div>
+      </div>
+
+      <!-- PANE D: reference table -->
+      <div id="p-table" class="pane" role="tabpanel" aria-labelledby="t-table" hidden>
+        <table><thead><tr><th>Format pitfall</th><th>Better move</th></tr></thead><tbody id="rows"></tbody></table>
+      </div>
+    </section>
+
+    <section class="entry" id="craft">
+      <div class="entry-head"><span class="num">04 · Prompt craft</span><h2>02.1–02.4 — writing prompts that survive real users</h2></div>
+
+      <h3 style="font-family:var(--mono);font-size:.9rem;letter-spacing:.06em">02.1 Core techniques <span class="tag-pill t">Theory</span></h3>
+      <ul>
+        <li><strong>Zero-shot:</strong> no examples. Make it work by defining role/scope, giving measurable constraints, and saying what to do when info is missing.</li>
+        <li><strong>Few-shot:</strong> a few short examples — one direct answer, one that asks for a missing detail, one that declines to speculate.</li>
+        <li><strong>Reasoning:</strong> ask for deliberation, but keep it silent in production and output only the final answer.</li>
+        <li>Set a priority order: safety/correctness &gt; policy &gt; clarity &gt; tone. Promote "be cheerful" above "don't invent policy" and you get friendly hallucinations.</li>
+      </ul>
+
+      <h3 style="font-family:var(--mono);font-size:.9rem;letter-spacing:.06em">02.2 Structured output + templates <span class="tag-pill h">Hands-on</span></h3>
+      <p>When output feeds a parser, the objective is predictability. Declare the exact schema, isolate input with delimiters, forbid extra text explicitly.</p>
+      <pre><code>from langchain.prompts import PromptTemplate
+
+fraud_prompt = PromptTemplate.from_template(
+    "You are a fraud analysis system.\n"
+    "Analyze the claim below and return ONLY a JSON object with this schema:\n"
+    '{{"fraud_flag": true | false, "risk_score": number}}\n'
+    "Do not include explanations, comments, or additional text.\n"
+    "CLAIM:\n{claim_text}"
+)</code></pre>
+
+      <h3 style="font-family:var(--mono);font-size:.9rem;letter-spacing:.06em">02.3 Prompt injection with templates <span class="tag-pill t">Theory</span></h3>
+      <ul>
+        <li>Injection overrides your instructions ("Ignore previous instructions..."). In RAG it can arrive through a <strong>retrieved document</strong>, not just the user.</li>
+        <li>Treat all external input as untrusted; wrap it in delimiters and tell the model not to follow instructions inside them.</li>
+        <li>The template is one layer. Combine with input sanitization, output validation, and fallback handling.</li>
+      </ul>
+
+      <h3 style="font-family:var(--mono);font-size:.9rem;letter-spacing:.06em">02.4 Metaprompts <span class="tag-pill t">Theory</span></h3>
+      <p>A metaprompt is a persistent system-level instruction governing <em>how</em> the model answers. It redefines success: "answer only when supported by context; otherwise say you can't." A correct refusal is a success, not a failure.</p>
+      <pre><code>METAPROMPT = """
+You are an internal knowledge assistant.
+Rules:
+- Use only the information provided in the retrieved context to answer questions.
+- Do not use prior knowledge or make assumptions beyond the retrieved context.
+- If the retrieved context does not contain enough information, respond with:
+  'I do not have sufficient information in the provided documents to answer this question.'
+- Do not fabricate examples, policies, or steps.
+"""</code></pre>
+    </section>
+
+    <section class="entry" id="ops">
+      <div class="entry-head"><span class="num">05 · Prompt operations</span><h2>02.5–02.8 — keeping prompts alive in production</h2></div>
+
+      <h3 style="font-family:var(--mono);font-size:.9rem;letter-spacing:.06em">02.5 ★ MLflow Prompt Registry <span class="tag-pill h">Hands-on</span></h3>
+      <p>A Git-like model: prompts are named entities in Unity Catalog, versions are immutable, aliases are mutable pointers, tags are version metadata. Full walkthrough in the <a href="prompt-registry.html">Prompt Registry deep-dive</a>.</p>
+      <pre><code>import mlflow
+v1 = mlflow.genai.register_prompt(
+    name="main.default.unity_airways_customer_support",
+    template="You are a customer support assistant for Unity Airways.\n"
+             "Customer question: {{question}}\nWrite a concise answer (max 120 words).",
+    commit_message="v1: baseline support answer",
+    tags={"use_case": "customer_support"})
+mlflow.genai.set_prompt_alias(
+    name="main.default.unity_airways_customer_support", alias="production", version=1)
+prompt = mlflow.genai.load_prompt(
+    "prompts:/main.default.unity_airways_customer_support@production")
+text = prompt.format(question="Can I change my flight tomorrow?")</code></pre>
+
+      <h3 style="font-family:var(--mono);font-size:.9rem;letter-spacing:.06em">02.6 Evaluate and compare versions <span class="tag-pill h">Hands-on</span></h3>
+      <p>Keep the dataset fixed. Score each version with <code>mlflow.genai.evaluate</code> and the <code>Correctness</code> scorer; read <code>correctness/mean</code>; promote the winner.</p>
+      <pre><code>from mlflow.genai.scorers import Correctness
+results = mlflow.genai.evaluate(
+    predict_fn=make_predict_fn(prompt_name, version),
+    data=eval_dataset,
+    scorers=[Correctness()])   # dataset fields: inputs, expectations (expected_facts)</code></pre>
+
+      <h3 style="font-family:var(--mono);font-size:.9rem;letter-spacing:.06em">02.7 Prompt optimization <span class="tag-pill h">Hands-on</span></h3>
+      <p>One unified API, <code>mlflow.genai.optimize_prompts</code>, proposes a candidate template you still review and promote through the same lifecycle.</p>
+      <pre><code>from mlflow.genai.optimize import GepaPromptOptimizer
+result = mlflow.genai.optimize_prompts(
+    predict_fn=predict_fn, train_data=train_dataset, prompt_uris=[baseline.uri],
+    optimizer=GepaPromptOptimizer(
+        reflection_model="databricks:/databricks-claude-sonnet-4-5", max_metric_calls=20),
+    scorers=[Correctness()])
+candidate = result.optimized_prompts[0]</code></pre>
+
+      <h3 style="font-family:var(--mono);font-size:.9rem;letter-spacing:.06em">02.8 Anti-patterns and debugging <span class="tag-pill t">Theory</span></h3>
+      <ul>
+        <li><strong>Kitchen-sink prompt</strong> → define one primary task; make the rest testable constraints.</li>
+        <li><strong>Changing many things at once</strong> → one change per version + an intent-rich commit message.</li>
+        <li><strong>Hard-coding versions</strong> → load by alias; move the pointer.</li>
+        <li>Log prompt name + version at runtime so "it said I'd get a refund" traces to a version.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">06 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>A prompt that works once is not the goal. A prompt that works when the user is vague, upset, or missing details is the goal. Design for the messy case first. And in evaluation, a correct refusal is a success, not a failure.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Load by <strong>alias</strong> in production and by <strong>version</strong> in development. Pin versions for reproducible tests; use the alias as your controlled release channel. One change per version keeps iteration debuggable.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Use <code>mlflow.genai.evaluate</code> (MLflow 3), not <code>mlflow.evaluate(model_type="databricks-agent")</code>. Registry templates use <code>{{double}}</code> braces — convert with <code>to_single_brace_format()</code> for LangChain. The Prompt Registry is <strong>Beta</strong> on Databricks (needs <code>mlflow[databricks]&gt;=3.1.0</code>, a UC schema, and CREATE FUNCTION + EXECUTE + MANAGE).</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">07 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Why is loading a prompt by <strong>alias</strong> preferred in production but loading by <strong>version</strong> preferred in development?</li>
+          <li>Give two prompt techniques that improve JSON format adherence, and one reason "please format as JSON" is not enough.</li>
+          <li>What is the difference between a <strong>task prompt</strong> and a <strong>metaprompt</strong>, and why do metaprompts reduce hallucination?</li>
+          <li>On Databricks, what maturity level is the MLflow Prompt Registry, and what three Unity Catalog privileges does it need?</li>
+          <li>When you compare two prompt versions with <code>mlflow.genai.evaluate</code>, why must the dataset stay fixed, and which metric names the winner?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">08 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📘 B1 — <em>Practical MLflow for GenAI on Databricks</em> (Early Release), Ch 3: prompt fundamentals, Prompt Registry, using prompts in code, evaluating/comparing versions, optimization, anti-patterns.</li>
+        <li>📗 B2 — <em>Cert Study Guide</em>, Ch 2 (structured output, templates, injection considerations, task alignment) &amp; Ch 4 (metaprompts, data leakage, injection resistance).</li>
+        <li>🌐 MLflow Docs — GenAI Prompt Registry: <code>mlflow.org/docs/latest/genai/prompt-registry/</code>; <code>mlflow.genai</code> API reference (<code>optimize_prompts</code>, <code>GepaPromptOptimizer</code>, <code>Correctness</code>).</li>
+        <li>🌐 Databricks Docs — MLflow 3 Prompt Registry (Beta): <code>docs.databricks.com/aws/en/mlflow3/genai/prompt-version-mgmt/prompt-registry/</code>.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Module 02</span>
+  <span>Grounded in 📘B1 Ch3 · 📗B2 Ch2/Ch4 · MLflow + Databricks docs</span>
+</footer>
+
+<script>
+/* ---------- content data ---------- */
+const ITEMS=[
+ {name:"Prompt craft (02.1-02.4)",spine:false,comps:[
+   ["02.1 Core techniques","Theory","Zero-shot, few-shot, reasoning, self-correction. Define role, measurable constraints, and what to do when info is missing.","module.md 02.1"],
+   ["02.2 Structured output","Hands-on","Schema declaration, delimiters, few-shot formatting, forbid extra text. Templates use {{double}} braces.","module.md 02.2"],
+   ["02.3 Prompt injection","Theory","Untrusted user AND retrieved input. Delimiters help; validation + fallback make it safe.","module.md 02.3"],
+   ["02.4 Metaprompts","Theory","System-level rules for grounding, refusal, disclosure. A correct refusal is a success.","module.md 02.4"],
+ ]},
+ {name:"Prompt operations (02.5-02.8)",spine:true,comps:[
+   ["02.5 Prompt Registry","Hands-on ★","Immutable versions, mutable aliases, UC tags. register_prompt / load_prompt / set_prompt_alias. Beta on Databricks.","prompt-registry.md"],
+   ["02.6 Evaluate versions","Hands-on","Fixed dataset, mlflow.genai.evaluate, Correctness scorer, correctness/mean, promote the winner.","module.md 02.6"],
+   ["02.7 Optimization","Hands-on","optimize_prompts + GepaPromptOptimizer proposes a candidate you still review and promote.","module.md 02.7"],
+   ["02.8 Anti-patterns","Theory","Kitchen-sink prompt, vague constraints, changing many things at once, hard-coded versions.","module.md 02.8"],
+ ]},
+];
+const STEPS=[
+  ["Design prompt","Set role, scope, constraints, and missing-info behavior (02.1-02.4)."],
+  ["Register v1","register_prompt(name='catalog.schema.name', template=..., commit_message=...) creates the prompt at version 1."],
+  ["Add versions","Call register_prompt() again with the same name for v2, v3. Versions are immutable; one intentional change each."],
+  ["Evaluate","mlflow.genai.evaluate(predict_fn, data=eval_dataset, scorers=[Correctness()]) on a fixed dataset."],
+  ["Optimize (optional)","optimize_prompts() proposes a candidate template. Review, register as a new version."],
+  ["Promote via alias","set_prompt_alias(alias='staging', version=winner) then 'production'. Rollback is one reassignment."],
+];
+const ROWS=[
+  ["Mixing reasoning with structured output","Ask for JSON only; keep reasoning out of the response"],
+  ["Implicit format assumptions","State the exact format even if it seems obvious"],
+  ["Trusting 'please format as JSON'","Use strong constraints: 'ONLY', 'any additional text is invalid'"],
+  ["No downstream validation","Validate against the schema; reprompt or fall back on failure"],
+];
+const MERMAID_CRAFT=`flowchart TD
+  A["02.1 · Core techniques"] --> B["02.2 · Structured output<br/>and templates"]
+  B --> C["02.3 · Injection defenses"]
+  C --> D["02.4 · Metaprompts"]`;
+const MERMAID_OPS=`flowchart TD
+  E["02.5 · Prompt Registry"] --> F["02.6 · Evaluate versions"]
+  F --> G["02.7 · Optimize"]
+  G --> H["02.8 · Anti-patterns"]`;
+const MERMAID_SRC2=`flowchart TD
+  design["Design prompt"] --> register["Register v1<br/>register_prompt()"]
+  register --> version["Add versions v2, v3<br/>register_prompt() again"]
+  version --> evaluate["Evaluate versions<br/>mlflow.genai.evaluate()"]
+  evaluate --> optimize["Optimize (optional)<br/>optimize_prompts()"]
+  optimize --> promote["Promote via alias<br/>set_prompt_alias()"]
+  promote -->|iterate| version`;
+
+/* ---------- light tutor front ---------- */
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+/* ---------- explorer ---------- */
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+/* ---------- tabs ---------- */
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");
+  if(window.mermaid)drawMermaid();  /* render this pane's diagram now that it is visible */}
+
+/* ---------- stepper ---------- */
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+/* ---------- reference table ---------- */
+const rowsEl=document.getElementById("rows");
+if(rowsEl)rowsEl.innerHTML=ROWS.map(r=>`<tr><td>${r[0]}</td><td><b>${r[1]}</b></td></tr>`).join("");
+
+/* ---------- theme-aware mermaid (graceful offline, lazy per-visible-pane) ---------- */
+const MERMAIDS=[["mermaidCraft",MERMAID_CRAFT],["mermaidOps",MERMAID_OPS],["mermaidGraph2",MERMAID_SRC2]];
+const _mmDone=new Set();let _mmInit=false;
+function _mmVisible(el){return !!(el&&el.offsetParent!==null);}  /* false when inside a display:none pane */
+function drawMermaid(){if(!window.mermaid)return;
+  if(!_mmInit){mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});_mmInit=true;}
+  MERMAIDS.forEach(([id,src])=>{
+    const el=document.getElementById(id);
+    if(!el||_mmDone.has(id)||!_mmVisible(el))return;  /* skip hidden panes so their SVG can't overlap the visible one */
+    el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});_mmDone.add(id);}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidCraft")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=drawMermaid;s.onerror=function(){["mermaidCraft","mermaidOps","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+/* ---------- reveal + progress ---------- */
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

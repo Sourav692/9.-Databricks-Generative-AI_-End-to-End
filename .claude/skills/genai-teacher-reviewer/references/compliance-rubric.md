@@ -48,26 +48,30 @@ row with evidence. Group them as below.
     index types; MLflow-2.x-vs-3.x scope correct; deprecated integrations flagged (e.g.
     `langchain-databricks` → `databricks-langchain`); doc/book pages cited.
 
-### E. HTML explainer — "Databricks Field Almanac" design system
+### E. HTML explainer — shared "Databricks Tutor Field Guide" design system
 16. **Self-contained** — opens by double-click; all CSS/JS inline; Mermaid via CDN with a
     graceful offline fallback; no build step or local server.
-17. **House style** — editorial ink-on-warm-paper; type = **Fraunces** (display) / **Spectral**
-    (body) / **IBM Plex Mono** (labels/code); tokens paper `#f5efe4` · ink `#1b1916` · lava
-    accent `#d83a17` · rule `#d9cfbc` (+ `html[data-theme="night"]` variants). **Never** Inter/
-    Roboto/Arial/system fonts; **never** a generic dark SaaS dashboard or purple gradient.
-17a. **Differentiation anchors (all four required)** — oversized **ghost numeral** in the
-    masthead; **PLATE/FIG** diagram framing (`.plate` blueprint-grid + `data-fig="Fig. NN — …"`);
-    confident **serif voice**; **sticky numbered index rail** with scroll-spy. If it could be
-    mistaken for a generic template, it's wrong.
+17. **House style** — light "paper" editorial / technical-manual front shared with the DE/Delta/
+    PySpark/NetSec tutors; type = **JetBrains Mono** (hero, labels, controls, code) + **Source
+    Serif 4** (body prose and headings); tokens warm paper `#f4f1e8` · card `#fbfaf5` · panel
+    `#efe9d9` · ink `#17140d` · single accent `#2b2bf0` · danger `#b91c1c` · ok `#2f7d55`. One
+    primary accent; **never** Inter/Roboto/Arial/system fonts; **never** a generic dark SaaS
+    dashboard, purple gradient, aurora, or glassmorphism.
+17a. **Front anchors (must be present)** — slim sticky topbar; dotted-paper hero with mono
+    uppercase `h1.display` + `.figstamp` / `.subline` / `.lede`; a single readable `.wrap` column
+    with section hairlines and `.seclabel` labels; code-rich interactive labs/diagrams (`.lab`,
+    `.plate`, `.seg`, `.flowline`, `.stepbox`, `.quickgrid` / `.quickcard`, Mermaid). If it looks
+    like a generic template — or like the retired GenAI-only "Field Almanac" (Fraunces / lava /
+    ghost numeral) — it's wrong; match the shared tutor front.
 18. **Interactivity** — ≥1 genuine interactive element (collapsibles / tabs / clickable diagram
     nodes / hover tooltips / step-through next-prev); each widget's JS scoped to its container id.
-19. **Theme-aware** — day/night toggle persisted to localStorage; Mermaid re-inits with paper/
-    night `themeVariables` on toggle; paper-grain SVG overlay; reveal-on-scroll honoring
-    `prefers-reduced-motion`.
-20. **Callouts as field notes + Notes mirrored** — IMPORTANT (lava) / TIP (green) / GOTCHA
-    (amber) colored left-rule + mono tag; the Notes section mirrored from the MD.
-21. **Accessibility** — `:focus-visible` lava rings; tabs use `role=tab`/`role=tabpanel`; chips
-    use `aria-pressed`; adequate contrast in both themes.
+19. **Self-contained + robust motion** — inline CSS/JS; Mermaid via CDN with graceful offline
+    fallback; a light-only front is preferred so it matches the tutor tracks; honor
+    `prefers-reduced-motion` on any reveal/progress motion.
+20. **Callouts + Notes mirrored** — IMPORTANT / TIP / GOTCHA via `.callout` / `.callout.warn`
+    note variants (accent left-rule + mono tag); the Notes section mirrored from the MD.
+21. **Accessibility** — `:focus-visible` accent rings; tabs use `role=tab`/`role=tabpanel`; chips
+    use `aria-pressed`; adequate contrast.
 
 ### F. Files, notebook & loop
 22. **File locations** — explainer at `modules/<NN-module-slug>/<topic-slug>.{md,html}`; notebook
@@ -97,6 +101,6 @@ row with evidence. Group them as below.
 - **✅ Approved:** clean on Check 1 (terminology/APIs/versions) and all blocking items pass.
 
 A single hallucinated API/product/metric, a wrong MLflow-2-vs-3 version gate (item 15), a missing/
-un-mirrored Mermaid diagram (items 11–12), or an HTML that abandons the Field Almanac design
+un-mirrored Mermaid diagram (items 11–12), or an HTML that abandons the shared Tutor Field Guide design
 system (items 16–17a) is enough to withhold ✅ — in this project accurate grounding and the shared
 house style are the contract.

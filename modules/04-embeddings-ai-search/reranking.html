@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Topic 04.9 (cornerstone): Reranking retrieved results (two-stage retrieval).
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Reranking Retrieved Results · Databricks GenAI Tutor 04.9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbox pre{margin:8px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI</a>
+    <span class="loc">Module 04 · Topic 04.9 ★</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_04.9 · Cornerstone · v1.0</span><span>Verified against books + docs</span></div>
+    <div class="filed">Module 04 — Embeddings and AI Search · Topic 04.9 · Theory + Hands-on ★</div>
+    <h1>Reranking Retrieved Results</h1>
+    <p class="dek">Your embedding retriever is tuned for recall, so the best passage is often not rank 1. Two-stage retrieval fixes the order: cast a wide net with the bi-encoder, then let a cross-encoder re-score the candidates and promote the passage that actually answers the question.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>The right passage came back at rank 7</h2></div>
+      <p class="lead">Unity Airways' assistant answers "Can I get a refund on a Basic Economy fare?" from your indexed policy chunks. It returns the top 5 by similarity and answers from the general refund policy. It is wrong: the Basic Economy exception <em>was</em> retrieved, but at rank 7, so it never reached the prompt. The retrieval was fine. The ordering failed.</p>
+      <ul>
+        <li>The embedding model is a <strong>bi-encoder</strong>: it encodes the query and each passage <em>separately</em>, then compares vectors. That is what makes the index fast — and what makes its ranking a coarse proxy for real relevance.</li>
+        <li><strong>Reranking</strong> is a postprocessing step: re-score the top-K candidates with a model that reads the query and passage <em>together</em>, then reorder so the best rises to the top.</li>
+        <li>The shape is <strong>two-stage retrieval</strong>: stage 1 = fast bi-encoder recall (top-K, K=50); stage 2 = a <strong>cross-encoder</strong> re-scores each <code>(query, passage)</code> pair and returns top-N (N=5).</li>
+        <li>Retriever owns <strong>recall</strong>, reranker owns <strong>precision</strong>, and you only pay the reranker's cost on a small candidate set — never on the whole corpus.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>Pipeline, the two encoders, and when to rerank</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Pipeline</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">Two encoders</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Walkthrough</button>
+        <button role="tab" aria-selected="false" aria-controls="p-compare" id="t-compare" onclick="tab(this,'p-compare')">Compare</button>
+        <button role="tab" aria-selected="false" aria-controls="p-when" id="t-when" onclick="tab(this,'p-when')">When to rerank</button>
+      </div>
+
+      <!-- PANE A: two-stage pipeline mermaid — mirrors reranking.md diagram 1 -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — Two-stage retrieval: query to top-N to LLM">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">The reranker only re-orders the small pool the retriever found — precision without corpus-scale cost.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the two encoders + reranker options -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — The two encoders">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a model</div><h3>Recall then precision</h3><p>Click a model to see how it scores, what it optimizes, and where it runs.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: stepper walkthrough of the two-stage flow -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE D: bi-encoder vs cross-encoder comparison table -->
+      <div id="p-compare" class="pane" role="tabpanel" aria-labelledby="t-compare" hidden>
+        <table>
+          <thead><tr><th>Property</th><th>Bi-encoder · retriever</th><th>Cross-encoder · reranker</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Encodes</td><td>query and passage separately</td><td>query + passage together</td></tr>
+            <tr><td class="k">Precompute</td><td>yes — offline, once</td><td>no — one pass per query</td></tr>
+            <tr><td class="k">Speed</td><td>fast, corpus-scale</td><td>slow, top-K only</td></tr>
+            <tr><td class="k">Optimizes</td><td>recall</td><td>precision</td></tr>
+            <tr><td class="k">Interaction</td><td>none (two vectors)</td><td>full cross-attention</td></tr>
+            <tr><td class="k">Runs over</td><td>the whole index</td><td>the top-K candidates</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Source: B2 Ch3, "The role of reranking in retrieval". Separate encoding buys speed; joint encoding buys accuracy.</p>
+      </div>
+
+      <!-- PANE E: when to rerank vs skip -->
+      <div id="p-when" class="pane" role="tabpanel" aria-labelledby="t-when" hidden>
+        <table>
+          <thead><tr><th>Rerank when</th><th>Skip / be careful when</th></tr></thead>
+          <tbody>
+            <tr><td>MRR is low — right passage retrieved but ranked low</td><td>You have a strict end-to-end latency budget</td></tr>
+            <tr><td>Queries are ambiguous, multi-part, or domain-specific</td><td>Recall itself is broken (good passage never in top-K)</td></tr>
+            <tr><td>Chunks are large or overlapping, so several look equal</td><td>Tiny corpus and the top result is already reliable</td></tr>
+            <tr><td>You need precision without re-indexing</td><td>Very high QPS where per-query cost compounds</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Source: B2 Ch3, "When reranking matters most" + "Practical considerations". Rerank fixes order, not coverage.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="how">
+      <div class="entry-head"><span class="num">03 · How it works</span><h2>Why the best passage is often not rank 1</h2></div>
+      <p>Separate encoding is what makes the index fast, and also what makes its ranking approximate. The cross-encoder gives up precomputation to gain accuracy, which is only affordable on the top-K.</p>
+      <div class="plate" data-fig="Fig. 02 — Bi-encoder vs cross-encoder">
+        <div class="mermaid" id="mermaidGraph2"></div>
+        <div class="plate-cap">Two vectors compared apart vs one pass that reads query and passage together.</div>
+      </div>
+      <ul>
+        <li><strong>Stage 1 tunes recall, not order.</strong> Raise K so the good passage is reliably in the pool. Messy ordering is fine — stage 2 fixes it. If the passage never shows up even at K=100, that is a chunking, embedding, or hybrid-search problem, not a reranking one.</li>
+        <li><strong>Stage 2 scores pairs.</strong> For each of the K candidates, build a <code>(query, passage)</code> pair, run one forward pass, get a relevance score, sort, keep top-N.</li>
+        <li><strong>Why only top-K.</strong> One forward pass per pair means cost scales with candidate count. K=50 pairs is cheap; millions is impossible. Reranking is affordable <em>because</em> stage 1 already narrowed the field.</li>
+        <li><strong>Cross-encoder vs LLM-as-reranker.</strong> A small <code>ms-marco</code>-style cross-encoder is the practical default: fast, cheap, no key. LLM-based scoring (prompt an LLM to rate each passage) handles subtler intent but costs more per candidate — reserve it for the hardest queries.</li>
+        <li><strong>Hybrid search and reranking stack.</strong> Hybrid (04.8) widens the candidate net for recall; reranking (04.9) sharpens the order for precision. Different halves of the same problem.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="dothis">
+      <div class="entry-head"><span class="num">04 · Run this</span><h2>Retrieve top-K, rerank, feed the chain</h2></div>
+      <p><strong>Prereqs:</strong> serverless or DBR ML runtime; read access to the Module 04 Delta Sync index over <code>unity_airways.rag.ua_rag_chunks</code>; a vector search endpoint. The retriever uses <code>DatabricksVectorSearch</code> from <code>databricks-langchain</code>; the cross-encoder is a portable, provider-neutral example served in-process.</p>
+      <pre><code>%pip install -U databricks-vectorsearch databricks-langchain sentence-transformers
+dbutils.library.restartPython()</code></pre>
+      <pre><code>CATALOG = "unity_airways"; SCHEMA = "rag"
+VS_ENDPOINT = "unity-airways-vs"
+INDEX = f"{CATALOG}.{SCHEMA}.ua_rag_chunks_index"   # Module 04 index over ua_rag_chunks
+K = 50   # stage-1 recall depth
+N = 5    # stage-2 passages sent to the LLM
+QUERY = "Can I get a refund on a Basic Economy fare?"</code></pre>
+      <p><strong>Stage 1 — bi-encoder recall</strong> via the Module 04 retriever. Tune <code>k</code> for recall, not order:</p>
+      <pre><code>from databricks_langchain import DatabricksVectorSearch
+
+vs = DatabricksVectorSearch(
+    endpoint=VS_ENDPOINT,
+    index_name=INDEX,
+    columns=["chunk_id", "source_doc", "content"],
+)
+retriever = vs.as_retriever(search_kwargs={"k": K})   # top-K candidates
+candidates = retriever.invoke(QUERY)                  # K LangChain Documents</code></pre>
+      <p><strong>Stage 2 — cross-encoder rerank</strong> (the portable pattern). Score each <code>(query, passage)</code> pair, sort, keep top-N:</p>
+      <pre><code>from sentence_transformers import CrossEncoder
+
+# Small, well-known open cross-encoder — illustrative. Runs in-process; no external key.
+reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+
+pairs  = [(QUERY, d.page_content) for d in candidates]
+scores = reranker.predict(pairs)                       # one score per pair
+ranked = sorted(zip(candidates, scores), key=lambda x: x[1], reverse=True)
+top_n  = [doc for doc, _ in ranked[:N]]                # what the LLM will see</code></pre>
+      <p><strong>Feed the reranked top-N into the Module 05 RAG chain</strong> — wrap both stages in one function and plug it into an LCEL chain:</p>
+      <pre><code>from databricks_langchain import ChatDatabricks
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough
+
+def retrieve_and_rerank(question: str):
+    cands = retriever.invoke(question)                                  # stage 1
+    scores = reranker.predict([(question, d.page_content) for d in cands])
+    ranked = sorted(zip(cands, scores), key=lambda x: x[1], reverse=True)
+    return [d for d, _ in ranked[:N]]                                   # stage 2
+
+def format_docs(docs):
+    return "\n\n".join(d.page_content for d in docs)
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "Answer using ONLY the context. If unsure, say you don't know.\n\nContext:\n{context}"),
+    ("user", "{question}"),
+])
+llm = ChatDatabricks(endpoint="databricks-claude-sonnet-4-5")   # confirm on supported-models page
+
+chain = (
+    {"context": RunnableLambda(retrieve_and_rerank) | format_docs,
+     "question": RunnablePassthrough()}
+    | prompt | llm | StrOutputParser()
+)
+answer = chain.invoke(QUERY)</code></pre>
+      <p><strong>How to verify it worked:</strong> print the naive top-N (<code>candidates[:N]</code>) beside the reranked top-N (<code>ranked[:N]</code>). Success looks like the passage containing the <em>whole</em> Basic Economy refund rule appearing in the reranked list and near the top, even if it was rank 6-7 before. Then measure <strong>MRR</strong> on a small labeled query set — that is the metric reranking moves most.</p>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>Reranking improves <strong>ordering, not coverage</strong>. It can only reorder the passages stage 1 already retrieved — if the answer isn't in the top-K, no reranker can put it in the prompt. Tune the retriever for recall first (raise K, fix chunking/embeddings, consider hybrid search), then rerank for precision.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Start with K=50, N=5, then tune by measuring MRR on a small labeled set. Reranking improves precision significantly but adds latency, so apply it selectively on a small candidate set (the book uses the top ~100). If latency matters, shrink K or move the cross-encoder onto a warm Model Serving endpoint.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · verify the native option</span>Databricks' retrieval stack changes fast. This lesson teaches the portable cross-encoder pattern (retrieve top-K, score <code>(query, passage)</code> pairs, keep top-N) because it works on any stack and matches B2 Ch3. Before production, check the current docs for a native option — whether AI Search exposes a built-in rerank parameter or Databricks hosts a managed reranker endpoint — and prefer it if governed. Do <strong>not</strong> assume a <code>databricks-*-reranker</code> endpoint name; confirm it. (Live doc re-check pending: authoring-time fetch of the AI Search query docs returned no content.)</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha · naming</span>The product is <strong>Databricks AI Search</strong> (formerly Vector Search), but the SDK is still <code>databricks-vectorsearch</code> — there is no <code>databricks-ai-search</code> package. The retriever and chat model come from <code>databricks-langchain</code> (<code>from databricks_langchain import DatabricksVectorSearch, ChatDatabricks</code>), not <code>langchain-databricks</code> or <code>langchain_community</code>. Served-model endpoint names change; confirm on the supported-models page.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Why does a bi-encoder retriever optimize recall but rank imperfectly, and why is that acceptable as stage 1?</li>
+          <li>What does a cross-encoder do differently from the embedding model, and why can it only run on the top-K rather than the whole index?</li>
+          <li>You retrieve K=50 and send N=5 to the LLM. What is each number doing, and what breaks if you set K=N=5?</li>
+          <li>A customer says "retrieval finds the right doc but the answer is still wrong." How do you tell whether reranking will help, and which metric confirms it?</li>
+          <li>How do hybrid search (04.8) and reranking (04.9) divide the work, and why do they stack rather than compete?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📗 B2 — <em>Databricks Certified GenAI Engineer Associate Study Guide</em>, Ch 3 ("Evaluating Retrieval Quality"): "Reranking: Improving relevance" + <strong>Example 3-11</strong> (cross-encoder <code>cross-encoder/ms-marco-MiniLM-L-6-v2</code>, score <code>(query, chunk)</code> pairs, sort descending); "The role of reranking in retrieval" (retriever = recall, reranker = precision); "Common reranking approaches" (cross-encoder vs LLM-based scoring); "When reranking matters most"; "Practical considerations" (retrieve many, rerank a subset; MRR); Table 3-6 (low MRR → cross-encoder reranking). Primary source. <em>Example 3-11 uses the HuggingFace <code>transformers</code> pipeline; this page shows the equivalent <code>sentence_transformers.CrossEncoder.predict</code> form of the same model.</em></li>
+        <li>📗 B2 — exam objective: "Explain the role of reranking in the information retrieval process."</li>
+        <li>🌐 Databricks Docs — Databricks AI Search (formerly Vector Search): <code>docs.databricks.com/aws/en/generative-ai/vector-search</code> + create/query index guide. SDK <code>databricks-vectorsearch</code>; retriever <code>DatabricksVectorSearch</code> from <code>databricks-langchain</code>; hybrid via <code>query_type="HYBRID"</code>. <strong>Live re-check pending</strong> — verify any native rerank parameter or managed reranker endpoint.</li>
+        <li>🌐 Databricks Docs — Foundation Model APIs supported models: confirm the <code>ChatDatabricks</code> endpoint name before use; names change.</li>
+        <li>🌐 <code>sentence-transformers</code> — <code>CrossEncoder(model).predict([(query, passage), ...])</code>; <code>cross-encoder/ms-marco-MiniLM-L-6-v2</code> as an illustrative open reranker. Verify against current library docs.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Topic 04.9 ★</span>
+  <span>Grounded in 📗B2 Ch3 · Databricks + LangChain docs</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"Stage 1 · Recall (the index)",spine:false,comps:[
+   ["Bi-encoder retriever","encode separately","The embedding model behind the AI Search index (e.g. databricks-gte-large-en). Encodes the query and each passage into vectors independently, then compares by cosine/dot-product. Documents are embedded once offline, so search is millisecond-fast over the whole corpus — but the query and passage never interact, so the ranking is a coarse proxy for relevance.","→ owns recall · returns top-K"],
+ ]},
+ {name:"Stage 2 · Precision (the reranker)",spine:true,comps:[
+   ["Cross-encoder","read together","Reads the query and one passage in a single forward pass with full cross-attention, then outputs one relevance score. Far more accurate than comparing two separate vectors, but it can't precompute anything — one pass per (query, passage) pair, so it only runs on the top-K.","→ owns precision · practical default"],
+   ["LLM-based scoring","judge with an LLM","Prompt a served LLM to rate each passage's relevance, or to pick the better of two. Handles subtle, multi-part intent, but slower and costlier per candidate. Reserve for the hardest queries where a cross-encoder isn't discriminating enough.","→ owns precision · nuanced intent"],
+ ]},
+];
+const STEPS=[
+  ["Query arrives","The user question enters the chain. Nothing is embedded yet."],
+  ["Stage 1 · bi-encoder recall","AI Search embeds the query and returns the top-K nearest chunks (K=50). Tuned for recall: the goal is that the best passage is somewhere in the pool, not that it is first."],
+  ["Form (query, passage) pairs","Pair the query with each of the K candidates. These pairs are exactly what the cross-encoder scores."],
+  ["Stage 2 · cross-encoder rerank","Score every pair in one forward pass each, sort by score, keep the top-N (N=5). The best passage rises to the top even if it was rank 7."],
+  ["Hand off to the LLM","Format the reranked top-N as context and pass it to ChatDatabricks (Module 05). Fewer, higher-quality chunks means a better, more grounded answer."],
+];
+const MERMAID_SRC=`flowchart LR
+  q["User query"] --> bi["Stage 1 · bi-encoder recall<br/>AI Search index over ua_rag_chunks<br/>return top-K (K=50)"]
+  bi --> cand["K candidate passages<br/>form (query, passage) pairs"]
+  cand --> ce["Stage 2 · cross-encoder rerank<br/>score each pair together, sort"]
+  ce --> topn["Top-N (N=5)<br/>highest relevance"]
+  topn --> llm["LLM context<br/>ChatDatabricks chain (Module 05)"]`;
+const MERMAID_SRC2=`flowchart TD
+  subgraph BI["Bi-encoder · the index (fast, approximate)"]
+    q1["query"] --> ev["encode query alone"]
+    d1["passage (encoded offline)"] --> dv["passage vector"]
+    ev --> sim["cosine similarity<br/>query and passage never interact"]
+    dv --> sim
+    sim --> r1["ranks by 'same neighborhood'<br/>great recall, coarse order"]
+  end
+  subgraph CE["Cross-encoder · the reranker (slow, accurate)"]
+    j["query + passage read together"] --> pass["one forward pass<br/>full cross-attention"]
+    pass --> score["relevance score<br/>accurate order, can't precompute"]
+  end`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

@@ -252,6 +252,27 @@ When the verdict is **🟡** or **🔴**, drive the artifact to **✅ Approved**
 2. **Re-review the revised artifact** — run Check 1 and Check 2 again from scratch.
 3. **Repeat** until ✅ Approved.
 
+### Running under `genai-build-loop` (the critic role)
+
+When invoked by the **`genai-build-loop`** orchestrator, you are the **critic** in a maker → critic →
+revise loop and the orchestration is external:
+- **You judge; the loop drives.** Return the verdict + the **prioritized, machine-actionable findings**
+  (each: what's wrong with a quote/line → the exact corrected value + doc/book citation). The loop hands
+  those to `genai-teacher` (the maker) and calls you again to re-review — you do **not** apply fixes or
+  update trackers yourself.
+- **Findings must be atomic and testable** so the maker can act on each without guesswork and the next
+  review can confirm each is resolved (this drives the no-progress guard).
+- **Round cap is coordinated:** default **3** rounds, **up to 5 for cornerstone/T1** artifacts (the
+  orchestrator sets the ceiling). Honor the same no-progress / regression / human-pause guards below.
+- **Cross-artifact consistency:** when reviewing one of a topic's artifacts (MD / HTML / notebook), flag
+  any drift from its siblings (a fact or diagram fixed in one but stale in another) so the loop keeps
+  MD ↔ HTML ↔ notebook in sync.
+- **You gate the ✅.** The orchestrator flips `ROADMAP.md` markers and ticks `plan.md` boxes **only**
+  after your **✅ Approved** — so never approve just to exit the loop.
+
+When run **standalone** (not under the orchestrator), drive the loop yourself as described above and
+update markers only if the user asked you to.
+
 ### Loop controls (mandatory)
 
 - **Iteration cap:** stop after **3 fix→re-review rounds**; if still not Approved, stop and

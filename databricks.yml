@@ -10,8 +10,8 @@ targets:
     mode: development
     default: true
     workspace:
-      host: https://fevm-internal-demo-sbanerjee.cloud.databricks.com
-      profile: fevm-sbanerjee
+      host: https://adb-7405608191250043.3.azuredatabricks.net/
+      profile: fevm-azure
 
   ## Optionally, there could be 'staging' or 'prod' targets here.
   #

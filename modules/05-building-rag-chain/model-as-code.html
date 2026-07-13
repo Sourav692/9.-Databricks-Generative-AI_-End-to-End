@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Topic 05.6 (cornerstone): Logging a chain as Model-as-Code vs the LangChain flavor.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Model as Code · Databricks GenAI Tutor 05.6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbox pre{margin:8px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI</a>
+    <span class="loc">Module 05 · Topic 05.6 ★</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_05.6 · Cornerstone · v1.0</span><span>Verified against 📘B1 Ch4 + docs</span></div>
+    <div class="filed">Module 05 — Building and versioning a RAG chain · Topic 05.6 · Theory + Hands-on ★</div>
+    <h1>Model as Code</h1>
+    <p class="dek">One function, two inputs. Hand <code>mlflow.langchain.log_model</code> the in-memory chain and you fight the pickler; hand it a <code>.py</code> file with <code>set_model()</code> and MLflow keeps the recipe — reproducible, deployable, and ready for Unity Catalog.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>Same door, two inputs</h2></div>
+      <p class="lead">You finished the Unity Airways RAG chain in 05.3 — a <code>DatabricksVectorSearch</code> retriever feeds chunks to <code>ChatDatabricks("databricks-claude-sonnet-4-5")</code>. Now you have to log it so it reloads and deploys identically. MLflow offers two ways in through one call, and the whole lesson is which one you pick.</p>
+      <ul>
+        <li><strong>The brittle way:</strong> pass the <strong>in-memory <code>chain</code> object</strong>. MLflow cloudpickles it. The retriever holds a live client that will not pickle, so logging fails with <code>VectorStoreRetriever ... loader_fn must be provided</code> — and the workaround gets messy fast.</li>
+        <li><strong>The recommended way — Models-from-Code:</strong> put the chain in a <strong><code>.py</code> file</strong> ending with <code>mlflow.models.set_model(chain)</code>, then log with <code>lc_model="rag_chain.py"</code>. MLflow stores the <strong>code</strong>. Loading re-runs the script and rebuilds the chain fresh.</li>
+        <li>Attach <strong>dependent resources</strong> so the deployed model gets scoped credentials automatically: <code>DatabricksVectorSearchIndex</code> + <code>DatabricksServingEndpoint</code>.</li>
+        <li>Add a <strong>signature</strong>, then <strong>register to Unity Catalog</strong> as <code>unity_airways.rag.ua_rag_chain</code>. Topic 05.7 layers on <strong>LoggedModel</strong> and <code>mlflow.set_active_model()</code>.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>Two paths, the pieces you attach, and the build</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Two paths</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">Inputs and attachments</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Walkthrough</button>
+        <button role="tab" aria-selected="false" aria-controls="p-compare" id="t-compare" onclick="tab(this,'p-compare')">Object vs code</button>
+        <button role="tab" aria-selected="false" aria-controls="p-res" id="t-res" onclick="tab(this,'p-res')">Resources</button>
+      </div>
+
+      <!-- PANE A: two-path mermaid — mirrors model-as-code.md diagram 1 -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — Object (pickle, brittle) vs code (set_model, reproducible)">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">Same function. Hand it the object and you fight the pickler; hand it a code file and MLflow keeps the recipe.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of inputs + attachments -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — What you hand log_model">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select an item</div><h3>Inputs and attachments</h3><p>Click one to see what it does and where it bites.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: stepper walkthrough of the build -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE D: object vs code compare -->
+      <div id="p-compare" class="pane" role="tabpanel" aria-labelledby="t-compare" hidden>
+        <table>
+          <thead><tr><th>Aspect</th><th>lc_model = chain (object)</th><th>lc_model = "rag_chain.py" (code)</th></tr></thead>
+          <tbody>
+            <tr><td class="k">What MLflow stores</td><td>a cloudpickle of the object graph</td><td>the .py source (+ code_paths, model_config)</td></tr>
+            <tr><td class="k">Live clients</td><td>must be rebuilt via loader_fn</td><td>rebuilt when the script re-runs</td></tr>
+            <tr><td class="k">Failure mode</td><td>serialization error on non-picklable pieces</td><td>import/syntax error you catch by running the file</td></tr>
+            <tr><td class="k">Scales to agents</td><td>poorly (loader_fn grows)</td><td>yes — recommended for agents too</td></tr>
+            <tr><td class="k">Status</td><td>valid, legacy default</td><td>GA · recommended</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Both produce a standard MLmodel with langchain + python_function flavors, so downstream loading and serving are identical.</p>
+      </div>
+
+      <!-- PANE E: dependent resources -->
+      <div id="p-res" class="pane" role="tabpanel" aria-labelledby="t-res" hidden>
+        <table>
+          <thead><tr><th>Resource class</th><th>Kwarg</th><th>Declares</th></tr></thead>
+          <tbody>
+            <tr><td class="k">DatabricksVectorSearchIndex</td><td>index_name=</td><td>the AI Search index the chain retrieves from</td></tr>
+            <tr><td class="k">DatabricksServingEndpoint</td><td>endpoint_name=</td><td>the model-serving endpoint the chain calls (the LLM)</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Imported from <code>mlflow.models.resources</code> and passed as <code>resources=[...]</code>. They drive automatic authentication passthrough: on deploy, Databricks mints scoped, short-lived credentials for exactly these services. Class names/kwargs confirmed in 📘B1 Ch4; re-verify against current MLflow docs.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="how">
+      <div class="entry-head"><span class="num">03 · How it works</span><h2>Why live objects do not pickle</h2></div>
+      <p>Pick the input by what your chain holds. A chain with any live client — a retriever, a serving-endpoint LLM, a tool — should be logged as code.</p>
+      <div class="plate" data-fig="Fig. 02 — Which input do you hand log_model?">
+        <div class="mermaid" id="mermaidGraph2"></div>
+        <div class="plate-cap">Prefer the code-file input. Reach for the object input only for a tiny, fully serializable chain.</div>
+      </div>
+      <ul>
+        <li><strong>cloudpickle snapshots data, not connections.</strong> A <code>DatabricksVectorSearch</code> retriever is a handle to a running service — client, auth, connection state. There is no meaningful byte snapshot of an open connection, so LangChain marks it non-serializable and MLflow refuses.</li>
+        <li><strong><code>set_model</code> names the model.</strong> The last line of the <code>.py</code> file, <code>mlflow.models.set_model(model=chain)</code>, tells MLflow which object in the script is the model to log. It does not log anything by itself.</li>
+        <li><strong>Loading re-executes the script.</strong> <code>mlflow.langchain.load_model(uri)</code> runs <code>rag_chain.py</code> again, constructing a fresh retriever and LLM client. Nothing is unpickled, so the fragile step is gone.</li>
+        <li><strong>Resources drive deploy-time auth.</strong> You declare the services the chain calls; deployment reads the list and grants the endpoint exactly those permissions. Miss one and it fails at inference, not at logging.</li>
+        <li><strong>The pyfunc twin.</strong> For non-LangChain code (a <code>ResponsesAgent</code>), <code>mlflow.pyfunc.log_model(python_model="agent.py", ...)</code> is the same Models-from-Code idea in a different flavor.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="dothis">
+      <div class="entry-head"><span class="num">04 · Run this</span><h2>File, resources, log, verify</h2></div>
+      <p><strong>Prereqs:</strong> serverless or DBR ML runtime, <strong>MLflow ≥ 3.1</strong>; the RAG chain from 05.3; read access to <code>unity_airways.rag.ua_rag_chunks_index</code>; rights to register a model in <code>unity_airways.rag</code>.</p>
+      <pre><code>%pip install -U mlflow databricks-langchain databricks-vectorsearch
+dbutils.library.restartPython()</code></pre>
+      <p><strong>1. Move the chain into <code>rag_chain.py</code></strong> and end the file with <code>set_model</code>:</p>
+      <pre><code># rag_chain.py — the entire chain lives here, no notebook state
+import mlflow
+from databricks_langchain import ChatDatabricks, DatabricksVectorSearch
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+
+cfg = mlflow.models.ModelConfig(development_config="rag_chain_config.yml")
+retriever = DatabricksVectorSearch(
+    index_name=cfg.get("index_name"),
+    columns=["chunk_id", "source_doc", "content"],
+).as_retriever(search_kwargs={"k": 5})
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "Answer using only the context.\n\nContext:\n{context}"),
+    ("user", "{question}"),
+])
+llm = ChatDatabricks(endpoint=cfg.get("llm_endpoint"), temperature=0)
+chain = ({"context": retriever, "question": RunnablePassthrough()}
+         | prompt | llm | StrOutputParser())
+
+mlflow.models.set_model(model=chain)   # ← the crucial line: THIS is the model</code></pre>
+      <p><strong>Sanity-check the file</strong> before logging (catch errors while you can see them):</p>
+      <pre><code>from rag_chain import chain
+print(chain.invoke("Can I get a refund on a Basic Economy fare?")[:200])</code></pre>
+      <p><strong>2. Signature + dependent resources</strong> (resources drive auto-auth on deploy):</p>
+      <pre><code>from mlflow.models import infer_signature
+from mlflow.models.resources import DatabricksVectorSearchIndex, DatabricksServingEndpoint
+
+signature = infer_signature(model_input="Can I change my booking?",
+                            model_output="A short grounded answer.")
+resources = [
+    DatabricksVectorSearchIndex(index_name="unity_airways.rag.ua_rag_chunks_index"),
+    DatabricksServingEndpoint(endpoint_name="databricks-claude-sonnet-4-5"),
+]</code></pre>
+      <p><strong>3. Log as Models-from-Code</strong> — <code>lc_model=</code> is the <strong>file path</strong>, not the object:</p>
+      <pre><code>with mlflow.start_run() as run:
+    logged = mlflow.langchain.log_model(
+        lc_model="rag_chain.py",                 # ← code file, NOT the chain object
+        model_config="rag_chain_config.yml",     # config injected at load time
+        signature=signature,
+        input_example="Can I change my booking?",
+        resources=resources,                     # auto-auth on deploy
+        pip_requirements=["mlflow>=3.1", "databricks-langchain", "databricks-vectorsearch"],
+        # code_paths=["helpers/"],               # if rag_chain.py imports local helpers
+        registered_model_name="unity_airways.rag.ua_rag_chain",   # log + register in one shot
+    )
+print(logged.model_uri)   # runs:/&lt;run_id&gt;/model</code></pre>
+      <p><strong>Verify it worked</strong> — reload and invoke (this re-executes the code, not a pickle):</p>
+      <pre><code>loaded = mlflow.langchain.load_model(logged.model_uri)
+print(loaded.invoke("What is the checked baggage allowance on Basic Economy?")[:200])</code></pre>
+      <p><strong>Register separately</strong> (alternative to <code>registered_model_name=</code>):</p>
+      <pre><code>mlflow.set_registry_uri("databricks-uc")
+mv = mlflow.register_model(f"runs:/{run.info.run_id}/model", "unity_airways.rag.ua_rag_chain")
+print(mv.name, mv.version)   # unity_airways.rag.ua_rag_chain, 1</code></pre>
+      <p><strong>The brittle object path</strong> — shown so you recognize the error, not to ship:</p>
+      <pre><code>with mlflow.start_run():
+    mlflow.langchain.log_model(lc_model=chain, signature=signature, resources=resources)
+# -&gt; MlflowException: ... 'VectorStoreRetriever ... a `loader_fn` must be provided.'
+# Fix A (messy): add loader_fn=load_retriever to rebuild the retriever at load time.
+# Fix B (do this): log the .py file as in step 3.</code></pre>
+      <p><strong>Forward-ref to 05.7</strong> — attach a LoggedModel version (new in MLflow 3):</p>
+      <pre><code>active = mlflow.set_active_model(name="ua_rag_chain_v1")
+# ...then pass model_id=active.model_id into log_model(...) — full treatment in 05.7.</code></pre>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>The whole lesson is one fork in one function. <code>mlflow.langchain.log_model(lc_model=...)</code> behaves completely differently depending on whether you pass an <strong>object</strong> (serialize, fragile) or a <strong>file path</strong> (store code, reproducible). For any real chain with a retriever or a serving-endpoint client, pass the file path.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Make the <code>.py</code> file the source of truth even during development — build the chain there, <code>from rag_chain import chain</code>, and invoke it in the notebook. You get the same object to iterate on, and logging is then a one-line <code>lc_model="rag_chain.py"</code>. Read every environment-specific name via <code>mlflow.models.ModelConfig</code> so the same file logs cleanly in dev, stage, and prod.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>Missing <code>resources</code> is a silent trap. The model <strong>logs and registers without complaint</strong> and only fails when it is deployed and actually tries to call Vector Search or the LLM — an auth error, not a logging error. Declare every Databricks service the chain touches. Class names and kwargs — <code>DatabricksVectorSearchIndex(index_name=...)</code>, <code>DatabricksServingEndpoint(endpoint_name=...)</code> from <code>mlflow.models.resources</code> — are confirmed in 📘B1 Ch4; re-verify against current MLflow docs, since resource classes are added over time.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li><code>mlflow.langchain.log_model(lc_model=chain)</code> fails with a <code>VectorStoreRetriever</code> error. In one sentence, why — and what is the fix that scales?</li>
+          <li>What does <code>mlflow.models.set_model(model=chain)</code> do, and where in the <code>.py</code> file must it go?</li>
+          <li>Explain why Models-from-Code is reproducible: what happens at <em>load</em> time that does not happen with the pickled-object path?</li>
+          <li>You deploy the model and retrieval throws an auth error, even though logging and registration succeeded. What did you most likely forget, and what fixes it?</li>
+          <li>Give the two lines that register the logged run's model into Unity Catalog as <code>unity_airways.rag.ua_rag_chain</code>.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📘 B1 — <em>Practical MLflow for Generative AI on Databricks</em>, Ch 4 ("Packaging and Logging the RAG Chain" → "Logging Model as Code"): the serialization failure (<code>VectorStoreRetriever ... loader_fn must be provided</code>), the <code>loader_fn</code> workaround, <code>mlflow.models.set_model(model=chain)</code> in <code>rag_chain.py</code>, logging with <code>lc_model=&lt;script path&gt;</code> + <code>code_paths</code> + <code>model_config</code>, <code>infer_signature</code>, and <code>resources=[DatabricksServingEndpoint(endpoint_name=...), DatabricksVectorSearchIndex(index_name=...)]</code> for automatic authentication passthrough. O'Reilly Early Release — RAW &amp; UNEDITED; verify APIs against current docs.</li>
+        <li>🌐 MLflow Docs — Models from Code (<code>mlflow.org/docs/latest/ml/model/models-from-code/</code>): confirms <code>mlflow.models.set_model()</code> as the entry point and that flavor logging (<code>mlflow.langchain.log_model</code>, <code>mlflow.pyfunc.log_model</code>) accepts a code path. <code>set_model</code> presence verified live.</li>
+        <li>🌐 MLflow API — <code>mlflow.models.resources</code> (<code>DatabricksVectorSearchIndex</code>, <code>DatabricksServingEndpoint</code>) and <code>mlflow.models.infer_signature</code>. Class names/kwargs grounded in 📘B1 Ch4; live doc re-check pending (docs page is JS-rendered).</li>
+        <li>🌐 Databricks Docs — register/deploy an agent to Unity Catalog: <code>mlflow.set_registry_uri("databricks-uc")</code> → <code>mlflow.register_model("runs:/&lt;run_id&gt;/model", "catalog.schema.name")</code>.</li>
+        <li>🧭 Naming cross-check: <code>references/naming-conventions.md</code> §1 (Models-from-Code GA/recommended; flavor logging still valid; LoggedModel + <code>set_active_model()</code> new in MLflow 3) and §9 (LangChain integration is <code>databricks-langchain</code>).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Topic 05.6 ★</span>
+  <span>Grounded in 📘B1 Ch4 · MLflow + Databricks docs</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"Two inputs to log_model",spine:false,comps:[
+   ["lc_model = chain (object)","serialize / cloudpickle","MLflow pickles the object graph. A live DatabricksVectorSearch retriever holds a client that cannot be frozen, so logging throws and you must add a loader_fn to rebuild it at load time. Trial-and-error, does not scale.","Legacy default — avoid for real chains"],
+   ["lc_model = 'rag_chain.py' (code path)","Models-from-Code","MLflow copies the source file. At load it re-runs the script and rebuilds the retriever and LLM fresh. No pickle, no loader_fn.","GA · recommended"],
+ ]},
+ {name:"What you attach",spine:true,comps:[
+   ["mlflow.models.set_model(chain)","declares the model","The last executable line of the .py file. Tells MLflow which object in the script is the model to log.","Required for Models-from-Code"],
+   ["resources=[...]","auto-auth passthrough","DatabricksVectorSearchIndex + DatabricksServingEndpoint. On deploy, Databricks mints scoped, short-lived credentials for exactly these services.","Forget it and inference auth fails after deploy"],
+   ["register to Unity Catalog","govern + deploy","set_registry_uri('databricks-uc') then register_model('runs:/.../model', 'unity_airways.rag.ua_rag_chain'), or registered_model_name= in one shot.","Three-level name; enables Model Serving"],
+ ]},
+];
+const STEPS=[
+  ["Move the chain into rag_chain.py","Build the chain exactly as in 05.3, then end the file with mlflow.models.set_model(model=chain). The .py must be self-contained: imports + ModelConfig, no notebook globals."],
+  ["Sanity-check the file","from rag_chain import chain; chain.invoke('Can I get a refund on a Basic Economy fare?'). Catch import/config errors while you can still see them."],
+  ["Signature + resources","infer_signature(model_input, model_output). resources=[DatabricksVectorSearchIndex(index_name='unity_airways.rag.ua_rag_chunks_index'), DatabricksServingEndpoint(endpoint_name='databricks-claude-sonnet-4-5')]."],
+  ["Log as code","mlflow.langchain.log_model(lc_model='rag_chain.py', signature=..., input_example=..., resources=..., model_config=..., registered_model_name='unity_airways.rag.ua_rag_chain'). lc_model is the FILE PATH, not the object."],
+  ["Verify by reloading","mlflow.langchain.load_model(uri).invoke(...). This re-executes the code and rebuilds the live clients — there is nothing to unpickle, so the fragile step is gone."],
+  ["Version it (05.7)","mlflow.set_active_model(name='ua_rag_chain_v1'), then pass model_id into log_model. The MLflow 3 LoggedModel links this version to its traces, evals, and metrics."],
+];
+const MERMAID_SRC=`flowchart TB
+  subgraph A["Path A · LangChain flavor, in-memory object — BRITTLE"]
+    obj["chain object in memory<br/>holds VS retriever + LLM client"] --> pk["mlflow.langchain.log_model(lc_model=chain)"]
+    pk --> ser["MLflow cloudpickles the object graph"]
+    ser --> err["VectorStoreRetriever will not serialize<br/>error: loader_fn must be provided"]
+    err --> patch["add loader_fn to rebuild it<br/>works, but trial-and-error and does not scale"]
+  end
+  subgraph B["Path B · Models-from-Code — RECOMMENDED"]
+    py["rag_chain.py<br/>chain logic + last line mlflow.models.set_model(chain)"] --> log["mlflow.langchain.log_model(lc_model='rag_chain.py')"]
+    resx["resources=[DatabricksVectorSearchIndex(index_name=...),<br/>DatabricksServingEndpoint(endpoint_name=...)]"] --> log
+    sig["signature + input_example"] --> log
+    log --> store["MLflow stores the CODE, no pickle"]
+    store --> uc["register to Unity Catalog<br/>unity_airways.rag.ua_rag_chain"]
+  end`;
+const MERMAID_SRC2=`flowchart TD
+  q{"What do you pass to lc_model= ?"}
+  q -->|"a .py file path with set_model()"| code["Models-from-Code<br/>stores code · reproducible · recommended"]
+  q -->|"the in-memory chain object"| obj["Flavor serialization<br/>cloudpickle · needs loader_fn for live clients"]
+  code --> res["attach resources=[...] for auto-auth"]
+  obj --> res
+  res --> reg["signature + register to UC + set_active_model (05.7)"]`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

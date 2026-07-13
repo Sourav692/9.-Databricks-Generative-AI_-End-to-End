@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Topic 06.2 (cornerstone): From MLflow 2 to MLflow 3 — what changed for GenAI.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MLflow 2 to 3 · Databricks GenAI Tutor 06.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbox pre{margin:8px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .badge{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;white-space:nowrap}
+  .badge.ga{background:var(--ok-soft);color:var(--ok)}
+  .badge.beta{background:var(--danger-soft);color:var(--danger)}
+  .badge.new{background:var(--accent-soft);color:var(--accent-2)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI</a>
+    <span class="loc">Module 06 · Topic 06.2 ★</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_06.2 · Cornerstone · v1.0</span><span>Verified against 📘B1 Ch1 + docs</span></div>
+    <div class="filed">Module 06 — MLflow for GenAI core · Topic 06.2 · Theory ★</div>
+    <h1>MLflow 2 to 3</h1>
+    <p class="dek">The tracking core carries over. The GenAI layer was rebuilt. This is your migration map so you never teach a dead API: <code>mlflow.genai.evaluate</code> over <code>mlflow.evaluate(model_type=...)</code>, LoggedModel + tracing, and UC aliases instead of stages.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>Same spine, new GenAI layer</h2></div>
+      <p class="lead">The two books teach MLflow the 2.x way, and the MLflow book predates the <code>mlflow.genai</code> surface. MLflow 3 kept the core you know and rewrote the GenAI workflow around it. The whole lesson is a translation table you carry in your head.</p>
+      <ul>
+        <li><strong>Carries over (unchanged):</strong> Experiments, Runs, params, metrics, artifacts, <code>log_model</code>, signatures. Migration from 2.x is mostly additive — <em>"it still preserves its core tracking concepts, making migration from 2.x quick and simple"</em> (📘B1 Ch1).</li>
+        <li><strong>New for GenAI:</strong> a first-class <strong>LoggedModel</strong> (a version that links its own traces, evals, and metrics via <code>mlflow.set_active_model()</code>), first-class <strong>OpenTelemetry tracing</strong>, and <strong>Models-from-Code</strong> packaging.</li>
+        <li><strong>Rewritten:</strong> evaluation is now <code>mlflow.genai.evaluate(data=, predict_fn=, scorers=[...])</code> with <strong>explicit scorers</strong>; the registry is <strong>UC-first</strong> with <code>@champion</code>/<code>@challenger</code> <strong>aliases</strong> instead of <code>Staging</code>/<code>Production</code> stages; a <strong>Prompt Registry</strong> (Beta) is new.</li>
+        <li><strong>Never get wrong:</strong> GenAI eval is <code>mlflow.genai.evaluate()</code> — there is <strong>no</strong> <code>agents.evaluate()</code>, and <code>mlflow.evaluate(model_type="databricks-agent")</code> is the <em>former</em> path.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>Old vs new, the six changes, and the mapping</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Old vs new</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The six changes</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Walkthrough</button>
+        <button role="tab" aria-selected="false" aria-controls="p-map" id="t-map" onclick="tab(this,'p-map')">Mapping table</button>
+        <button role="tab" aria-selected="false" aria-controls="p-status" id="t-status" onclick="tab(this,'p-status')">GA vs Beta</button>
+      </div>
+
+      <!-- PANE A: two-flow mermaid — mirrors mlflow-2-to-3.md diagram 1 -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — MLflow 2 GenAI flow vs MLflow 3 GenAI flow">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">The core tracking spine is the same; the GenAI workflow around it was rebuilt. Read left, write right.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the six changes -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — What MLflow 3 added or rewrote for GenAI">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select a change</div><h3>The MLflow 3 GenAI surface</h3><p>Click one to see what it replaces and what to write today.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: stepper walkthrough of the translation -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE D: the MLflow 2 -> 3 mapping table -->
+      <div id="p-map" class="pane" role="tabpanel" aria-labelledby="t-map" hidden>
+        <table>
+          <thead><tr><th>MLflow 2 (former — often in the book)</th><th>MLflow 3 (teach this)</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>mlflow.evaluate(model_type="databricks-agent")</td><td class="k">mlflow.genai.evaluate(data=, predict_fn=, scorers=[...])</td><td><span class="badge ga">GA</span></td></tr>
+            <tr><td>auto-selected judges; extra_metrics=</td><td class="k">explicit scorers=[...] · mlflow.genai.scorers / .judges · @scorer + make_judge()</td><td><span class="badge ga">GA</span></td></tr>
+            <tr><td>agents.evaluate() (assumed — never existed)</td><td class="k">mlflow.genai.evaluate() (same call for agents)</td><td><span class="badge ga">GA</span></td></tr>
+            <tr><td>fields request / response / expected_response</td><td class="k">inputs / outputs / expectations (retrieved_context from traces)</td><td><span class="badge ga">GA</span></td></tr>
+            <tr><td>ad-hoc logging; tracing not first-class</td><td class="k">@mlflow.trace · mlflow.start_span() · mlflow.&lt;lib&gt;.autolog() (OpenTelemetry)</td><td><span class="badge ga">GA</span></td></tr>
+            <tr><td>no version object for traces/evals/metrics</td><td class="k">LoggedModel + mlflow.set_active_model()</td><td><span class="badge new">GA · new</span></td></tr>
+            <tr><td>pickle / cloudpickle the object</td><td class="k">Models-from-Code · mlflow.models.set_model()</td><td><span class="badge ga">GA</span></td></tr>
+            <tr><td>Workspace Model Registry; two-level name</td><td class="k">set_registry_uri("databricks-uc") · catalog.schema.model</td><td><span class="badge ga">GA</span></td></tr>
+            <tr><td>stages Staging / Production</td><td class="k">aliases @champion / @challenger + tags</td><td><span class="badge ga">GA</span></td></tr>
+            <tr><td>prompts as plain strings / params</td><td class="k">Prompt Registry · register_prompt / load_prompt / aliases</td><td><span class="badge beta">Beta</span></td></tr>
+            <tr><td>"Lakehouse Monitoring for generative AI"</td><td class="k">production monitoring reusing the same scorers/judges</td><td><span class="badge beta">Beta</span></td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Every MLflow-3 name here is grounded in naming-conventions §1 / §2. The <code>request</code>/<code>response</code> columns and <code>model_type=</code> path are what you will see in 📘B1 — translate them.</p>
+      </div>
+
+      <!-- PANE E: GA vs Beta -->
+      <div id="p-status" class="pane" role="tabpanel" aria-labelledby="t-status" hidden>
+        <table>
+          <thead><tr><th>MLflow 3 feature</th><th>Maturity</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td class="k">mlflow.genai.evaluate + scorers/judges</td><td><span class="badge ga">GA</span></td><td>Main teaching path for GenAI eval</td></tr>
+            <tr><td class="k">First-class tracing (@mlflow.trace, autolog)</td><td><span class="badge ga">GA</span></td><td>OpenTelemetry-compatible</td></tr>
+            <tr><td class="k">LoggedModel + set_active_model()</td><td><span class="badge new">GA · new</span></td><td>New object in MLflow 3</td></tr>
+            <tr><td class="k">Models-from-Code (set_model)</td><td><span class="badge ga">GA</span></td><td>Recommended packaging</td></tr>
+            <tr><td class="k">UC registry + aliases</td><td><span class="badge ga">GA</span></td><td>Three-level names; no stages</td></tr>
+            <tr><td class="k">Prompt Registry</td><td><span class="badge beta">Beta</span></td><td>Databricks (UC schema); needs mlflow[databricks]&gt;=3.1</td></tr>
+            <tr><td class="k">Production monitoring</td><td><span class="badge beta">Beta</span></td><td>Reuses offline scorers/judges</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Prefer GA on the main path; label Beta clearly in front of a customer. Databricks GenAI maturity churns fast — re-verify at authoring time.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="how">
+      <div class="entry-head"><span class="num">03 · How it works</span><h2>Why the version object matters</h2></div>
+      <p>In MLflow 2 the traces, eval scores, and metrics for a GenAI app floated loose around a Run. In MLflow 3 they all hang off one <strong>LoggedModel</strong> version, so "which version produced this trace, scored this way" has a definite answer.</p>
+      <div class="plate" data-fig="Fig. 02 — What links to what: the LoggedModel graph">
+        <div class="mermaid" id="mermaidGraph2"></div>
+        <div class="plate-cap">Activate a version with mlflow.set_active_model(); traces, evals, and metrics attach to it; then register to UC and promote with an alias.</div>
+      </div>
+      <ul>
+        <li><strong>LoggedModel is the hub.</strong> <code>mlflow.set_active_model(name="ua_rag_chain_v1")</code> creates/activates a version; subsequent traces and evals link to it. Forget it and lineage still records, but is not tied to a named version. (📘B1 Ch4; naming-conventions §1. Live doc re-check pending — logged-model page is JS-rendered.)</li>
+        <li><strong>Evaluation is explicit now.</strong> <code>mlflow.genai.evaluate(data=, predict_fn=, scorers=[...])</code>. You must pass <code>scorers=[...]</code> yourself — 3.x does not auto-select judges the way v2 did (📘B1 Ch1: v2 had "automated judge selection … more manual knobs").</li>
+        <li><strong>Tracing is first-class.</strong> Decorate with <code>@mlflow.trace</code>, open <code>mlflow.start_span()</code>, or <code>mlflow.&lt;lib&gt;.autolog()</code>. OpenTelemetry-compatible, GenAI semantic conventions.</li>
+        <li><strong>Packaging changed default.</strong> Models-from-Code (<code>mlflow.models.set_model()</code>) over pickling for chains/agents that hold live clients (Module 05.6).</li>
+        <li><strong>Registry moved to UC.</strong> <code>set_registry_uri("databricks-uc")</code>, three-level <code>catalog.schema.model</code>, and <code>@champion</code>/<code>@challenger</code> aliases replace <code>Staging</code>/<code>Production</code> stages.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="dothis">
+      <div class="entry-head"><span class="num">04 · Translate this</span><h2>Old (do not ship) vs new</h2></div>
+      <p><strong>[Theory]</strong> Illustrative contrasts, not a runnable flow. Assume <strong>MLflow ≥ 3.1</strong>, <code>CATALOG="unity_airways"</code>, <code>SCHEMA="rag"</code>.</p>
+      <p><strong>1. Evaluation</strong> — the entry point moved to the <code>mlflow.genai</code> namespace:</p>
+      <pre><code># ── MLflow 2 (book style) — deprecated GenAI path ──
+mlflow.evaluate(
+    model=my_chain,
+    model_type="databricks-agent",     # gone for GenAI in 3.x
+    data=eval_df,                       # request / response / expected_response
+)
+
+# ── MLflow 3 (current) ──
+from mlflow.genai.scorers import Correctness, RelevanceToQuery, RetrievalGroundedness
+results = mlflow.genai.evaluate(
+    data=eval_df,                       # inputs / outputs / expectations
+    predict_fn=my_chain.invoke,         # was model=
+    scorers=[Correctness(), RelevanceToQuery(), RetrievalGroundedness()],  # MUST be explicit
+)</code></pre>
+      <p><strong>2. Version identity</strong> — link traces and evals to a LoggedModel (new in MLflow 3):</p>
+      <pre><code>active = mlflow.set_active_model(name="ua_rag_chain_v1")
+# ...run/trace/eval the app; results attach to this LoggedModel version.</code></pre>
+      <p><strong>3. Tracing</strong> — instrument instead of hand-logging:</p>
+      <pre><code>mlflow.langchain.autolog()              # auto-capture the whole chain as spans
+
+@mlflow.trace                           # or trace one function
+def retrieve(question: str):
+    return retriever.invoke(question)</code></pre>
+      <p><strong>4. Registry</strong> — UC three-level name + alias instead of stage:</p>
+      <pre><code># ── MLflow 2 / OSS workspace registry (stages) ──
+# client.transition_model_version_stage(name="ua_rag_chain", version=1, stage="Production")
+
+# ── MLflow 3 on Databricks (UC + aliases) ──
+mlflow.set_registry_uri("databricks-uc")
+mv = mlflow.register_model("runs:/&lt;run_id&gt;/model", "unity_airways.rag.ua_rag_chain")
+
+from mlflow import MlflowClient
+MlflowClient().set_registered_model_alias(
+    name="unity_airways.rag.ua_rag_chain", alias="champion", version=mv.version,
+)</code></pre>
+      <p><strong>Quick check</strong> — spot the 2.x pattern, then rewrite: <code>model_type=</code> or <code>agents.evaluate</code> → <code>mlflow.genai.evaluate</code>; <code>stage="Production"</code> → <code>@champion</code> alias; inline prompt to version → Prompt Registry (Beta).</p>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>MLflow 3 <strong>keeps</strong> your tracking core (Experiments, Runs, params, metrics, artifacts) and <strong>adds/rewrites</strong> the GenAI layer. The two facts to never get wrong: GenAI eval is <code>mlflow.genai.evaluate(data=, predict_fn=, scorers=[...])</code> (there is <strong>no</strong> <code>agents.evaluate()</code>, and <code>mlflow.evaluate(model_type="databricks-agent")</code> is the former path), and you must pass <code>scorers=[...]</code> explicitly.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Keep the mapping table open when you read the MLflow book. Translate each GenAI API before you type it: <code>mlflow.evaluate(model_type=...)</code> → <code>mlflow.genai.evaluate(...)</code>, <code>stage="Production"</code> → <code>@champion</code> alias, inline prompt → Prompt Registry. The book is right about <em>why</em>; the docs are right about <em>what to call it</em>.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>LoggedModel, first-class tracing, and Models-from-Code are new-in-MLflow-3 and GA — but <strong>Prompt Registry, production monitoring, and Unity AI Gateway are Beta/Preview</strong>. Don't present Beta as GA in a customer demo, and re-verify status at authoring time. (LoggedModel live-doc re-check pending — the MLflow logged-model page is JS-rendered; grounded here in naming-conventions §1 + 📘B1 Ch4.)</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Name three things that <strong>carry over unchanged</strong> from MLflow 2 to 3, and three that are <strong>new or rewritten</strong> for GenAI.</li>
+          <li>A notebook calls <code>mlflow.evaluate(model_type="databricks-agent", data=df)</code>. Rewrite it as the MLflow-3 equivalent, and say what you must not forget to pass.</li>
+          <li>What is a <strong>LoggedModel</strong>, which function activates it, and what does it link together?</li>
+          <li>On Databricks/UC, how do you promote version 3 of <code>unity_airways.rag.ua_rag_chain</code> to production <em>without</em> using stages?</li>
+          <li>Which of these are <strong>Beta</strong> (not GA): Prompt Registry, <code>mlflow.genai.evaluate</code>, first-class tracing, production monitoring?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📘 B1 — <em>Practical MLflow for Generative AI on Databricks</em>, Ch 1 ("From MLflow 2 to MLflow 3": preserves core tracking, migration "quick and simple"; "Advanced GenAI Evaluation" names <code>mlflow.genai.evaluate()</code> vs the v2 "automated judge selection … more manual knobs"; "Comprehensive Tracing" / "Tracing and Observability" incl. OpenTelemetry; "Model Registry from MLflow server to Databricks Unity Catalog"; "Management of Iterative Prompts and Models" → Prompt Registry). Also B1 Ch4 for <code>mlflow.set_active_model(name=...)</code> / LoggedModel and B1 pp.17/38 for <code>@champion</code> aliases + tags. O'Reilly Early Release — RAW &amp; UNEDITED; book predates the full <code>mlflow.genai</code> surface, so verify API names against current docs.</li>
+        <li>🌐 MLflow Docs — GenAI evaluation (<code>mlflow.org/docs/latest/genai/eval-monitor/</code>): <code>predict_fn=</code> + explicit <code>scorers=</code> verified live. Tracing (<code>.../genai/tracing/</code>): OpenTelemetry + autolog verified live. Prompt Registry (<code>.../genai/prompt-registry/</code>): <code>register_prompt</code> / <code>load_prompt</code> verified live.</li>
+        <li>🌐 MLflow / Databricks Docs — LoggedModel (<code>docs.databricks.com/aws/en/mlflow/logged-model</code>): grounded in naming-conventions §1 + B1 Ch4; live-page grep empty (JS-rendered) — live re-check pending.</li>
+        <li>🧭 Naming cross-check: <code>references/naming-conventions.md</code> §1 (the MLflow-2→3 map: eval, scorers/judges, dataset fields, tracing, LoggedModel + <code>set_active_model()</code>, Models-from-Code, Prompt Registry Beta, production monitoring Beta) and §2 / §9 (UC registration; no <code>agents.evaluate()</code>; aliases). Every MLflow-3 name here is grounded in §1/§2.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Topic 06.2 ★</span>
+  <span>Grounded in 📘B1 Ch1 · MLflow + Databricks docs</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"New GenAI identity + observability",spine:true,comps:[
+   ["LoggedModel + set_active_model()","the version hub","A first-class object for one model/app VERSION. mlflow.set_active_model(name='ua_rag_chain_v1') links this version to its traces, eval results, and metrics. Did not exist in MLflow 2.","GA · new in MLflow 3"],
+   ["First-class tracing","@mlflow.trace / autolog","Instrument with @mlflow.trace, mlflow.start_span(), or mlflow.<lib>.autolog(). OpenTelemetry-compatible, GenAI semantic conventions. In v2 tracing a multi-step chain was ad-hoc.","GA"],
+   ["Models-from-Code","package the code, not a pickle","mlflow.models.set_model() logs the .py that builds the chain; loading re-runs it and rebuilds live clients. Replaces fragile cloudpickle for GenAI. Flavor logging still valid.","GA · recommended (Module 05.6)"],
+ ]},
+ {name:"Rewritten GenAI workflow",spine:false,comps:[
+   ["mlflow.genai.evaluate()","the eval entry point","Replaces mlflow.evaluate(model_type='databricks-agent'/'question-answering'). Signature: evaluate(data=, predict_fn=, scorers=[...]). model→predict_fn, extra_metrics→scorers; model_type/evaluator_config removed.","GA — must pass scorers=[...] explicitly"],
+   ["scorers + judges","explicit grading","Built-ins in mlflow.genai.scorers (Correctness, RelevanceToQuery, Safety, RetrievalGroundedness, ...); judges in mlflow.genai.judges; custom via @scorer + make_judge(). There is NO agents.evaluate().","GA"],
+   ["UC registry + aliases","govern + promote","set_registry_uri('databricks-uc'), three-level catalog.schema.model (unity_airways.rag.ua_rag_chain), promote with @champion / @challenger aliases + tags. Replaces Staging/Production stages.","GA"],
+   ["Prompt Registry","version prompts","register_prompt / load_prompt / search_prompts / set_prompt_alias; URIs prompts:/name@alias; {{variable}} templates; commit-based versioning. Replaces prompts-as-strings.","Beta on Databricks"],
+ ]},
+];
+const STEPS=[
+  ["Recognize the 2.x pattern","The inherited notebook pickles the chain, calls mlflow.evaluate(model_type='databricks-agent'), and pushes to the workspace registry with a Production stage. All three are former MLflow-2 patterns."],
+  ["Package as Models-from-Code","Move the chain into rag_chain.py ending with mlflow.models.set_model(chain). No more fragile cloudpickle of the live Vector Search retriever (Module 05.6)."],
+  ["Name the version","mlflow.set_active_model(name='ua_rag_chain_v1') creates the LoggedModel so traces and eval results link to this version."],
+  ["Turn on tracing","mlflow.langchain.autolog() (or @mlflow.trace on functions). Every step becomes an OpenTelemetry-compatible span for debugging and monitoring."],
+  ["Evaluate the MLflow-3 way","mlflow.genai.evaluate(data=eval_df, predict_fn=chain.invoke, scorers=[Correctness(), RetrievalGroundedness(), Safety()]). Scorers are explicit — nothing is auto-selected."],
+  ["Register to UC + set alias","set_registry_uri('databricks-uc'); register_model(..., 'unity_airways.rag.ua_rag_chain'); set the @champion alias. No stages."],
+];
+const MERMAID_SRC=`flowchart TB
+  subgraph OLD["MLflow 2 · GenAI as a bolt-on"]
+    o1["build chain / agent<br/>(pickle the object)"] --> o2["mlflow.evaluate(model_type='databricks-agent')<br/>auto-selected judges, manual knobs"]
+    o2 --> o3["Workspace Model Registry<br/>register + Staging / Production stages"]
+    o3 --> o4["ad-hoc logging<br/>tracing not first-class"]
+    o4 --> o5["prompts as plain strings in code"]
+  end
+  subgraph NEW["MLflow 3 · GenAI is first-class"]
+    n0["mlflow.set_active_model(name=...)<br/>creates a LoggedModel (the version hub)"] --> n1["Models-from-Code<br/>mlflow.models.set_model()"]
+    n1 --> n2["mlflow.genai.evaluate(data=, predict_fn=,<br/>scorers=[...])  · explicit scorers"]
+    n2 --> n3["UC registry: set_registry_uri('databricks-uc')<br/>catalog.schema.model + @champion / @challenger aliases"]
+    n3 --> n4["first-class tracing: @mlflow.trace,<br/>start_span(), autolog() · OpenTelemetry"]
+    n4 --> n5["Prompt Registry (Beta)<br/>register_prompt / load_prompt / aliases"]
+  end
+  OLD -. "translate each step" .-> NEW`;
+const MERMAID_SRC2=`flowchart TD
+  lm["LoggedModel<br/>one model / app VERSION<br/>set via mlflow.set_active_model()"]
+  tr["Traces<br/>every execution, spans, inputs/outputs"] --> lm
+  ev["Evaluation results<br/>from mlflow.genai.evaluate()"] --> lm
+  me["Metrics + params<br/>scores, latency, cost"] --> lm
+  lm --> reg["Register version to Unity Catalog<br/>unity_airways.rag.ua_rag_chain"]
+  reg --> al["Promote with alias<br/>@champion / @challenger"]`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>

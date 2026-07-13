@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Databricks GenAI Tutor Field Guide — Topics 07.2-07.3 (cornerstone): Tracing a GenAI app — automated + manual.
+  Shared tutor front: warm paper, JetBrains Mono chrome, Source Serif 4 reading face, single accent.
+-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MLflow Tracing · Databricks GenAI Tutor 07.2-07.3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1e8; --panel:#efe9d9; --card:#fbfaf5;
+    --ink:#17140d; --muted:#6a6252; --faint:#9c937f;
+    --line:rgba(23,20,13,.16); --line-2:rgba(23,20,13,.09);
+    --accent:#2b2bf0; --accent-2:#1a1aae; --accent-soft:rgba(43,43,240,.08);
+    --danger:#b91c1c; --danger-soft:rgba(185,28,28,.10);
+    --ok:#2f7d55; --ok-soft:rgba(47,125,85,.12);
+    --wrap:748px; --maxw:748px; --radius:9px;
+    --paper:var(--bg); --paper-2:var(--panel); --ink-soft:var(--muted);
+    --rule:var(--line); --grid:var(--line-2);
+    --serif-display:"JetBrains Mono",ui-monospace,monospace;
+    --serif-body:"Source Serif 4",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}.entry{opacity:1!important;transform:none!important}}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif-body);font-size:1.06rem;
+    line-height:1.72;font-feature-settings:"liga","onum";-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.04;mix-blend-mode:multiply;
+    background-image:radial-gradient(var(--line-2) 1.1px, transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  #progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:50;background:var(--accent);transform:scaleX(0);transform-origin:left;will-change:transform}
+  .topbar{border-bottom:1px solid var(--line);background:rgba(244,241,232,.86);backdrop-filter:blur(6px);position:sticky;top:0;z-index:40}
+  .topbar .row{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+  .topbar .brand{color:var(--ink);border:none;font-weight:700;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+  .topbar .brand::before{content:"";width:9px;height:9px;background:var(--accent);display:inline-block}
+  .topbar .brand:hover{color:var(--accent)}
+  .topbar .loc{color:var(--faint)}
+  .masthead{position:relative;border-bottom:1px solid var(--line);overflow:hidden;padding:66px 0 34px}
+  .masthead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(var(--line-2) 1.1px,transparent 1.1px);background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(180deg,#000,transparent 82%);mask-image:linear-gradient(180deg,#000,transparent 82%)}
+  .masthead-inner{max-width:var(--wrap);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:500;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:26px}
+  .filed{font-family:var(--mono);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+  .masthead h1{font-family:var(--mono);font-weight:800;color:var(--accent);font-size:clamp(2rem,5.2vw,3.2rem);
+    line-height:1.07;letter-spacing:-.03em;margin:0 0 12px;text-transform:uppercase;overflow-wrap:anywhere;max-width:18ch}
+  .dek{font-size:1.24rem;line-height:1.6;color:var(--ink);max-width:60ch;margin:0}
+  .dek em{font-style:italic;color:var(--muted)}
+  .masthead-inner *{position:relative;z-index:1}
+  .shell{max-width:var(--wrap);margin:0 auto;padding:0 24px;display:block}
+  main{padding:0 0 40px;min-width:0}
+  .entry{padding:40px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+  .entry:first-child{border-top:none}
+  .entry.in{opacity:1;transform:none}
+  .entry-head{display:block;margin-bottom:18px}
+  .entry-head .num{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);line-height:1;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .entry-head .num::before{content:"";width:22px;height:1px;background:var(--accent);display:inline-block;opacity:.6}
+  .entry-head h2{font-family:var(--serif-body);font-weight:600;font-size:clamp(1.5rem,3.2vw,1.95rem);line-height:1.2;margin:.1em 0 .55em;letter-spacing:-.01em}
+  p{margin:.7em 0} .lead{font-size:1.2rem;line-height:1.6}
+  strong,b{font-weight:600;color:var(--ink)}
+  ul{padding-left:1.1em;margin:0 0 16px} li{margin:7px 0} li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.82em;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+  a{color:var(--ink);text-decoration-color:var(--accent);text-underline-offset:3px}
+  pre{font-family:var(--mono);font-size:.82rem;line-height:1.7;background:var(--panel);color:#2b2620;border:1px solid var(--line);border-radius:9px;padding:16px 18px;overflow:auto;margin:15px 0}
+  pre code{background:none;padding:0;font-size:inherit;color:var(--ink)}
+  .tabs{display:flex;border-bottom:2px solid var(--ink);margin:6px 0 22px;flex-wrap:wrap}
+  .tabs button{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:11px 18px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .tabs button:hover{color:var(--ink)}
+  .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .pane{display:none;animation:fade .5s ease} .pane.active{display:block}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .plate{position:relative;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:22px 22px;padding:22px 18px 18px;margin-top:8px}
+  .plate::before{content:attr(data-fig);position:absolute;top:-1px;left:14px;background:var(--card);color:var(--accent);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;transform:translateY(-50%)}
+  .plate-cap{font-family:var(--mono);font-size:.68rem;color:var(--faint);text-align:center;margin-top:12px;letter-spacing:.04em}
+  .explorer{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+  @media(max-width:760px){.explorer{grid-template-columns:1fr}}
+  .layer{border-left:2px solid var(--rule);padding:4px 0 4px 16px;margin:0 0 16px}
+  .layer.spine{border-left-style:dashed;border-left-color:var(--accent)}
+  .layer h3{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 9px;font-weight:600}
+  .layer.spine h3{color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{appearance:none;cursor:pointer;font-family:var(--serif-body);font-size:14.5px;background:transparent;color:var(--ink);
+    border:1px solid var(--rule);border-radius:2px;padding:6px 12px;transition:border-color .18s,background .18s}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .detail{position:sticky;top:24px;align-self:start;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:22px}
+  .detail .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .detail h3{font-family:var(--serif-display);font-weight:600;font-size:1.2rem;margin:6px 0 10px}
+  .detail .layerof{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+  .detail .mod{font-family:var(--mono);font-size:12px;margin-top:10px;color:var(--accent-2)}
+  .flowline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .flowline .n{font-family:var(--mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--rule);padding:5px 9px;cursor:pointer;transition:.18s}
+  .flowline .n:hover{border-color:var(--ink);color:var(--ink)}
+  .flowline .n.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .stepbox{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:20px;min-height:96px}
+  .stepbox .sn{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+  .stepbox .st{font-family:var(--serif-display);font-size:1.2rem;font-weight:600;margin:4px 0 8px}
+  .stepbox pre{margin:8px 0 0}
+  .stepbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .stepbar button{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 16px;cursor:pointer}
+  .stepbar button:disabled{opacity:.32;cursor:default}
+  .stepbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .stepbar .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+  .mermaid{display:flex;justify-content:center;margin-top:16px}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  td.k{font-family:var(--mono);font-size:.8rem;color:var(--accent-2)}
+  .note{position:relative;border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 20px;margin:14px 0;background:var(--card)}
+  .note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+  .note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:block;margin-bottom:6px}
+  .note.imp::before{background:var(--accent)} .note.imp .tag{color:var(--accent-2)}
+  .note.tip::before{background:var(--ok)} .note.tip .tag{color:var(--ok)}
+  .note.gotcha::before{background:var(--danger)} .note.gotcha .tag{color:var(--danger)}
+  details{border:1px solid var(--rule);padding:12px 16px;background:var(--card);margin:10px 0}
+  summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  ol{padding-left:1.3em} ol li{margin:9px 0}
+  footer{max-width:var(--wrap);margin:0 auto;padding:38px 24px 64px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.02em;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="module.html">Databricks GenAI</a>
+    <span class="loc">Module 07 · Topics 07.2-07.3 ★</span>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker"><span>Fig_07.2-07.3 · Cornerstone · v1.0</span><span>Verified against 📘B1 Ch5 · MLflow + Databricks docs</span></div>
+    <div class="filed">Module 07 — MLflow Tracing and observability · Topics 07.2-07.3 · Theory + Hands-on ★</div>
+    <h1>Tracing a GenAI App</h1>
+    <p class="dek">Turn one confident-but-wrong answer into a request you can read. <code>autolog()</code> traces the chain for free; <code>@mlflow.trace</code> and <code>start_span</code> add your own steps — and it all lands in <em>one</em> trace tree. Automated plus manual, on the Unity Airways RAG chain.</p>
+  </div>
+</header>
+
+<div class="shell">
+  <main>
+    <section class="entry" id="overview">
+      <div class="entry-head"><span class="num">01 · The big idea</span><h2>From black box to a request tree</h2></div>
+      <p class="lead">A customer asks <em>"Can I get a refund on a Basic Economy fare?"</em> and the Unity Airways bot answers confidently and wrong. All you have is the input and the output — but in between sits a compound system: retriever, prompt, model, parser. Tracing captures that whole journey per request so you can see which step failed instead of guessing.</p>
+      <ul>
+        <li><strong>Automated tracing is one line:</strong> <code>mlflow.langchain.autolog()</code>. Every <code>chain.invoke(...)</code> then emits a <strong>Trace</strong> with nested <strong>Spans</strong> — retriever (chunks + scores), prompt (rendered messages), LLM (answer + tokens + latency). No per-call code.</li>
+        <li><strong>Sibling autologgers</strong> cover the other SDKs: <code>mlflow.openai.autolog()</code>, <code>mlflow.anthropic.autolog()</code>, plus LangGraph, LlamaIndex, and 20+ more.</li>
+        <li><strong>Manual tracing adds spans autolog can't see</strong> — your own pre/post steps. Two fluent forms: the <code>@mlflow.trace</code> decorator on a function, and <code>with mlflow.start_span(...) as span:</code> for a block, where you set inputs, outputs, and attributes yourself.</li>
+        <li><strong>Auto and manual combine into ONE trace.</strong> MLflow links parent/child by call nesting, so a manual pre-step, the autolog'd chain, and a manual rerank all sit under a single request tree. <code>mlflow.set_active_model(...)</code> ties those traces to the LoggedModel from Module 06 — the thread Module 08 evaluation pulls on.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="explore">
+      <div class="entry-head"><span class="num">02 · Explore</span><h2>The trace, the APIs, and the build</h2></div>
+      <div class="tabs" role="tablist" aria-label="Views">
+        <button role="tab" aria-selected="true" aria-controls="p-flow" id="t-flow" onclick="tab(this,'p-flow')">Combined trace</button>
+        <button role="tab" aria-selected="false" aria-controls="p-explore" id="t-explore" onclick="tab(this,'p-explore')">The APIs</button>
+        <button role="tab" aria-selected="false" aria-controls="p-steps" id="t-steps" onclick="tab(this,'p-steps')">Walkthrough</button>
+        <button role="tab" aria-selected="false" aria-controls="p-spans" id="t-spans" onclick="tab(this,'p-spans')">Span types</button>
+        <button role="tab" aria-selected="false" aria-controls="p-scope" id="t-scope" onclick="tab(this,'p-scope')">Attributes vs tags</button>
+      </div>
+
+      <!-- PANE A: combined trace mermaid — mirrors tracing.md diagram 1 -->
+      <div id="p-flow" class="pane active" role="tabpanel" aria-labelledby="t-flow">
+        <div class="plate" data-fig="Fig. 01 — One request, one trace: auto spans + manual spans">
+          <div class="mermaid" id="mermaidGraph"></div>
+          <div class="plate-cap">autolog() gives the retriever/prompt/model spans for free; manual decorator + context-manager spans slot in around them; MLflow stitches one tree.</div>
+        </div>
+      </div>
+
+      <!-- PANE B: clickable explorer of the tracing APIs -->
+      <div id="p-explore" class="pane" role="tabpanel" aria-labelledby="t-explore" hidden>
+        <div class="plate" data-fig="Plate I — What you call to instrument a trace">
+          <div class="explorer">
+            <div id="stack"></div>
+            <div class="detail" id="detail" aria-live="polite">
+              <div class="role">Select an item</div><h3>Tracing APIs</h3><p>Click one to see what it does and where it bites.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE C: stepper walkthrough of the build -->
+      <div id="p-steps" class="pane" role="tabpanel" aria-labelledby="t-steps" hidden>
+        <div class="flowline" id="flowline"></div>
+        <div class="stepbox" id="stepbox"></div>
+        <div class="stepbar"><button id="prev" onclick="step(-1)" disabled>◀ Prev</button><span class="count" id="stepLabel"></span><button id="next" onclick="step(1)">Next ▶</button></div>
+      </div>
+
+      <!-- PANE D: span types table -->
+      <div id="p-spans" class="pane" role="tabpanel" aria-labelledby="t-spans" hidden>
+        <table>
+          <thead><tr><th>SpanType</th><th>Use for</th><th>Special?</th></tr></thead>
+          <tbody>
+            <tr><td class="k">RETRIEVER</td><td>fetching from a data/vector store</td><td>yes — required Document schema; renders docs + enables retrieval eval</td></tr>
+            <tr><td class="k">LLM · CHAT_MODEL</td><td>a completion / chat model call</td><td>captures tokens + latency</td></tr>
+            <tr><td class="k">CHAIN</td><td>an orchestration / sequence of steps</td><td>common root-span type</td></tr>
+            <tr><td class="k">RERANKER · PARSER</td><td>reranking, output parsing</td><td>organizational</td></tr>
+            <tr><td class="k">AGENT · TOOL · EMBEDDING</td><td>agents, tool calls, embedding steps</td><td>organizational</td></tr>
+            <tr><td class="k">UNKNOWN</td><td>default when no type is set</td><td>fine for generic helpers</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">Pass the enum (<code>from mlflow.entities import SpanType</code>) or the equivalent string (<code>span_type="RETRIEVER"</code>). Common built-ins (non-exhaustive): AGENT, CHAIN, CHAT_MODEL, EMBEDDING, LLM, PARSER, RERANKER, RETRIEVER, TOOL, UNKNOWN — newer releases add EVALUATOR, GUARDRAIL, MEMORY, TASK, WORKFLOW.</p>
+      </div>
+
+      <!-- PANE E: attributes vs trace tags -->
+      <div id="p-scope" class="pane" role="tabpanel" aria-labelledby="t-scope" hidden>
+        <table>
+          <thead><tr><th>Metadata</th><th>API</th><th>Scope + where it shows</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Span attributes</td><td>span.set_attributes({...}) or decorator attributes=</td><td>one span — the span's Attributes tab</td></tr>
+            <tr><td class="k">Span inputs/outputs</td><td>span.set_inputs({...}) / span.set_outputs({...})</td><td>one span — the Inputs/Outputs tab (decorator sets these automatically)</td></tr>
+            <tr><td class="k">Trace tags</td><td>mlflow.update_current_trace(tags={...})</td><td>whole trace (TraceInfo) — the experiment Traces tab, for search/filter; NOT the span view</td></tr>
+          </tbody>
+        </table>
+        <p class="plate-cap" style="text-align:left;margin-top:14px">If you search for a value on the span view and find nothing, you probably set it as a trace tag — check the experiment Traces tab instead.</p>
+      </div>
+    </section>
+
+    <section class="entry" id="how">
+      <div class="entry-head"><span class="num">03 · How it works</span><h2>Automated first, then layer manual on top</h2></div>
+      <p>The decision is per <em>step</em>, not per app. If a step runs inside a library MLflow can autolog, you get its span for free. If it is your own code, you add a span by hand. Both forms produce spans that land in the same trace.</p>
+      <div class="plate" data-fig="Fig. 02 — When does each form fire?">
+        <div class="mermaid" id="mermaidGraph2"></div>
+        <div class="plate-cap">Autolog covers the framework calls; manual covers the glue you wrote. MLflow merges them into one trace.</div>
+      </div>
+      <ul>
+        <li><strong>Automated — one line, whole chain.</strong> <code>mlflow.langchain.autolog()</code> hooks LangChain's callbacks; every runnable <code>.invoke()</code> emits a span. Best practice (Book 1): start here, then add manual spans for the gaps.</li>
+        <li><strong>Manual form 1 — the decorator.</strong> <code>@mlflow.trace(name=, span_type=, attributes=)</code> wraps a whole function; its args become span inputs and its return becomes span outputs, automatically. Keep it the outermost decorator.</li>
+        <li><strong>Manual form 2 — the context manager.</strong> <code>with mlflow.start_span(name=..., span_type=...) as span:</code> traces an arbitrary block; you call <code>set_inputs</code>, <code>set_outputs</code>, <code>set_attributes</code> yourself. Use it when there is no single function to decorate.</li>
+        <li><strong>They combine automatically.</strong> Wrap steps in an outer <code>@mlflow.trace</code> orchestrator; call your manual helpers and the autolog'd pieces inside. MLflow detects the nesting — no code links parent to child. Fanning out with <code>ThreadPoolExecutor</code>? Copy the context: <code>contextvars.copy_context().run(fn, ...)</code>.</li>
+        <li><strong>RETRIEVER is the one special type.</strong> Output <code>mlflow.entities.Document</code> (page_content, metadata, id) so docs render as documents and retrieval can be evaluated later.</li>
+        <li><strong>Bind traces to a version.</strong> <code>mlflow.set_active_model(name="ua_rag_chain")</code> stamps traces with the Module 06 LoggedModel, so Module 08 evaluation reads exactly this build's traces.</li>
+      </ul>
+    </section>
+
+    <section class="entry" id="dothis">
+      <div class="entry-head"><span class="num">04 · Run this</span><h2>autolog, then manual, then combine</h2></div>
+      <p><strong>Prereqs:</strong> serverless or DBR ML runtime, <strong>MLflow ≥ 3.1</strong>; the Module 05 <code>chain</code> (and its <code>retriever</code>, <code>prompt</code>, <code>llm</code>, <code>format_docs</code>) and the Module 06 model <code>unity_airways.rag.ua_rag_chain</code>.</p>
+      <pre><code>%pip install -U "mlflow[databricks]>=3.1" databricks-langchain databricks-vectorsearch
+dbutils.library.restartPython()</code></pre>
+      <p><strong>0. Imports and variables:</strong></p>
+      <pre><code>import mlflow
+from mlflow.entities import SpanType, Document
+
+CATALOG  = "unity_airways"
+SCHEMA   = "rag"
+UC_MODEL = f"{CATALOG}.{SCHEMA}.ua_rag_chain"
+QUESTION = "Can I get a refund on a Basic Economy fare?"</code></pre>
+      <p><strong>1. Turn on automated tracing and pin the version:</strong></p>
+      <pre><code>mlflow.langchain.autolog()                     # every LangChain .invoke() now traces
+active = mlflow.set_active_model(name="ua_rag_chain")   # link traces to the LoggedModel
+print(active.name, active.model_id)</code></pre>
+      <p><strong>2. Read the automated trace</strong> — open the cell's inline MLflow Trace UI and inspect the RETRIEVER span:</p>
+      <pre><code>answer = chain.invoke(QUESTION)
+print(answer)
+# Open the RETRIEVER span: did the refund/fare-rules chunk come back?
+# If not, the bug is upstream in chunking/retrieval, not the model.</code></pre>
+      <p><strong>3. Manual pre-step with the decorator:</strong></p>
+      <pre><code>@mlflow.trace                                   # default span type; name = function name
+def preprocess_question(raw: str) -> str:
+    return raw.strip().replace("BE fare", "Basic Economy fare")</code></pre>
+      <p><strong>4. Manual mid-step with the context manager:</strong></p>
+      <pre><code>def rerank(question, docs):
+    with mlflow.start_span(name="rerank", span_type=SpanType.RERANKER) as span:
+        span.set_inputs({"question": question, "n_candidates": len(docs)})
+        ranked = sorted(docs, key=lambda d: len(d.page_content))[:3]   # stand-in scorer
+        span.set_outputs({"kept": [d.metadata.get("source_doc") for d in ranked]})
+        span.set_attributes({"reranker": "heuristic", "top_k": 3})
+        return ranked</code></pre>
+      <p><strong>5. Orchestrate — one function, one trace, auto + manual interleaved:</strong></p>
+      <pre><code>from langchain_core.output_parsers import StrOutputParser
+
+@mlflow.trace(span_type=SpanType.CHAIN)         # outer span = the trace root
+def answer_unity_airways(raw_question: str) -> str:
+    q = preprocess_question(raw_question)       # manual span
+    docs = retriever.invoke(q)                  # AUTO RETRIEVER span
+    docs = rerank(q, docs)                      # manual RERANKER span
+    return (prompt | llm | StrOutputParser()).invoke(   # AUTO prompt + LLM spans
+        {"context": format_docs(docs), "question": q}
+    )
+
+print(answer_unity_airways("Can I get a refund on a BE fare?"))</code></pre>
+      <p><strong>Verify:</strong> the newest trace reads <code>answer_unity_airways (CHAIN)</code> → <code>preprocess_question</code> → retriever <code>(RETRIEVER)</code> → <code>rerank (RERANKER)</code> → prompt → <code>ChatDatabricks (CHAT_MODEL)</code>. Auto and manual spans in one tree.</p>
+      <p><strong>6. Trace-level tags for later search:</strong></p>
+      <pre><code>@mlflow.trace(span_type=SpanType.CHAIN)
+def answer_tagged(raw_question: str) -> str:
+    mlflow.update_current_trace(tags={"app": "ua-policy-bot", "channel": "web"})
+    return answer_unity_airways(raw_question)
+# Filter by these in Experiments -> your experiment -> Traces (not on the span view).</code></pre>
+      <p><strong>7. Make a RETRIEVER span render as documents</strong> (needed for evaluation later):</p>
+      <pre><code>@mlflow.trace(span_type=SpanType.RETRIEVER, name="ua_retriever")
+def retrieve_as_documents(q: str):
+    raw = retriever.invoke(q)                    # LangChain Documents
+    return [Document.from_langchain_document(d) for d in raw]   # MLflow Documents</code></pre>
+    </section>
+
+    <section class="entry" id="markers">
+      <div class="entry-head"><span class="num">05 · Field notes</span><h2>What to remember</h2></div>
+      <div class="note imp"><span class="tag">📌 Important</span>The whole lesson is two moves: <strong>turn on <code>autolog()</code></strong> to get the framework spans for free, then <strong>add manual spans</strong> (<code>@mlflow.trace</code> for a function, <code>mlflow.start_span</code> for a block) for the code you wrote. MLflow merges both into one trace automatically — you never wire parent to child by hand. <code>Trace = TraceInfo + TraceData</code>, and <code>TraceData</code> is the list of spans.</div>
+      <div class="note tip"><span class="tag">💡 Tip · field</span>Make reading the trace your <em>first</em> debugging step, not your last. When a RAG answer is wrong, open the RETRIEVER span before you touch the prompt or swap the model — nine times out of ten the right chunk was never retrieved, and the trace tells you that in one click.</div>
+      <div class="note gotcha"><span class="tag">⚠️ Gotcha</span>On <strong>serverless compute</strong>, GenAI autologging is <strong>not</strong> auto-enabled — call <code>mlflow.&lt;library&gt;.autolog()</code> explicitly for each integration. Book 1 is an O'Reilly Early Release and predates parts of MLflow 3, but its tracing APIs (<code>autolog()</code>, <code>@mlflow.trace</code>, <code>start_span</code>, <code>SpanType</code>, <code>set_inputs/outputs/attributes</code>, <code>update_current_trace</code>, <code>Document</code>) are current and were re-verified live. The low-level <code>MlflowClient</code> span API and the exact <code>set_active_model</code>-to-LoggedModel linking are the two spots to re-confirm for your runtime.</div>
+    </section>
+
+    <section class="entry" id="check">
+      <div class="entry-head"><span class="num">06 · Notes &amp; self-check</span><h2>Test yourself</h2></div>
+      <details><summary>Reveal 5-question self-check</summary>
+        <ol style="margin-top:14px">
+          <li>Name the one line that enables automated tracing for your LangChain RAG chain, and list the three spans you expect per invoke.</li>
+          <li>You call OpenAI's SDK in one helper and LangChain in another. Which autologger(s) do you enable, and what happens if you enable only <code>mlflow.langchain.autolog()</code>?</li>
+          <li>Give the two fluent manual-tracing forms. When would you reach for the context manager instead of the decorator?</li>
+          <li>How do auto and manual spans end up in the same trace without linking code? What breaks this under <code>ThreadPoolExecutor</code>, and how do you fix it?</li>
+          <li>Why does <code>span_type=SpanType.RETRIEVER</code> matter beyond a nicer icon, and what does <code>mlflow.set_active_model(...)</code> connect a trace to?</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="entry" id="sources" style="border-bottom:0">
+      <div class="entry-head"><span class="num">07 · Sources</span><h2>Grounding</h2></div>
+      <ul>
+        <li>📘 B1 — <em>Practical MLflow for Generative AI on Databricks</em>, Ch 5 ("MLflow Tracing for GenAI Application Observability") + Ch 4 (Models-from-Code, <code>set_active_model</code>): logging-vs-tracing (Table 5-1); <code>Trace = TraceInfo + TraceData</code>, <code>Span</code> with inputs/outputs/attributes/events; automated tracing via <code>mlflow.&lt;flavour&gt;.autolog()</code>; the <code>@mlflow.trace</code> decorator (<code>name=</code>, <code>span_type=SpanType.RETRIEVER/PARSER/CHAIN</code>, <code>attributes=</code>), <code>get_current_active_span()</code>, <code>update_current_trace(tags=)</code>, and the <code>mlflow.start_span(name=, span_type=SpanType.CHAIN)</code> context manager with <code>set_inputs/set_outputs/set_attributes</code>; combining auto + manual; <code>ThreadPoolExecutor</code> + <code>contextvars.copy_context()</code>; the special RETRIEVER schema (<code>mlflow.entities.Document</code>); <code>set_active_model(name=)</code>. O'Reilly Early Release — RAW &amp; UNEDITED; every API re-verified against current docs.</li>
+        <li>🌐 MLflow docs — GenAI manual tracing (<code>mlflow.org/docs/latest/genai/tracing/app-instrumentation/manual-tracing/</code>): <code>@mlflow.trace(name=, span_type=, attributes=)</code> with <code>span_type</code> as a <code>SpanType</code> or a string; outermost-decorator rule; <code>mlflow.start_span(name=...)</code> with <code>span.set_inputs/set_outputs</code>; <code>get_current_active_span().set_attributes(...)</code>; <code>update_current_trace(tags=)</code>. <strong>Verified live</strong> (bounded curl, July 2026).</li>
+        <li>🌐 MLflow API — <code>mlflow.entities.SpanType</code> (<code>.../python_api/mlflow.entities.html</code>): enum AGENT, CHAIN, CHAT_MODEL, EMBEDDING, LLM, PARSER, RERANKER, RETRIEVER, TOOL, UNKNOWN; <code>mlflow.entities.Document</code> represents retrieved docs in a RETRIEVER span, with <code>from_langchain_document(...)</code>. <strong>Verified live</strong> (bounded curl, July 2026).</li>
+        <li>🌐 Databricks docs — automatic tracing (<code>docs.databricks.com/aws/en/mlflow3/genai/tracing/app-instrumentation/automatic</code>): <code>mlflow.&lt;library&gt;.autolog()</code> for 20+ frameworks; <strong>serverless requires explicit enablement</strong>; worked example combining <code>mlflow.openai.autolog()</code> + <code>mlflow.langchain.autolog()</code> + a manual <code>@mlflow.trace(span_type=SpanType.CHAIN)</code> in one trace; install <code>"mlflow[databricks]>=3.1"</code>. <strong>Verified live</strong> (bounded curl, July 2026).</li>
+        <li>🧭 Naming cross-check: <code>references/naming-conventions.md</code> §1 (Tracing = <code>@mlflow.trace</code>, <code>mlflow.start_span()</code>, <code>mlflow.&lt;lib&gt;.autolog()</code>; LoggedModel + <code>set_active_model()</code> links a version to its traces/evals/metrics, new in MLflow 3; OpenTelemetry-compatible) and §2 (LangChain import is <code>databricks-langchain</code>).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <span>Databricks GenAI Tutor Field Guide · Topics 07.2-07.3 ★</span>
+  <span>Grounded in 📘B1 Ch5 · MLflow + Databricks docs</span>
+</footer>
+
+<script>
+const ITEMS=[
+ {name:"Automated tracing",spine:false,comps:[
+   ["mlflow.langchain.autolog()","one line, whole chain","Hooks LangChain's callbacks so every runnable .invoke() emits a trace with a span per step (retriever, prompt, model). Call it once, early. Best practice: start here, then add manual spans for the gaps.","On serverless you MUST call it explicitly"],
+   ["mlflow.openai / anthropic .autolog()","sibling autologgers","Match the autologger to the SDK your app actually calls. mlflow.openai.autolog(), mlflow.anthropic.autolog(), LangGraph, LlamaIndex, 20+ more. Enable several at once and MLflow merges their spans.","LangChain autolog won't trace raw OpenAI calls"],
+ ]},
+ {name:"Manual tracing",spine:true,comps:[
+   ["@mlflow.trace(name=, span_type=, attributes=)","decorator on a function","Wraps a whole function in a span. Args become span inputs; the return becomes span outputs, automatically. span_type takes a SpanType or a string. Keep @mlflow.trace the outermost decorator.","For your own helpers autolog can't see"],
+   ["mlflow.start_span(name=, span_type=)","context manager for a block","Traces an arbitrary code block, not a whole function. Inside: span.set_inputs({...}), span.set_outputs({...}), span.set_attributes({...}). Captures parent/child, exceptions, and timing like the decorator.","When there's no single function to decorate"],
+   ["mlflow.get_current_active_span()","add attributes from inside","Grabs the span created by @mlflow.trace so you can span.set_attributes({...}) inside a decorated function without opening a new span.","Enrich a decorator span"],
+   ["mlflow.update_current_trace(tags={...})","trace-level tags","Sets tags on TraceInfo (the whole trace) for search/filter in the experiment Traces tab. NOT the same as span attributes and NOT visible on the per-span view.","Trace scope, not span scope"],
+   ["mlflow.set_active_model(name=...)","tie traces to a LoggedModel","Sets the active LoggedModel; traces produced afterward attach to that version. Returns .name and .model_id. This is the link Module 08 evaluation follows back to 'which build produced this trace'.","Verify exact linking per runtime"],
+ ]},
+];
+const STEPS=[
+  ["Enable autolog + pin version","mlflow.langchain.autolog() turns on automated tracing for the chain. mlflow.set_active_model(name='ua_rag_chain') links the traces to the Module 06 LoggedModel. On serverless, autolog must be called explicitly."],
+  ["Read the automated trace","chain.invoke(QUESTION), then open the inline MLflow Trace UI. Inspect the RETRIEVER span: did the refund/fare-rules chunk come back? If not, the bug is retrieval, not the model."],
+  ["Manual pre-step (decorator)","@mlflow.trace on preprocess_question(raw). Default span type; name defaults to the function name. It normalizes 'BE fare' -> 'Basic Economy fare' before the chain sees it. Args become inputs, return becomes outputs."],
+  ["Manual mid-step (context manager)","with mlflow.start_span(name='rerank', span_type=SpanType.RERANKER) as span. Set span.set_inputs(...), span.set_outputs(...), span.set_attributes(...) yourself around a reranking block."],
+  ["Orchestrate one trace","@mlflow.trace(span_type=SpanType.CHAIN) on answer_unity_airways. Inside: preprocess (manual) -> retriever.invoke (auto) -> rerank (manual) -> prompt|llm (auto). MLflow nests them all under one root."],
+  ["Trace-level tags","mlflow.update_current_trace(tags={'app':'ua-policy-bot','channel':'web'}). Filter by these in the experiment Traces tab. They live on TraceInfo, not on any single span."],
+  ["RETRIEVER schema","@mlflow.trace(span_type=SpanType.RETRIEVER) returning a list of mlflow.entities.Document (via Document.from_langchain_document). This is what renders docs nicely and lets retrieval be evaluated in Module 08."],
+];
+const MERMAID_SRC=`flowchart TB
+  req["User request: refund on a Basic Economy fare?"] --> root
+  subgraph TRACE["One Trace (tr-...) · TraceInfo + TraceData"]
+    root["Span: answer_unity_airways · CHAIN<br/>MANUAL @mlflow.trace · trace root"]
+    root --> pre["Span: preprocess_question<br/>MANUAL @mlflow.trace · normalize query"]
+    root --> ret["Span: retriever · RETRIEVER<br/>AUTO autolog · chunks + scores + source_doc"]
+    root --> rr["Span: rerank · RERANKER<br/>MANUAL start_span · set_inputs/outputs/attributes"]
+    root --> pr["Span: prompt · CHAIN<br/>AUTO autolog · rendered messages"]
+    root --> llm["Span: ChatDatabricks · CHAT_MODEL<br/>AUTO autolog · answer + tokens + latency"]
+  end
+  llm --> ans["Grounded answer + a trace that shows why"]`;
+const MERMAID_SRC2=`flowchart TD
+  q{"Is this step inside a library MLflow can autolog?"}
+  q -->|"Yes - LangChain / OpenAI / Anthropic call"| a["AUTOMATED<br/>mlflow.langchain.autolog()<br/>spans appear with no per-call code"]
+  q -->|"No - your own function or code block"| m["MANUAL<br/>@mlflow.trace on a function<br/>OR with mlflow.start_span(...) for a block"]
+  a --> one["Both land in the SAME trace<br/>MLflow links parent/child automatically"]
+  m --> one`;
+
+const root=document.documentElement;
+root.dataset.theme = "paper";
+
+const stack=document.getElementById("stack");
+if(stack){ITEMS.forEach(l=>{
+  const d=document.createElement("div");d.className="layer"+(l.spine?" spine":"");d.innerHTML=`<h3>${l.name}</h3>`;
+  const chips=document.createElement("div");chips.className="chips";
+  l.comps.forEach(c=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=c[0];b.setAttribute("aria-pressed","false");
+    b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");
+      document.getElementById("detail").innerHTML=`<div class="role">${c[1]}</div><h3>${c[0]}</h3><p>${c[2]}</p><div class="layerof">${l.name}</div><div class="mod">→ ${c[3]}</div>`;};
+    chips.appendChild(b);});
+  d.appendChild(chips);stack.appendChild(d);});}
+
+function tab(btn,id){document.querySelectorAll(".pane").forEach(p=>{p.classList.remove("active");p.hidden=true;});
+  document.querySelectorAll('.tabs [role="tab"]').forEach(b=>b.setAttribute("aria-selected","false"));
+  const p=document.getElementById(id);p.classList.add("active");p.hidden=false;btn.setAttribute("aria-selected","true");}
+
+const fl=document.getElementById("flowline");let idx=0;
+function renderStep(){const box=document.getElementById("stepbox");if(!box)return;
+  box.innerHTML=`<div class="sn">Step ${idx+1} / ${STEPS.length}</div><div class="st">${STEPS[idx][0]}</div><div>${STEPS[idx][1]}</div>`;
+  const lbl=document.getElementById("stepLabel");if(lbl)lbl.textContent=`${idx+1} of ${STEPS.length}`;
+  const p=document.getElementById("prev"),n=document.getElementById("next");if(p)p.disabled=idx===0;if(n)n.disabled=idx===STEPS.length-1;
+  document.querySelectorAll("#flowline .n").forEach(x=>x.classList.toggle("on",+x.dataset.i===idx));}
+function step(d){idx=Math.max(0,Math.min(STEPS.length-1,idx+d));renderStep();}
+if(fl){STEPS.forEach((s,i)=>{const n=document.createElement("span");n.className="n";n.dataset.i=i;n.textContent=(i+1)+" · "+s[0];n.onclick=()=>{idx=i;renderStep();};fl.appendChild(n);});renderStep();}
+
+function initMermaid(){if(!window.mermaid)return;
+  mermaid.initialize({startOnLoad:false,securityLevel:"loose",theme:"base",fontFamily:"JetBrains Mono, monospace",
+    themeVariables:{background:"#fbfaf5",primaryColor:"#fbfaf5",primaryTextColor:"#17140d",primaryBorderColor:"#2b2bf0",lineColor:"#6a6252",secondaryColor:"#efe9d9",tertiaryColor:"#efe9d9"}});
+  [["mermaidGraph",MERMAID_SRC],["mermaidGraph2",MERMAID_SRC2]].forEach(([id,src])=>{
+    const el=document.getElementById(id);if(!el)return;el.innerHTML=src;el.removeAttribute("data-processed");
+    try{mermaid.run({nodes:[el]});}catch(e){el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(diagram failed to render)</span>';}});}
+if(document.getElementById("mermaidGraph")){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+  s.onload=initMermaid;s.onerror=function(){["mermaidGraph","mermaidGraph2"].forEach(id=>{var el=document.getElementById(id);if(el)el.innerHTML='<span style="font-family:var(--mono);color:var(--ink-soft);font-size:12px">(connect to the internet to render this diagram)</span>';});};document.body.appendChild(s);}
+
+const entries=document.querySelectorAll(".entry");
+if("IntersectionObserver" in window){
+  const reveal=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");reveal.unobserve(e.target);}});},{threshold:.1});
+  entries.forEach((s,i)=>{s.style.transitionDelay=(Math.min(i,4)*60)+"ms";reveal.observe(s);});
+}else{entries.forEach(s=>s.classList.add("in"));}
+addEventListener("scroll",()=>{const h=document.documentElement;const r=h.scrollTop/((h.scrollHeight-h.clientHeight)||1);const pb=document.getElementById("progress");if(pb)pb.style.transform="scaleX("+r+")";},{passive:true});
+</script>
+</body>
+</html>
