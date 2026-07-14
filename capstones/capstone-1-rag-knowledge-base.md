@@ -271,7 +271,7 @@ Reach for these once the five milestones pass. Each maps to a module topic you a
 - **Hybrid search (04.8):** switch queries carrying booking codes, fare classes, or IATA airport codes (`UA-8842`, fare class `Q`, `SFO`) to `query_type="HYBRID"` so exact tokens match alongside semantic recall. Costs ~2x ANN — use it selectively.
 - **Reranking (04.9):** retrieve a wider candidate set (top 25–50), run a cross-encoder reranker over the `(query, chunk)` pairs, keep the top 5. Directly fixes the "right chunk retrieved but ranked 4th" problem the LLM otherwise misses.
 - **Lakeflow / SDP ingestion pipeline (03.9):** rebuild M1–M2 as a **Lakeflow Declarative Pipeline** — bronze (`FROM STREAM read_files(...)`), silver (`ai_parse_document` + chunk). Incremental, serverless, UC-governed; when a policy PDF changes, only that file reprocesses and the Delta Sync index picks it up.
-- **Metadata filters (04.4):** add `filters="source_doc = 'baggage_policy'"` (or the JSON-dict form on a Standard endpoint) so a baggage question can't retrieve fare-rules chunks. Match the filter syntax to the endpoint type — mixing them silently returns unfiltered results.
+- **Metadata filters (04.4):** add `filters="source_doc = 'checked_bag_fee'"` (or the JSON-dict form on a Standard endpoint) so a baggage question can't retrieve refund-policy chunks. `source_doc` here is the PDF filename stem, so the seeded values are `basic_economy_refund`, `checked_bag_fee`, `involuntary_reaccommodation`, `change_booking`, `delay_policy`. Match the filter syntax to the endpoint type — mixing them silently returns unfiltered results.
 
 ---
 

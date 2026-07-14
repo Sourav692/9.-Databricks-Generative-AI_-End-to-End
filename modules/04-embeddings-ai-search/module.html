@@ -272,7 +272,7 @@ index = vsc.create_delta_sync_index_and_wait(
     query_text="checked bag allowance",
     columns=["chunk_id", "content", "source_doc"],
     num_results=5,
-    filters="source_doc = 'baggage_policy' AND chunk_index &lt; 20",  # storage-optimized syntax
+    filters="source_doc = 'faq' AND chunk_index &lt; 20",  # storage-optimized syntax
 )</code></pre>
 
       <h3 class="tk">04.5 Retrievers and embedding models together <span class="tag-pill h">Theory + Hands-on</span></h3>
@@ -338,7 +338,7 @@ docs = retriever.invoke("Can I rebook for free if my connection is cancelled?")<
         <li><strong>Model (04.2):</strong> <code>databricks-gte-large-en</code> — 8192-token context covers ~200-token chunks whole.</li>
         <li><strong>Index (04.3, 04.7):</strong> Delta Sync managed index <code>ua_rag_chunks_index</code> on a Standard endpoint, key <code>chunk_id</code>, embed <code>content</code>, sync <code>source_doc</code>/<code>chunk_index</code>, TRIGGERED.</li>
         <li><strong>Query (04.1, 04.8):</strong> "rebook for free?" → ANN finds the "involuntary re-accommodation" chunk despite zero shared keywords; a booking-code query switches to HYBRID.</li>
-        <li><strong>Filter (04.4):</strong> baggage question adds <code>filters="source_doc = 'baggage_policy'"</code>.</li>
+        <li><strong>Filter (04.4):</strong> baggage how-to adds <code>filters="source_doc = 'faq'"</code>.</li>
         <li><strong>Rerank (04.9):</strong> retrieve top 30, cross-encoder re-scores, keep top 5 — the exact refund clause moves to rank 1.</li>
         <li><strong>Hand off (04.5):</strong> <code>as_retriever(search_kwargs={"k": 5})</code> → the <strong>Module 05</strong> RAG chain.</li>
       </ol>

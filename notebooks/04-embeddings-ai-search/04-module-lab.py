@@ -135,46 +135,51 @@ for row in results["result"]["data_array"]:
 # MAGIC %md
 # MAGIC ## Step 2 · 04.4 — Metadata filtering on the query
 # MAGIC Semantic similarity finds the right *kind* of passage; a **metadata filter** restricts *which*
-# MAGIC rows are eligible before ranking. For Unity Airways that means "only search the baggage policy"
-# MAGIC so a fare-rules chunk can never compete for a baggage question.
+# MAGIC rows are eligible before ranking. For Unity Airways that means "only search the FAQ" so a dense
+# MAGIC Conditions-of-Carriage refund chunk can never compete for a baggage how-to question.
 # MAGIC
 # MAGIC > 💡 **TIP:** filters only work on columns that were synced into the index (here `source_doc`,
 # MAGIC > `chunk_index`). Plan filter columns when you build the index, not after.
 # MAGIC >
 # MAGIC > ⚠️ **GOTCHA:** filter **syntax depends on endpoint type**. On a **Standard** endpoint use a
 # MAGIC > dictionary (shown below). On a **Storage-optimized** endpoint use a SQL-like string
-# MAGIC > (`filters="source_doc = 'baggage_policy' AND chunk_index < 20"`). Mixing them silently returns
+# MAGIC > (`filters="source_doc = 'faq' AND chunk_index < 20"`). Mixing them silently returns
 # MAGIC > unfiltered results or errors.
 
 # COMMAND ----------
 
-# Standard endpoint: dictionary filter. Only rows where source_doc == 'baggage_policy' are eligible.
+# Standard endpoint: dictionary filter. Only rows where source_doc == 'faq' are eligible.
+# ('faq' is a source_doc that actually exists in ua_rag_chunks from Module 03 — along with
+#  'conditions_of_carriage' and 'support_transcript'; the FAQ is the doc with baggage content.)
 filtered = index.similarity_search(
-    query_text="What is the checked baggage allowance?",
+    query_text="How do I add a checked bag to my booking?",
     columns=["chunk_id", "content", "source_doc"],
     num_results=5,
-    filters={"source_doc": "baggage_policy"},   # dict filter on a Standard endpoint
+    filters={"source_doc": "faq"},   # dict filter on a Standard endpoint
 )
 print("rows after filter:", len(filtered["result"]["data_array"]))
 for row in filtered["result"]["data_array"]:
     print(round(row[-1], 3), "|", row[2], "|", row[1][:110], "...")
 
 # --- Storage-optimized endpoint would instead take a SQL-like string ---
-# filters="source_doc = 'baggage_policy' AND chunk_index < 20"
+# filters="source_doc = 'faq' AND chunk_index < 20"
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ### How to verify it worked
-# MAGIC Every returned row's `source_doc` should be `baggage_policy` — no fare-rules or FAQ chunks leak
-# MAGIC through. If you get an error or unfiltered rows, you likely used the wrong filter syntax for the
-# MAGIC endpoint type.
+# MAGIC Every returned row's `source_doc` should be `faq` — no Conditions-of-Carriage or transcript chunks
+# MAGIC leak through, and the query returns at least one row. If you get zero rows, an error, or unfiltered
+# MAGIC rows, you likely filtered on a `source_doc` that does not exist or used the wrong filter syntax for
+# MAGIC the endpoint type.
 
 # COMMAND ----------
 
 returned_docs = {row[2] for row in filtered["result"]["data_array"]}
 print("source_doc values returned:", returned_docs)
-assert returned_docs <= {"baggage_policy"} or not returned_docs, \
+assert returned_docs, \
+    "Filter returned zero rows — 'faq' must be a source_doc in ua_rag_chunks (Module 03) and synced into the index."
+assert returned_docs <= {"faq"}, \
     "Filter leaked other source_doc values — check filter syntax vs endpoint type (04.4 GOTCHA)."
 
 # COMMAND ----------

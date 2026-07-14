@@ -50,7 +50,7 @@ Everything below rides one running use case: **Unity Airways**, the airline whos
 - **Index** — the searchable vector structure built over `ua_rag_chunks`. See 04.3, 04.7.
 - **Endpoint** — the compute that hosts one or more indexes: **Standard** or **Storage-optimized**. See 04.6, 04.7.
 - **Delta Sync** — the index tracks the source Delta table's Change Data Feed and re-embeds only changed rows. See 04.3, 04.7.
-- **Metadata filter** — restrict results by column value (e.g. `source_doc = 'baggage_policy'`). See 04.4.
+- **Metadata filter** — restrict results by column value (e.g. `source_doc = 'faq'`). See 04.4.
 - **Retriever** — the object a chain calls to fetch chunks; produced with `databricks-langchain`. See 04.5.
 - **Search mode** — **ANN** (semantic), **HYBRID** (semantic + BM25 keyword), or **FULL_TEXT** (keyword only, Beta). See 04.8.
 - **Reranker** — a second-stage cross-encoder that re-scores the top candidates for precise ordering. See 04.9.
@@ -189,7 +189,7 @@ You can also query an index from **SQL** with the built-in **`vector_search()`**
 
 ## 04.4 Metadata filtering on queries  ·  [Hands-on]
 
-Semantic similarity finds the right *kind* of passage; a **metadata filter** restricts *which* rows are eligible before ranking. For Unity Airways that means "only search the baggage policy" or "only chunks ingested this year."
+Semantic similarity finds the right *kind* of passage; a **metadata filter** restricts *which* rows are eligible before ranking. For Unity Airways that means "only search the FAQ" or "only chunks ingested this year." (The `ua_rag_chunks` corpus from Module 03 has three `source_doc` values: `faq`, `conditions_of_carriage`, `support_transcript`.)
 
 The filter **syntax depends on the endpoint type**:
 - **Standard endpoint** → dictionary filters (`filters_json` as a JSON string via the SDK).
@@ -201,15 +201,15 @@ results = index.similarity_search(
     query_text="checked bag allowance",
     columns=["chunk_id", "content", "source_doc"],
     num_results=5,
-    filters="source_doc = 'baggage_policy' AND chunk_index < 20",
+    filters="source_doc = 'faq' AND chunk_index < 20",
 )
 
 # Standard endpoint (databricks-sdk): dictionary / JSON filter
-# filters_json='{"source_doc": "baggage_policy"}'
+# filters_json='{"source_doc": "faq"}'
 ```
 
 Why it matters:
-- **Precision** — filtering to `source_doc = 'baggage_policy'` stops a fare-rules chunk from ever competing for a baggage question.
+- **Precision** — filtering to `source_doc = 'faq'` stops a Conditions-of-Carriage refund chunk from ever competing for a baggage how-to question.
 - **Governance and freshness** — filter by tenant, language, or `ingested_at` to enforce access boundaries or serve only current policy.
 - **Cheaper reranking** — a tight candidate set means the 04.9 reranker has less to re-score.
 
@@ -342,7 +342,7 @@ From the Module 03 table to a retriever Module 05 can use:
 2. **Model (04.2):** pick `databricks-gte-large-en` — 8192-token context comfortably covers the ~200-token chunks.
 3. **Index (04.3, 04.7):** create a **Delta Sync managed** index `unity_airways.rag.ua_rag_chunks_index` on a **Standard** endpoint, `primary_key="chunk_id"`, embed `content`, sync `source_doc` and `chunk_index`, TRIGGERED pipeline.
 4. **Query (04.1, 04.8):** "Can I rebook for free if my connection is cancelled?" → ANN finds the "involuntary re-accommodation" chunk despite zero shared keywords. A booking-code query switches to HYBRID.
-5. **Filter (04.4):** for a baggage question, add `filters="source_doc = 'baggage_policy'"` so fare-rules chunks can't compete.
+5. **Filter (04.4):** for a baggage how-to, add `filters="source_doc = 'faq'"` so Conditions-of-Carriage chunks can't compete.
 6. **Rerank (04.9):** retrieve top 30, cross-encoder re-scores, keep top 5 — the exact refund clause moves to rank 1.
 7. **Hand off (04.5):** wrap the index in `DatabricksVectorSearch(...).as_retriever(search_kwargs={"k": 5})` and pass that retriever to the **Module 05** RAG chain.
 

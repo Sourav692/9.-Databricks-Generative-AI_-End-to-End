@@ -323,7 +323,7 @@
         <li><strong>Hybrid search (04.8)</strong> — switch queries carrying booking codes, fare classes, or airport codes (<code>UA-8842</code>, fare <code>Q</code>, <code>SFO</code>) to <code>query_type="HYBRID"</code> so exact tokens match alongside semantic recall. ~2x ANN cost — use it selectively.</li>
         <li><strong>Reranking (04.9)</strong> — retrieve a wider candidate set (top 25–50), run a cross-encoder over the (query, chunk) pairs, keep the top 5. Fixes "right chunk retrieved but ranked 4th."</li>
         <li><strong>Lakeflow / SDP pipeline (03.9)</strong> — rebuild M1–M2 as a Lakeflow Declarative Pipeline: bronze (<code>FROM STREAM read_files(...)</code>), silver (<code>ai_parse_document</code> + chunk). Incremental, serverless, UC-governed.</li>
-        <li><strong>Metadata filters (04.4)</strong> — add <code>filters="source_doc = 'baggage_policy'"</code> so a baggage question can't retrieve fare-rules chunks. Match the filter syntax to the endpoint type.</li>
+        <li><strong>Metadata filters (04.4)</strong> — add <code>filters="source_doc = 'checked_bag_fee'"</code> so a baggage question can't retrieve refund-policy chunks (<code>source_doc</code> is the PDF filename stem). Match the filter syntax to the endpoint type.</li>
       </ul>
     </section>
 
