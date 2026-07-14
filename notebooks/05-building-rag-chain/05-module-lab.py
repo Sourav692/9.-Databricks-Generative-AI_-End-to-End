@@ -331,9 +331,11 @@ print("Signature + resources ready for logging.")
 # COMMAND ----------
 
 # Sanity-check the file before logging (runs it the way MLflow will at load time).
-import sys, os
-sys.path.insert(0, os.getcwd())
-from rag_chain import chain as file_chain
+import os, importlib.util
+spec = importlib.util.spec_from_file_location("rag_chain", os.path.join(os.getcwd(), "rag_chain.py"))
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+file_chain = mod.chain
 print(file_chain.invoke(EXAMPLE_Q)[:200])
 
 # COMMAND ----------
@@ -350,9 +352,11 @@ with mlflow.start_run() as run:
     )
 print("model_uri:", logged.model_uri)
 
+# COMMAND ----------
+
 # Reload (re-executes the code) to prove the round-trip.
 loaded = mlflow.langchain.load_model(logged.model_uri)
-print(loaded.invoke("What is the checked baggage allowance on Basic Economy?")[:200])
+print(loaded.invoke("Can I get a refund if I miss my connection?")[:200])
 
 # COMMAND ----------
 
@@ -362,6 +366,34 @@ print(loaded.invoke("What is the checked baggage allowance on Basic Economy?")[:
 # MAGIC `mlflow.set_active_model(name=...)` and links its traces, params, and evals automatically. We log the
 # MAGIC version's params, **register** the Model-as-Code artifact to Unity Catalog (a new version), and set a
 # MAGIC `@champion` **alias** so downstream deployment (Module 11) can pin "the current best" by name.
+
+# COMMAND ----------
+
+# DBTITLE 1,Two ways a LoggedModel is created
+# MAGIC %md
+# MAGIC ### Two ways a LoggedModel gets created
+# MAGIC
+# MAGIC MLflow 3 creates a LoggedModel entry via **two different code paths**. Understanding the difference
+# MAGIC prevents the common trap of params/traces living on one entity while the artifact lives on another.
+# MAGIC
+# MAGIC | | `mlflow.set_active_model(name=...)` | `mlflow.langchain.log_model(..., name=...)` |
+# MAGIC |---|---|---|
+# MAGIC | **What it creates** | An **external** LoggedModel (metadata-only) | A **non-external** LoggedModel (has an artifact) |
+# MAGIC | **Has model artifact?** | No — no `.py` file, no weights, nothing deployable | Yes — the actual code/weights/signature/pip reqs |
+# MAGIC | **Has `source_run_id`?** | No (empty) | Yes — points to the Run holding the artifact |
+# MAGIC | **Can register to UC?** | No — nothing to deploy | Yes — `mlflow.register_model(uri, ...)` works |
+# MAGIC | **Tagged** | `mlflow.model.isExternal: true` | No external tag |
+# MAGIC | **Purpose** | Organizational bucket: collects **traces**, **params**, and **eval results** for a logical model version | Stores the **deployable artifact** with its metadata |
+# MAGIC | **When to use** | Early iteration — tracing, tuning, comparing variants | Freeze point — you have a working chain, ready to version |
+# MAGIC
+# MAGIC **The consolidation pattern:** When `log_model(name=X)` uses the **same name** as a prior
+# MAGIC `set_active_model(name=X)`, MLflow merges the artifact into the existing external LoggedModel —
+# MAGIC turning it from external to non-external. Params, traces, and artifact then live under **one entity**.
+# MAGIC
+# MAGIC > ⚠️ **GOTCHA:** If the names differ (e.g., `set_active_model("rag_chain")` + `log_model(name="chain")`),
+# MAGIC > you get two separate LoggedModels — params on one, artifact on the other. The UC model version links
+# MAGIC > to the artifact entity, so the params appear "missing" in the UC model page. Always use the same name
+# MAGIC > for both calls to keep everything consolidated.
 
 # COMMAND ----------
 

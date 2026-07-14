@@ -58,7 +58,7 @@ VS_ENDPOINT   = "unity-airways-vs"                          # Vector Search endp
 CHAT_ENDPOINT = "databricks-claude-sonnet-4-5"             # confirm on the supported-models page
 
 # Learner-set: an experiment path you can write to (usually your own /Users/<you> path).
-EXPERIMENT_PATH = "/Users/you@company.com/unity_airways_rag"
+EXPERIMENT_PATH = "/Users/sourav.banerjee@databricks.com/unity_airways_rag"
 
 EXAMPLE_Q     = "Can I get a refund if I miss my connection?"
 APPROVER      = "s.banerjee"                                # who signs off the promotion
@@ -227,7 +227,7 @@ print("model_uri:", logged.model_uri)   # MLflow 3 -> models:/<model_id>
 # COMMAND ----------
 
 reloaded = mlflow.langchain.load_model(logged.model_uri)
-print(reloaded.invoke("What is the checked baggage allowance on Basic Economy?")[:250])
+print(reloaded.invoke("Can I get a refund if I cancel my Basic Economy ticket within 24 hours of booking?")[:250])
 print("OK — signature + pinned env logged; the chain round-trips from its code.")
 
 # COMMAND ----------
