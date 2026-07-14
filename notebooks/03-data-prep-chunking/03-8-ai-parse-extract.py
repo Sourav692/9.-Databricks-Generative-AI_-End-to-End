@@ -311,3 +311,7 @@ parsed_py.display()
 # MAGIC - **03.9 — Build the RAG ingestion pipeline as a Lakeflow Spark Declarative Pipeline (SDP):** turn these
 # MAGIC   four steps into declarative stages — `from pyspark import pipelines as dp` with `@dp.table` (or SQL
 # MAGIC   `CREATE OR REFRESH STREAMING TABLE`) — with an error sidecar and incremental parsing.
+
+# COMMAND ----------
+
+

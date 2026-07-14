@@ -159,7 +159,11 @@ filtered = index.similarity_search(
 )
 print("rows after filter:", len(filtered["result"]["data_array"]))
 for row in filtered["result"]["data_array"]:
-    print(round(row[-1], 3), "|", row[2], "|", row[1][:110], "...")
+    print("---")
+    print("score: ",round(row[-1], 3))
+    print("source_doc: ",row[2])
+    print("content: ", row[1][:110], "...")
+    # print(round(row[-1], 3), "|", row[2], "|", row[1][:110], "...")
 
 # --- Storage-optimized endpoint would instead take a SQL-like string ---
 # filters="source_doc = 'faq' AND chunk_index < 20"
@@ -315,7 +319,11 @@ hybrid = index.similarity_search(
     num_results=10,
 )
 for row in hybrid["result"]["data_array"][:5]:
-    print(round(row[-1], 3), "|", row[2], "|", row[1][:110], "...")
+    # print(round(row[-1], 3), "|", row[2], "|", row[1][:110], "...")
+    print("---")
+    print("score: ",round(row[-1], 3))
+    print("source_doc: ",row[2])
+    print("content: ", row[1][:110], "...")
 
 # Note: a managed index takes just query_text for HYBRID. A self-managed index would also need a
 # query_vector for the ANN half.
