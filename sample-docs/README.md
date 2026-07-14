@@ -31,6 +31,10 @@ Drop `scanned/fare-rules-scanned.png` (or the `.tiff`) into the **same UC Volume
 
 ## Where to put them (upload to the UC Volume)
 
+### Easiest — run the uploader notebook
+If this repo is checked out as a **Databricks Git folder**, just open **`upload_to_volume.py`** (in this folder) and run it. It creates the Volume and copies the PDFs (and the scan) in for you. Set `TARGET = "parse"` for `03-8` or `TARGET = "pipeline"` for `03-9`, and `INCLUDE_SCAN` to include the OCR image. No manual upload needed.
+
+### Manual — UI or CLI
 The notebooks expect a Volume under `unity_airways.rag`. Two paths are referenced — upload to whichever notebook you're running (or both):
 
 | Notebook | Volume path |
