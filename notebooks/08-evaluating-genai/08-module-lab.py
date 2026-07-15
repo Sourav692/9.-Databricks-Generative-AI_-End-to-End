@@ -68,7 +68,7 @@ CHAT_ENDPOINT = "databricks-claude-sonnet-4-5"            # confirm on the suppo
 EVAL_MODEL    = "databricks:/databricks-claude-sonnet-4-5"
 
 # Learner-set: an experiment path you can write to (usually your own /Users/<you> path).
-EXPERIMENT_PATH = "/Users/you@company.com/unity_airways_rag"
+EXPERIMENT_PATH = "/Users/sourav.banerjee@databricks.com/unity_airways_rag"
 APPROVER        = "s.banerjee"                             # who signs off the promotion
 
 mlflow.set_registry_uri("databricks-uc")   # UC-governed registry

@@ -60,7 +60,7 @@ INDEX_NAME    = f"{CATALOG}.{SCHEMA}.ua_rag_chunks_index"  # the Module 04 index
 CHAT_ENDPOINT = "databricks-claude-sonnet-4-5"            # confirm on the supported-models page
 
 # Learner-set: an experiment path you can write to (usually your own /Users/<you> path).
-EXPERIMENT_PATH = "/Users/you@company.com/unity_airways_rag"
+EXPERIMENT_PATH = "/Users/sourav.banerjee@databricks.com/unity_airways_rag"
 
 # The running example — a policy question the assistant has answered confidently and WRONG.
 QUESTION = "Can I get a refund on a Basic Economy fare?"
